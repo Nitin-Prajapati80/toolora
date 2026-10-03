@@ -4,3289 +4,4699 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Professional Resume Maker - Toolora</title>
+<title>Professional Resume Maker | Toolora</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <script
 src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
-integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvHdeKFVgA5v3S/cIrLF7QnIg=="
+integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
 crossorigin="anonymous"
 referrerpolicy="no-referrer">
 </script>
 
 <style>
+
 *{
     box-sizing:border-box;
 }
 
 body{
     margin:0;
-    background:#f5f5f5;
-    color:#111;
+    background:#f5f7fb;
+    color:#111827;
     font-family:Arial,Helvetica,sans-serif;
 }
 
-button,
 input,
 select,
-textarea{
+textarea,
+button{
     font:inherit;
 }
 
 input::placeholder,
 textarea::placeholder{
-    color:#b8b8b8;
+    color:#a3a3a3;
     opacity:1;
     font-weight:400;
 }
 
-select{
-    color:#555;
-}
-
-select:valid{
-    color:#111;
-}
-
 .topbar{
-    height:58px;
-    background:#fff;
-    border-bottom:1px solid #ddd;
+    background:#111827;
+    color:white;
+    padding:15px 20px;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:0 18px;
 }
 
-.logo{
-    font-family:"Trebuchet MS",Arial,sans-serif;
-    font-weight:900;
+.brand{
     font-size:20px;
+    font-weight:700;
 }
 
-.back-link{
-    color:#555;
+.back{
+    color:white;
     text-decoration:none;
     font-size:13px;
 }
 
-.page{
-    max-width:1180px;
-    margin:0 auto;
-    padding:24px 16px 40px;
+.page-wrap{
+    max-width:1100px;
+    margin:20px auto;
+    padding:0 14px;
 }
 
-.builder-grid{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-    gap:20px;
+.tool-card,
+.preview-card{
+    background:white;
+    border-radius:14px;
+    padding:18px;
+    box-shadow:0 6px 25px rgba(15,23,42,.07);
+    margin-bottom:18px;
 }
 
-.panel{
-    background:#fff;
-    border:1px solid #e6e6e6;
-    border-radius:12px;
-    padding:16px;
+.title{
+    font-size:22px;
+    font-weight:700;
+    margin:0;
 }
 
-.panel-title{
-    font-size:18px;
-    font-weight:800;
-    margin:0 0 5px;
-}
-
-.panel-subtitle{
-    font-size:12px;
-    color:#777;
-    margin:0 0 18px;
+.sub{
+    font-size:13px;
+    color:#6b7280;
+    margin:6px 0 18px;
 }
 
 .section{
-    border:1px solid #e5e5e5;
-    border-radius:10px;
+    border:1px solid #e5e7eb;
+    border-radius:11px;
     padding:13px;
-    margin-bottom:12px;
+    margin-bottom:13px;
 }
 
-.section-title{
-    font-size:14px;
-    font-weight:800;
-    margin-bottom:12px;
+.section h2{
+    font-size:15px;
+    margin:0 0 11px;
+    font-weight:700;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
 }
 
 .field{
-    margin-bottom:10px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
 }
 
-.field label{
-    display:block;
+.field.full{
+    grid-column:1/-1;
+}
+
+label{
     font-size:11px;
-    font-weight:700;
-    color:#555;
-    margin-bottom:5px;
+    font-weight:600;
+    color:#374151;
 }
 
-.field input,
-.field select,
-.field textarea{
+input,
+select,
+textarea{
     width:100%;
-    border:1px solid #ddd;
+    border:1px solid #d1d5db;
     border-radius:7px;
-    padding:9px 10px;
-    outline:none;
-    background:#fff;
+    padding:8px 9px;
     font-size:12px;
-    color:#222;
+    background:white;
+    color:#111827;
+    outline:none;
 }
 
-.field input:focus,
-.field select:focus,
-.field textarea:focus{
-    border-color:#777;
+input:focus,
+select:focus,
+textarea:focus{
+    border-color:#6366f1;
+    box-shadow:0 0 0 2px rgba(99,102,241,.08);
 }
 
-.field textarea{
-    min-height:80px;
+textarea{
+    min-height:75px;
     resize:vertical;
 }
 
-.grid-2{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:9px;
+.row-card{
+    border:1px solid #e5e7eb;
+    border-radius:9px;
+    padding:10px;
+    margin-top:9px;
 }
 
-.grid-3{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:9px;
-}
-
-.grid-4{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
+.row-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
     gap:8px;
+    margin-bottom:8px;
 }
 
-.add-btn{
+.row-title{
+    font-size:12px;
+    font-weight:700;
+    color:#374151;
+}
+
+.btn{
     border:0;
-    background:#111;
-    color:#fff;
     border-radius:7px;
     padding:8px 12px;
-    font-size:11px;
+    font-size:12px;
+    font-weight:600;
     cursor:pointer;
 }
 
-.remove-btn{
-    border:0;
-    background:#ffe7e7;
-    color:#b00000;
-    border-radius:6px;
-    padding:5px 9px;
-    font-size:10px;
-    cursor:pointer;
+.add{
+    background:#4f46e5;
+    color:white;
 }
 
-.small-btn{
-    border:1px solid #ddd;
-    background:#fff;
-    color:#333;
-    border-radius:6px;
+.remove{
+    background:#fee2e2;
+    color:#b91c1c;
     padding:6px 9px;
-    font-size:10px;
-    cursor:pointer;
 }
 
-.dynamic-item{
-    border:1px solid #e3e3e3;
-    border-radius:9px;
-    padding:11px;
-    margin-bottom:10px;
-    background:#fff;
-}
-
-.dynamic-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:10px;
-}
-
-.dynamic-head strong{
-    font-size:11px;
-}
-
-.chips{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-}
-
-.chip{
-    border:1px solid #ddd;
-    background:#fff;
-    border-radius:5px;
-    padding:6px 8px;
-    font-size:10px;
-    cursor:pointer;
-}
-
-.chip.active{
-    background:#111;
-    color:#fff;
-    border-color:#111;
-}
-
-.photo-box{
-    border:1px dashed #ccc;
-    border-radius:8px;
-    padding:12px;
-    text-align:center;
-}
-
-.photo-box input{
-    font-size:11px;
-}
-
-.photo-preview{
-    width:90px;
-    height:110px;
-    margin:10px auto 0;
-    display:none;
-    border:1px solid #ddd;
-    padding:3px;
-    object-fit:contain;
-    background:#fff;
+.secondary{
+    background:#eef2ff;
+    color:#3730a3;
 }
 
 .actions{
     display:flex;
     gap:8px;
-    margin-top:14px;
+    flex-wrap:wrap;
+    margin-top:8px;
 }
 
-.primary-btn{
-    flex:1;
-    background:#111;
-    color:#fff;
-    border:0;
-    border-radius:8px;
-    padding:10px;
-    cursor:pointer;
-    font-size:12px;
+.help{
+    font-size:10px;
+    color:#6b7280;
+    margin-top:4px;
 }
 
-.secondary-btn{
-    flex:1;
-    background:#eee;
-    color:#111;
-    border:0;
-    border-radius:8px;
-    padding:10px;
-    cursor:pointer;
-    font-size:12px;
+.country-row{
+    display:grid;
+    grid-template-columns:150px 1fr;
+    gap:7px;
 }
 
-.pdf-wrap{
-    position:relative;
-    flex:1;
+.photo-control{
+    display:flex;
+    align-items:center;
+    gap:10px;
 }
 
-.pdf-main{
-    width:100%;
-    background:#111;
-    color:#fff;
-    border:0;
-    border-radius:8px;
-    padding:10px;
-    font-size:12px;
-    cursor:pointer;
-}
-
-.pdf-menu{
-    position:absolute;
-    left:0;
-    right:0;
-    bottom:calc(100% + 6px);
-    background:#fff;
-    border:1px solid #ddd;
-    border-radius:8px;
-    box-shadow:0 8px 25px rgba(0,0,0,.12);
-    overflow:hidden;
+.photo-thumb{
+    width:55px;
+    height:68px;
+    border:1px dashed #cbd5e1;
+    border-radius:7px;
     display:none;
-    z-index:20;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
 }
 
-.pdf-menu button{
-    width:100%;
-    border:0;
-    background:#fff;
-    padding:11px;
-    text-align:left;
-    font-size:12px;
-    cursor:pointer;
+.photo-thumb img{
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain;
 }
 
-.pdf-menu button:hover{
-    background:#f4f4f4;
-}
+/* =========================
+   LIVE RESUME PREVIEW
+========================= */
 
-.preview-area{
-    position:sticky;
-    top:15px;
-}
-
-.preview-label{
-    font-size:14px;
-    font-weight:800;
-    margin-bottom:7px;
-}
-
-.preview-note{
-    font-size:11px;
-    color:#777;
-    margin-bottom:10px;
+.preview-card>h2{
+    font-size:16px;
+    margin:0 0 12px;
 }
 
 .preview-scroll{
     width:100%;
     overflow-x:auto;
-    padding-bottom:5px;
 }
 
 .resume-page{
     width:100%;
     max-width:794px;
-    margin:0 auto;
-    background:#fff;
-    border-radius:10px;
-    padding:34px 38px;
-    min-height:900px;
-    box-shadow:0 5px 25px rgba(0,0,0,.08);
-    color:#111;
+    min-height:1123px;
+    background:white;
+    margin:auto;
+    padding:42px;
+    box-shadow:0 8px 30px rgba(0,0,0,.12);
+    color:#111827;
+    font-family:Arial,Helvetica,sans-serif;
 }
 
 .resume-header{
     display:flex;
     justify-content:space-between;
-    gap:20px;
-    padding-bottom:15px;
-    border-bottom:1px solid #111;
-}
-
-.resume-header-info{
-    min-width:0;
-    flex:1;
+    gap:18px;
+    border-bottom:2px solid #111827;
+    padding-bottom:13px;
 }
 
 .resume-name{
     font-size:28px;
-    font-weight:900;
-    margin:0 0 5px;
-    word-break:break-word;
+    font-weight:700;
+    margin:0 0 4px;
 }
 
 .resume-title{
     font-size:13px;
-    color:#444;
-    margin-bottom:12px;
+    color:#4b5563;
+    margin-bottom:8px;
 }
 
-.contact-line{
+.contact{
     font-size:10px;
-    color:#333;
-    line-height:1.7;
+    color:#4b5563;
+    line-height:1.65;
 }
 
-.resume-photo-wrap{
-    width:90px;
-    min-width:90px;
-    height:110px;
+.photo-box{
+    width:92px;
+    height:118px;
+    flex:0 0 92px;
     display:flex;
-    justify-content:center;
     align-items:center;
+    justify-content:center;
+    overflow:hidden;
 }
 
-.resume-photo{
-    max-width:90px;
-    max-height:110px;
+.photo-box img{
+    max-width:100%;
+    max-height:100%;
     width:auto;
     height:auto;
     object-fit:contain;
-    display:none;
 }
 
 .resume-section{
-    margin-top:18px;
+    margin-top:14px;
+    break-inside:avoid;
+    page-break-inside:avoid;
 }
 
-.resume-section-title{
-    font-size:13px;
-    font-weight:900;
-    letter-spacing:.5px;
+.resume-section h3{
+    font-size:12px;
     text-transform:uppercase;
-    padding-bottom:6px;
-    border-bottom:1px solid #888;
-    margin-bottom:10px;
+    letter-spacing:.8px;
+    margin:0 0 6px;
+    border-bottom:1px solid #d1d5db;
+    padding-bottom:4px;
 }
 
 .resume-text{
     font-size:10px;
-    line-height:1.65;
-    color:#222;
-    white-space:pre-wrap;
+    line-height:1.55;
+    color:#374151;
+    white-space:pre-line;
 }
 
-.edu-block,
-.project-block,
-.exp-block,
-.cert-block{
-    margin-bottom:12px;
+.edu-item,
+.exp-item,
+.project-item,
+.cert-item{
+    margin-bottom:8px;
+    break-inside:avoid;
+    page-break-inside:avoid;
 }
 
-.resume-item-title{
+.item-title{
     font-size:11px;
-    font-weight:900;
-    margin-bottom:3px;
+    font-weight:700;
 }
 
-.resume-meta{
+.item-meta{
     font-size:9px;
-    color:#444;
-    line-height:1.6;
+    color:#6b7280;
+    margin:2px 0 3px;
 }
 
-.resume-skills{
+.item-desc{
+    font-size:9.5px;
+    line-height:1.45;
+    color:#374151;
+    white-space:pre-line;
+}
+
+.sem-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:4px;
+    font-size:8.5px;
+}
+
+.sem-table th,
+.sem-table td{
+    border:1px solid #e5e7eb;
+    padding:3px;
+    text-align:left;
+}
+
+.chips{
     display:flex;
     flex-wrap:wrap;
     gap:5px;
 }
 
-.resume-skill{
-    border:1px solid #bbb;
-    border-radius:4px;
-    padding:4px 7px;
+.chip{
     font-size:9px;
+    border:1px solid #d1d5db;
+    border-radius:20px;
+    padding:3px 7px;
+    color:#374151;
 }
 
-.resume-links{
-    display:grid;
-    gap:9px;
-}
-
-.resume-link-item strong{
-    font-size:10px;
-    display:block;
-}
-
-.resume-link-item span{
+.link-list{
     font-size:9px;
-    color:#444;
-    word-break:break-all;
+    line-height:1.7;
 }
 
-.semester-box{
-    border:1px solid #ddd;
-    border-radius:7px;
-    padding:9px;
+.sem-year{
+    border:1px solid #e5e7eb;
+    border-radius:8px;
+    padding:8px;
     margin-top:8px;
 }
 
-.semester-title{
-    font-size:10px;
-    font-weight:800;
-    margin-bottom:4px;
+.sem-year h4{
+    font-size:11px;
+    margin:0 0 7px;
 }
 
-.empty-message{
-    color:#999;
-    font-size:10px;
+.pdf-actions{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
 }
 
-.hidden{
-    display:none!important;
-}
+/* =========================
+   MOBILE
+========================= */
 
-.status-note{
-    font-size:10px;
-    color:#777;
-    margin-top:5px;
-}
+@media(max-width:700px){
 
-@media(max-width:850px){
-    .builder-grid{
-        grid-template-columns:1fr;
-    }
-
-    .preview-area{
-        position:static;
-    }
-}
-
-@media(max-width:600px){
     .topbar{
-        padding:0 12px;
-        height:54px;
+        padding:13px 15px;
     }
 
-    .page{
-        padding:12px 10px 30px;
+    .page-wrap{
+        margin:12px auto;
+        padding:0 9px;
     }
 
-    .panel{
-        padding:12px;
+    .tool-card,
+    .preview-card{
+        padding:13px;
+        border-radius:12px;
     }
 
-    .grid-2,
-    .grid-3,
-    .grid-4{
+    .grid{
         grid-template-columns:1fr;
+    }
+
+    .field.full{
+        grid-column:auto;
+    }
+
+    .country-row{
+        grid-template-columns:125px 1fr;
     }
 
     .resume-page{
-        padding:22px 17px;
+        width:100%;
         min-height:auto;
+        padding:24px 18px;
         box-shadow:none;
-        border:1px solid #eee;
     }
 
     .resume-name{
-        font-size:23px;
+        font-size:24px;
     }
 
-    .resume-photo-wrap{
-        width:76px;
-        min-width:76px;
-        height:94px;
+    .photo-box{
+        width:80px;
+        height:100px;
+        flex-basis:80px;
     }
 
-    .resume-photo{
-        max-width:76px;
-        max-height:94px;
+    .preview-scroll{
+        overflow-x:hidden;
     }
 
     .resume-header{
-        gap:10px;
-    }
-
-    .actions{
-        flex-direction:column;
+        gap:12px;
     }
 }
 
+/* =========================
+   PRINT
+========================= */
+
 @media print{
+
     body{
-        background:#fff;
+        background:white;
     }
 
     .topbar,
-    .builder-grid > .panel,
-    .preview-label,
-    .preview-note,
-    .actions{
+    .tool-card,
+    .preview-card>h2,
+    .pdf-actions{
         display:none!important;
     }
 
-    .page{
-        padding:0;
+    .page-wrap{
         margin:0;
+        padding:0;
         max-width:none;
     }
 
-    .builder-grid{
+    .preview-card{
         display:block;
-    }
-
-    .preview-area{
-        display:block;
+        padding:0;
+        margin:0;
+        box-shadow:none;
     }
 
     .preview-scroll{
         overflow:visible;
-        padding:0;
     }
 
     .resume-page{
         width:210mm;
         max-width:none;
         min-height:297mm;
-        margin:0;
         padding:14mm;
-        border:0;
-        border-radius:0;
         box-shadow:none;
-    }
-
-    @page{
-        size:A4;
         margin:0;
     }
 }
+
+/* PDF rendering mode */
+
+.pdf-mode{
+    width:210mm!important;
+    max-width:none!important;
+    min-height:297mm!important;
+    padding:14mm!important;
+    box-shadow:none!important;
+}
+
+@media(max-width:700px){
+
+    .pdf-mode{
+        width:210mm!important;
+        min-height:297mm!important;
+    }
+
+}
+
 </style>
 </head>
 
 <body>
 
 <header class="topbar">
-    <div class="logo">Toolora</div>
-    <a href="index.html" class="back-link">Back to Home</a>
+
+    <div class="brand">
+        Toolora
+    </div>
+
+    <a class="back" href="index.html">
+        Back to Home
+    </a>
+
 </header>
 
-<main class="page">
 
-<div class="builder-grid">
+<main class="page-wrap">
 
-<!-- ================= FORM ================= -->
+<section class="tool-card">
 
-<div class="panel">
+<h1 class="title">
+    Professional Resume Maker
+</h1>
 
-<h1 class="panel-title">Professional Resume Maker</h1>
-<p class="panel-subtitle">
-Create a clean, professional resume and export it as a PDF.
+<p class="sub">
+    Create a clean and professional resume with guided sections and live preview.
 </p>
 
-<!-- PERSONAL INFORMATION -->
+
+<form id="resumeForm" onsubmit="return false">
+
+
+<!-- =========================
+     PERSONAL INFORMATION
+========================= -->
+
 <div class="section">
 
-<div class="section-title">1. Personal Information</div>
+<h2>
+    1. Personal Information
+</h2>
+
+<div class="grid">
 
 <div class="field">
-<label>Full Name</label>
-<input id="fullName" type="text" placeholder="e.g. ABC XYZ">
+
+<label>
+    Full Name
+</label>
+
+<input
+    id="fullName"
+    placeholder="ABC XYZ"
+>
+
 </div>
 
+
 <div class="field">
-<label>Professional Title</label>
-<input id="professionalTitle" type="text" placeholder="e.g. Software Developer">
+
+<label>
+    Professional Title / Qualification
+</label>
+
+<input
+    id="headline"
+    placeholder="BCA Student"
+>
+
 </div>
 
+
 <div class="field">
-<label>Email</label>
-<input id="email" type="email" placeholder="e.g. abc@example.com">
+
+<label>
+    Email Address
+</label>
+
+<input
+    id="email"
+    type="email"
+    placeholder="abc@example.com"
+>
+
 </div>
 
-<div class="grid-2">
 
 <div class="field">
-<label>Country Code</label>
-<select id="countryCode">
-<option value="+91">India (+91)</option>
-<option value="+1">United States / Canada (+1)</option>
-<option value="+44">United Kingdom (+44)</option>
-<option value="+61">Australia (+61)</option>
-<option value="+81">Japan (+81)</option>
-<option value="+82">South Korea (+82)</option>
-<option value="+86">China (+86)</option>
-<option value="+971">United Arab Emirates (+971)</option>
-<option value="+974">Qatar (+974)</option>
-<option value="+966">Saudi Arabia (+966)</option>
-<option value="+65">Singapore (+65)</option>
-<option value="+60">Malaysia (+60)</option>
-<option value="+49">Germany (+49)</option>
-<option value="+33">France (+33)</option>
-<option value="+39">Italy (+39)</option>
-<option value="+7">Russia / Kazakhstan (+7)</option>
-<option value="+92">Pakistan (+92)</option>
-<option value="+880">Bangladesh (+880)</option>
-<option value="+94">Sri Lanka (+94)</option>
-<option value="+977">Nepal (+977)</option>
-<option value="+93">Afghanistan (+93)</option>
+
+<label>
+    Mobile Number
+</label>
+
+<div class="country-row">
+
+<select id="countryCode"></select>
+
+<input
+    id="phone"
+    inputmode="tel"
+    placeholder="9876543210"
+>
+
+</div>
+
+</div>
+
+
+<div class="field">
+
+<label>
+    State
+</label>
+
+<select id="state">
+
+<option value="">
+    Select State / UT
+</option>
+
 </select>
+
 </div>
+
 
 <div class="field">
-<label>Mobile Number</label>
-<input id="phone" type="tel" inputmode="numeric" placeholder="e.g. 9876543210">
-</div>
 
-</div>
+<label>
+    District
+</label>
 
-<div class="field">
-<label>City</label>
-<input id="city" type="text" placeholder="e.g. Kanpur">
-</div>
+<select
+    id="district"
+    disabled
+>
 
-<div class="grid-2">
+<option value="">
+    Select District
+</option>
 
-<div class="field">
-<label>State</label>
-<select id="state" required>
-<option value="">Select State</option>
 </select>
-</div>
-
-<div class="field">
-<label>District</label>
-<select id="district" disabled>
-<option value="">Select District</option>
-</select>
-</div>
 
 </div>
 
-<div class="field">
-<label>PIN Code</label>
-<input id="pinCode" type="text" inputmode="numeric" placeholder="e.g. 208001">
-</div>
 
-<div class="field">
-<label>Profile Photo</label>
+<div class="field full">
 
-<div class="photo-box">
+<label>
+    City / Address
+</label>
 
-<input id="profilePhoto" type="file" accept="image/jpeg,image/png,image/webp">
-
-<div class="status-note">
-Recommended professional portrait photo. JPG, PNG or WebP.
-</div>
-
-<img id="photoPreview" class="photo-preview" alt="Profile Preview">
+<input
+    id="address"
+    placeholder="City, Area"
+>
 
 </div>
 
+
+<div class="field full">
+
+<label>
+    Profile Photo
+</label>
+
+<div class="photo-control">
+
+<input
+    id="photoInput"
+    type="file"
+    accept="image/*"
+>
+
+<div
+    class="photo-thumb"
+    id="photoThumb"
+>
+
+<img
+    id="photoThumbImg"
+    alt="Photo preview"
+>
+
+</div>
+
+</div>
+
+<div class="help">
+    Use a clear professional photo. The original aspect ratio will be preserved.
 </div>
 
 </div>
 
-<!-- SUMMARY -->
+</div>
+
+</div>
+
+
+<!-- =========================
+     SUMMARY
+========================= -->
+
 <div class="section">
 
-<div class="section-title">2. Professional Summary</div>
+<h2>
+    2. Professional Summary
+</h2>
+
+<textarea
+    id="summary"
+    placeholder="Write a short professional summary about your profile, education, strengths, and career direction."
+></textarea>
+
+</div>
+
+
+<!-- =========================
+     EDUCATION
+========================= -->
+
+<div class="section">
+
+<h2>
+    3. Education
+</h2>
+
+<div id="educationList"></div>
+
+<button
+    class="btn add"
+    type="button"
+    onclick="addEducation()"
+>
+    + Add Education
+</button>
+
+</div>
+
+
+<!-- =========================
+     SKILLS
+========================= -->
+
+<div class="section">
+
+<h2>
+    4. Skills
+</h2>
+
+<div class="grid">
 
 <div class="field">
-<textarea id="summary"
-placeholder="Write a short professional summary about yourself..."></textarea>
-</div>
+
+<label>
+    Select Skill
+</label>
+
+<select id="skillSelect"></select>
 
 </div>
 
-<!-- EDUCATION -->
-<div class="section">
-
-<div class="section-title">3. Education</div>
-
-<div id="educationContainer"></div>
-
-<button class="add-btn" onclick="addEducation()">+ Add Education</button>
-
-</div>
-
-<!-- SKILLS -->
-<div class="section">
-
-<div class="section-title">4. Skills</div>
-
-<div class="chips" id="skillChips">
-
-<button class="chip" data-skill="HTML">HTML</button>
-<button class="chip" data-skill="CSS">CSS</button>
-<button class="chip" data-skill="JavaScript">JavaScript</button>
-<button class="chip" data-skill="Python">Python</button>
-<button class="chip" data-skill="C">C</button>
-<button class="chip" data-skill="C++">C++</button>
-<button class="chip" data-skill="Java">Java</button>
-<button class="chip" data-skill="SQL">SQL</button>
-<button class="chip" data-skill="Git">Git</button>
-<button class="chip" data-skill="GitHub">GitHub</button>
-<button class="chip" data-skill="MS Office">MS Office</button>
-<button class="chip" data-skill="Computer Fundamentals">Computer Fundamentals</button>
-<button class="chip" data-skill="Logical Thinking">Logical Thinking</button>
-<button class="chip" data-skill="Problem Solving">Problem Solving</button>
-<button class="chip" data-skill="Leadership">Leadership</button>
-<button class="chip" data-skill="Teamwork">Teamwork</button>
-
-</div>
-
-<div class="grid-2" style="margin-top:9px;">
-
-<div class="field" style="margin:0;">
-<input id="customSkill" placeholder="Add another skill">
-</div>
-
-<button class="add-btn" onclick="addCustomSkill()">Add Skill</button>
-
-</div>
-
-</div>
-
-<!-- PROJECTS -->
-<div class="section">
-
-<div class="section-title">5. Projects</div>
-
-<div id="projectContainer"></div>
-
-<button class="add-btn" onclick="addProject()">+ Add Project</button>
-
-</div>
-
-<!-- EXPERIENCE -->
-<div class="section">
-
-<div class="section-title">6. Experience & Activities</div>
-
-<div id="experienceContainer"></div>
-
-<button class="add-btn" onclick="addExperience()">+ Add Experience / Activity</button>
-
-</div>
-
-<!-- CERTIFICATIONS -->
-<div class="section">
-
-<div class="section-title">7. Certifications</div>
-
-<div id="certificationContainer"></div>
-
-<button class="add-btn" onclick="addCertification()">+ Add Certification</button>
-
-</div>
-
-<!-- LANGUAGES -->
-<div class="section">
-
-<div class="section-title">8. Languages</div>
-
-<div class="chips" id="languageChips">
-
-<button class="chip" data-language="English">English</button>
-<button class="chip" data-language="Hindi">Hindi</button>
-<button class="chip" data-language="Urdu">Urdu</button>
-<button class="chip" data-language="Bengali">Bengali</button>
-<button class="chip" data-language="Tamil">Tamil</button>
-<button class="chip" data-language="Telugu">Telugu</button>
-<button class="chip" data-language="Marathi">Marathi</button>
-<button class="chip" data-language="Punjabi">Punjabi</button>
-
-</div>
-
-<div class="grid-2" style="margin-top:9px;">
-
-<div class="field" style="margin:0;">
-<input id="customLanguage" placeholder="Add another language">
-</div>
-
-<button class="add-btn" onclick="addCustomLanguage()">Add Language</button>
-
-</div>
-
-</div>
-
-<!-- LINKS -->
-<div class="section">
-
-<div class="section-title">9. Professional Links</div>
 
 <div class="field">
-<label>LinkedIn</label>
-<input id="linkedin" type="url" placeholder="https://linkedin.com/in/abc">
-</div>
 
-<div class="field">
-<label>GitHub</label>
-<input id="github" type="url" placeholder="https://github.com/abc">
-</div>
+<label>
+    Custom Skill
+</label>
 
-<div class="field">
-<label>Portfolio</label>
-<input id="portfolio" type="url" placeholder="https://example.com">
-</div>
+<input
+    id="customSkill"
+    placeholder="Example: Video Editing"
+>
 
-<div class="field">
-<label>Other Professional Link</label>
-<input id="otherLink" type="url" placeholder="https://example.com">
 </div>
 
 </div>
+
 
 <div class="actions">
 
-<div class="pdf-wrap">
-
-<button class="pdf-main" onclick="togglePdfMenu()">
-Save as PDF
-</button>
-
-<div id="pdfMenu" class="pdf-menu">
-
-<button onclick="downloadPDF()">
-Download PDF
-</button>
-
-<button onclick="printResume()">
-Print
+<button
+    class="btn add"
+    type="button"
+    onclick="addSkill()"
+>
+    + Add Skill
 </button>
 
 </div>
 
+<div
+    class="chips"
+    id="skillInputChips"
+></div>
+
 </div>
 
-<button class="secondary-btn" onclick="resetResume()">
-Reset
+
+<!-- =========================
+     PROJECTS
+========================= -->
+
+<div class="section">
+
+<h2>
+    5. Projects
+</h2>
+
+<div id="projectList"></div>
+
+<button
+    class="btn add"
+    type="button"
+    onclick="addProject()"
+>
+    + Add Project
 </button>
 
 </div>
 
+
+<!-- =========================
+     EXPERIENCE
+========================= -->
+
+<div class="section">
+
+<h2>
+    6. Experience & Activities
+</h2>
+
+<div id="experienceList"></div>
+
+<button
+    class="btn add"
+    type="button"
+    onclick="addExperience()"
+>
+    + Add Experience / Activity
+</button>
+
 </div>
 
-<!-- ================= PREVIEW ================= -->
 
-<div class="panel preview-area">
+<!-- =========================
+     CERTIFICATIONS
+========================= -->
 
-<div class="preview-label">Live Preview</div>
+<div class="section">
 
-<div class="preview-note">
-Your resume updates automatically.
+<h2>
+    7. Certifications
+</h2>
+
+<div id="certificationList"></div>
+
+<button
+    class="btn add"
+    type="button"
+    onclick="addCertification()"
+>
+    + Add Certification
+</button>
+
 </div>
+
+
+<!-- =========================
+     LANGUAGES
+========================= -->
+
+<div class="section">
+
+<h2>
+    8. Languages
+</h2>
+
+<div class="grid">
+
+<div class="field">
+
+<label>
+    Select Language
+</label>
+
+<select id="languageSelect"></select>
+
+</div>
+
+
+<div class="field">
+
+<label>
+    Custom Language
+</label>
+
+<input
+    id="customLanguage"
+    placeholder="Example: French"
+>
+
+</div>
+
+</div>
+
+
+<div class="actions">
+
+<button
+    class="btn add"
+    type="button"
+    onclick="addLanguage()"
+>
+    + Add Language
+</button>
+
+</div>
+
+<div
+    class="chips"
+    id="languageInputChips"
+></div>
+
+</div>
+
+
+<!-- =========================
+     LINKS
+========================= -->
+
+<div class="section">
+
+<h2>
+    9. Professional Links
+</h2>
+
+<div id="linkList"></div>
+
+<button
+    class="btn add"
+    type="button"
+    onclick="addLink()"
+>
+    + Add Professional Link
+</button>
+
+</div>
+
+
+</form>
+
+</section>
+
+
+<!-- =========================
+     LIVE PREVIEW
+========================= -->
+
+<section class="preview-card">
+
+<h2>
+    Live Preview
+</h2>
+
+
+<div class="pdf-actions">
+
+<button
+    class="btn add"
+    type="button"
+    onclick="downloadPDF()"
+>
+    Download PDF
+</button>
+
+
+<button
+    class="btn secondary"
+    type="button"
+    onclick="printResume()"
+>
+    Print
+</button>
+
+</div>
+
 
 <div class="preview-scroll">
 
-<div id="resumePreview" class="resume-page">
+<div
+    id="resumePreview"
+    class="resume-page"
+>
+
 
 <div class="resume-header">
 
-<div class="resume-header-info">
+<div>
 
-<h1 id="previewName" class="resume-name">
-Your Name
+<h1
+    class="resume-name"
+    id="pName"
+>
+    Your Name
 </h1>
 
-<div id="previewTitle" class="resume-title">
-Professional Title
+
+<div
+    class="resume-title"
+    id="pHeadline"
+>
+    Professional Title
 </div>
 
-<div id="previewContact" class="contact-line">
-Email • Phone • Location
-</div>
 
-</div>
-
-<div class="resume-photo-wrap">
-<img id="previewPhoto" class="resume-photo" alt="Profile Photo">
-</div>
-
-</div>
-
-<div id="previewSummarySection" class="resume-section">
-
-<div class="resume-section-title">
-Professional Summary
-</div>
-
-<div id="previewSummary" class="resume-text">
-Your professional summary will appear here.
+<div
+    class="contact"
+    id="pContact"
+>
+    email@example.com · +91 0000000000 · City, State
 </div>
 
 </div>
 
-<div class="resume-section">
 
-<div class="resume-section-title">
-Education
-</div>
+<div
+    class="photo-box"
+    id="pPhotoBox"
+    style="display:none"
+>
 
-<div id="previewEducation">
-<div class="empty-message">
-Education details will appear here.
-</div>
-</div>
-
-</div>
-
-<div id="previewSkillsSection" class="resume-section hidden">
-
-<div class="resume-section-title">
-Skills
-</div>
-
-<div id="previewSkills" class="resume-skills"></div>
-
-</div>
-
-<div id="previewProjectsSection" class="resume-section hidden">
-
-<div class="resume-section-title">
-Projects
-</div>
-
-<div id="previewProjects"></div>
-
-</div>
-
-<div id="previewExperienceSection" class="resume-section hidden">
-
-<div class="resume-section-title">
-Experience & Activities
-</div>
-
-<div id="previewExperience"></div>
-
-</div>
-
-<div id="previewCertificationSection" class="resume-section hidden">
-
-<div class="resume-section-title">
-Certifications
-</div>
-
-<div id="previewCertifications"></div>
-
-</div>
-
-<div id="previewLanguagesSection" class="resume-section hidden">
-
-<div class="resume-section-title">
-Languages
-</div>
-
-<div id="previewLanguages" class="resume-skills"></div>
-
-</div>
-
-<div id="previewLinksSection" class="resume-section hidden">
-
-<div class="resume-section-title">
-Professional Links
-</div>
-
-<div id="previewLinks" class="resume-links"></div>
+<img
+    id="pPhoto"
+    alt="Profile photo"
+>
 
 </div>
 
 </div>
 
+
+<div
+    id="pSummarySection"
+    class="resume-section"
+    style="display:none"
+>
+
+<h3>
+    Professional Summary
+</h3>
+
+<div
+    class="resume-text"
+    id="pSummary"
+></div>
+
 </div>
+
+
+<div
+    id="pEducationSection"
+    class="resume-section"
+>
+
+<h3>
+    Education
+</h3>
+
+<div id="pEducation"></div>
+
+</div>
+
+
+<div
+    id="pSkillsSection"
+    class="resume-section"
+    style="display:none"
+>
+
+<h3>
+    Skills
+</h3>
+
+<div
+    class="chips"
+    id="pSkills"
+></div>
+
+</div>
+
+
+<div
+    id="pProjectsSection"
+    class="resume-section"
+    style="display:none"
+>
+
+<h3>
+    Projects
+</h3>
+
+<div id="pProjects"></div>
+
+</div>
+
+
+<div
+    id="pExperienceSection"
+    class="resume-section"
+    style="display:none"
+>
+
+<h3>
+    Experience & Activities
+</h3>
+
+<div id="pExperience"></div>
+
+</div>
+
+
+<div
+    id="pCertSection"
+    class="resume-section"
+    style="display:none"
+>
+
+<h3>
+    Certifications
+</h3>
+
+<div id="pCert"></div>
+
+</div>
+
+
+<div
+    id="pLanguagesSection"
+    class="resume-section"
+    style="display:none"
+>
+
+<h3>
+    Languages
+</h3>
+
+<div
+    class="chips"
+    id="pLanguages"
+></div>
+
+</div>
+
+
+<div
+    id="pLinksSection"
+    class="resume-section"
+    style="display:none"
+>
+
+<h3>
+    Professional Links
+</h3>
+
+<div
+    class="link-list"
+    id="pLinks"
+></div>
+
+</div>
+
 
 </div>
 
 </div>
+
+</section>
 
 </main>
 
+
+<!-- Suggestions for type + select -->
+
+<datalist id="collegeList">
+
+<option value="ABC College"></option>
+<option value="XYZ College"></option>
+<option value="ABC Institute"></option>
+<option value="XYZ Institute of Technology"></option>
+
+</datalist>
+
+
+<datalist id="universityList">
+
+<option value="Chhatrapati Shahu Ji Maharaj University"></option>
+<option value="University of Delhi"></option>
+<option value="University of Mumbai"></option>
+<option value="University of Calcutta"></option>
+<option value="Banaras Hindu University"></option>
+<option value="Jawaharlal Nehru University"></option>
+<option value="University of Allahabad"></option>
+<option value="Dr. A.P.J. Abdul Kalam Technical University"></option>
+
+</datalist>
+
+
 <script>
 
-/* =========================================================
-   INDIA STATES + DISTRICTS
-========================================================= */
+/* =========================================
+   BASIC HELPERS
+========================================= */
 
-const stateDistricts = {
+const $ = id => document.getElementById(id);
 
-"Uttar Pradesh":[
-"Agra","Aligarh","Ambedkar Nagar","Amroha","Auraiya","Ayodhya",
-"Azamgarh","Baghpat","Bahraich","Ballia","Balrampur","Banda",
-"Barabanki","Bareilly","Basti","Bhadohi","Bijnor","Budaun",
-"Bulandshahr","Chandauli","Chitrakoot","Deoria","Etah","Etawah",
-"Farrukhabad","Fatehpur","Firozabad","Gautam Buddha Nagar",
-"Ghaziabad","Ghazipur","Gonda","Gorakhpur","Hamirpur","Hapur",
-"Hardoi","Hathras","Jalaun","Jaunpur","Jhansi","Kannauj",
-"Kanpur Dehat","Kanpur Nagar","Kasganj","Kaushambi","Kushinagar",
-"Lakhimpur Kheri","Lalitpur","Lucknow","Maharajganj","Mahoba",
-"Mainpuri","Mathura","Mau","Meerut","Mirzapur","Moradabad",
-"Muzaffarnagar","Pilibhit","Pratapgarh","Prayagraj","Raebareli",
-"Rampur","Saharanpur","Sambhal","Sant Kabir Nagar","Shahjahanpur",
-"Shamli","Shravasti","Siddharthnagar","Sitapur","Sonbhadra",
-"Sultanpur","Unnao","Varanasi"
+const esc = value =>
+String(value ?? '')
+.replace(/[&<>"']/g, char => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#039;'
+}[char]));
+
+
+/* =========================================
+   YEARS
+   1950 - 2050
+========================================= */
+
+const YEARS =
+Array.from(
+    {length:101},
+    (_,index)=>1950+index
+);
+
+
+/* =========================================
+   BOARDS
+========================================= */
+
+const BOARDS = [
+
+'CBSE',
+'ICSE',
+'CISCE',
+'NIOS',
+
+'UP Board',
+'Bihar Board',
+'MP Board',
+'RBSE',
+'HBSE',
+'PSEB',
+'GSEB',
+'MSBSHSE',
+'WBBSE',
+'WBCHSE',
+'BSE Odisha',
+'Karnataka SSLC',
+'Karnataka PUC',
+'Kerala Board',
+'Tamil Nadu State Board',
+'Telangana Board',
+'Andhra Pradesh Board',
+
+'Other'
+
+];
+
+
+/* =========================================
+   SKILLS
+========================================= */
+
+const SKILLS = [
+
+'C Programming',
+'Python',
+'Java',
+'JavaScript',
+'HTML',
+'CSS',
+'SQL',
+'Git & GitHub',
+'MS Office',
+'Computer Fundamentals',
+'Problem Solving',
+'Logical & Analytical Thinking',
+'Data Analysis',
+'Communication',
+'UI/UX'
+
+];
+
+
+/* =========================================
+   LANGUAGES
+========================================= */
+
+const LANGUAGES = [
+
+'English',
+'Hindi',
+'Urdu',
+'Sanskrit',
+'Bengali',
+'Marathi',
+'Gujarati',
+'Punjabi',
+'Tamil',
+'Telugu',
+'Kannada',
+'Malayalam',
+'French',
+'German',
+'Spanish'
+
+];
+
+
+/* =========================================
+   COUNTRY CALLING CODES
+========================================= */
+
+const COUNTRY_CODES = [
+
+['India','+91'],
+['Afghanistan','+93'],
+['Albania','+355'],
+['Algeria','+213'],
+['Andorra','+376'],
+['Angola','+244'],
+['Argentina','+54'],
+['Armenia','+374'],
+['Australia','+61'],
+['Austria','+43'],
+['Azerbaijan','+994'],
+['Bahamas','+1-242'],
+['Bahrain','+973'],
+['Bangladesh','+880'],
+['Barbados','+1-246'],
+['Belarus','+375'],
+['Belgium','+32'],
+['Belize','+501'],
+['Benin','+229'],
+['Bhutan','+975'],
+['Bolivia','+591'],
+['Botswana','+267'],
+['Brazil','+55'],
+['Brunei','+673'],
+['Bulgaria','+359'],
+['Burkina Faso','+226'],
+['Burundi','+257'],
+['Cambodia','+855'],
+['Cameroon','+237'],
+['Canada','+1'],
+['Chile','+56'],
+['China','+86'],
+['Colombia','+57'],
+['Costa Rica','+506'],
+['Croatia','+385'],
+['Cuba','+53'],
+['Cyprus','+357'],
+['Czech Republic','+420'],
+['Denmark','+45'],
+['Dominican Republic','+1-809'],
+['Ecuador','+593'],
+['Egypt','+20'],
+['Estonia','+372'],
+['Ethiopia','+251'],
+['Fiji','+679'],
+['Finland','+358'],
+['France','+33'],
+['Georgia','+995'],
+['Germany','+49'],
+['Ghana','+233'],
+['Greece','+30'],
+['Hungary','+36'],
+['Iceland','+354'],
+['Indonesia','+62'],
+['Iran','+98'],
+['Iraq','+964'],
+['Ireland','+353'],
+['Israel','+972'],
+['Italy','+39'],
+['Jamaica','+1-876'],
+['Japan','+81'],
+['Jordan','+962'],
+['Kazakhstan','+7'],
+['Kenya','+254'],
+['Kuwait','+965'],
+['Kyrgyzstan','+996'],
+['Laos','+856'],
+['Latvia','+371'],
+['Lebanon','+961'],
+['Libya','+218'],
+['Lithuania','+370'],
+['Luxembourg','+352'],
+['Malaysia','+60'],
+['Maldives','+960'],
+['Malta','+356'],
+['Mauritius','+230'],
+['Mexico','+52'],
+['Mongolia','+976'],
+['Morocco','+212'],
+['Myanmar','+95'],
+['Namibia','+264'],
+['Nepal','+977'],
+['Netherlands','+31'],
+['New Zealand','+64'],
+['Nigeria','+234'],
+['Norway','+47'],
+['Oman','+968'],
+['Pakistan','+92'],
+['Panama','+507'],
+['Paraguay','+595'],
+['Peru','+51'],
+['Philippines','+63'],
+['Poland','+48'],
+['Portugal','+351'],
+['Qatar','+974'],
+['Romania','+40'],
+['Russia','+7'],
+['Saudi Arabia','+966'],
+['Singapore','+65'],
+['South Africa','+27'],
+['South Korea','+82'],
+['Spain','+34'],
+['Sri Lanka','+94'],
+['Sudan','+249'],
+['Sweden','+46'],
+['Switzerland','+41'],
+['Taiwan','+886'],
+['Thailand','+66'],
+['Tunisia','+216'],
+['Turkey','+90'],
+['Ukraine','+380'],
+['United Arab Emirates','+971'],
+['United Kingdom','+44'],
+['United States','+1'],
+['Uruguay','+598'],
+['Uzbekistan','+998'],
+['Venezuela','+58'],
+['Vietnam','+84'],
+['Yemen','+967'],
+['Zambia','+260'],
+['Zimbabwe','+263']
+
+];
+
+
+/* =========================================
+   INDIA STATE / DISTRICT DATA
+========================================= */
+
+const INDIA_LOCATIONS = {
+
+'Andaman and Nicobar Islands':
+['Nicobar','North and Middle Andaman','South Andaman'],
+
+'Andhra Pradesh':
+[
+'Alluri Sitharama Raju',
+'Anakapalli',
+'Anantapur',
+'Annamayya',
+'Bapatla',
+'Chittoor',
+'Eluru',
+'Guntur',
+'Kakinada',
+'Krishna',
+'Kurnool',
+'Nandyal',
+'NTR',
+'Palnadu',
+'Prakasam',
+'Srikakulam',
+'Tirupati',
+'Visakhapatnam',
+'Vizianagaram',
+'West Godavari',
+'YSR Kadapa'
 ],
 
-"Maharashtra":[
-"Ahmednagar","Akola","Amravati","Aurangabad","Beed","Bhandara",
-"Buldhana","Chandrapur","Dhule","Gadchiroli","Gondia","Hingoli",
-"Jalgaon","Jalna","Kolhapur","Latur","Mumbai City",
-"Mumbai Suburban","Nagpur","Nanded","Nandurbar","Nashik",
-"Osmanabad","Palghar","Parbhani","Pune","Raigad","Ratnagiri",
-"Sangli","Satara","Sindhudurg","Solapur","Thane","Wardha",
-"Washim","Yavatmal"
+'Arunachal Pradesh':
+[
+'Anjaw',
+'Changlang',
+'Dibang Valley',
+'East Kameng',
+'East Siang',
+'Kamle',
+'Lohit',
+'Longding',
+'Lower Dibang Valley',
+'Lower Siang',
+'Lower Subansiri',
+'Namsai',
+'Papum Pare',
+'Tawang',
+'Tirap',
+'Upper Siang',
+'Upper Subansiri',
+'West Kameng',
+'West Siang'
 ],
 
-"Delhi":[
-"Central Delhi","East Delhi","New Delhi","North Delhi",
-"North East Delhi","North West Delhi","Shahdara","South Delhi",
-"South East Delhi","South West Delhi","West Delhi"
+'Assam':
+[
+'Baksa',
+'Barpeta',
+'Biswanath',
+'Bongaigaon',
+'Cachar',
+'Charaideo',
+'Chirang',
+'Darrang',
+'Dhemaji',
+'Dhubri',
+'Dibrugarh',
+'Dima Hasao',
+'Goalpara',
+'Golaghat',
+'Hailakandi',
+'Hojai',
+'Jorhat',
+'Kamrup',
+'Kamrup Metropolitan',
+'Karbi Anglong',
+'Karimganj',
+'Kokrajhar',
+'Lakhimpur',
+'Majuli',
+'Morigaon',
+'Nagaon',
+'Nalbari',
+'Sivasagar',
+'Sonitpur',
+'Tinsukia',
+'Udalguri'
 ],
 
-"Rajasthan":[
-"Ajmer","Alwar","Banswara","Baran","Barmer","Bharatpur","Bhilwara",
-"Bikaner","Bundi","Chittorgarh","Churu","Dausa","Dholpur",
-"Dungarpur","Hanumangarh","Jaipur","Jaisalmer","Jalore",
-"Jhalawar","Jhunjhunu","Jodhpur","Karauli","Kota","Nagaur",
-"Pali","Pratapgarh","Rajsamand","Sawai Madhopur","Sikar",
-"Sirohi","Sri Ganganagar","Tonk","Udaipur"
+'Bihar':
+[
+'Araria',
+'Arwal',
+'Aurangabad',
+'Banka',
+'Begusarai',
+'Bhagalpur',
+'Bhojpur',
+'Buxar',
+'Darbhanga',
+'East Champaran',
+'Gaya',
+'Gopalganj',
+'Jamui',
+'Jehanabad',
+'Kaimur',
+'Katihar',
+'Khagaria',
+'Kishanganj',
+'Lakhisarai',
+'Madhepura',
+'Madhubani',
+'Munger',
+'Muzaffarpur',
+'Nalanda',
+'Nawada',
+'Patna',
+'Purnia',
+'Rohtas',
+'Saharsa',
+'Samastipur',
+'Saran',
+'Sheikhpura',
+'Sheohar',
+'Sitamarhi',
+'Siwan',
+'Supaul',
+'Vaishali',
+'West Champaran'
 ],
 
-"Madhya Pradesh":[
-"Agar Malwa","Alirajpur","Anuppur","Ashoknagar","Balaghat",
-"Barwani","Betul","Bhind","Bhopal","Burhanpur","Chhatarpur",
-"Chhindwara","Damoh","Datia","Dewas","Dhar","Dindori",
-"Guna","Gwalior","Harda","Hoshangabad","Indore","Jabalpur",
-"Jhabua","Katni","Khandwa","Khargone","Mandla","Mandsaur",
-"Morena","Narsinghpur","Neemuch","Panna","Raisen","Rajgarh",
-"Ratlam","Rewa","Sagar","Satna","Sehore","Seoni","Shahdol",
-"Shajapur","Sheopur","Shivpuri","Sidhi","Singrauli","Tikamgarh",
-"Ujjain","Umaria","Vidisha"
+'Chhattisgarh':
+[
+'Balod',
+'Baloda Bazar',
+'Balrampur-Ramanujganj',
+'Bastar',
+'Bemetara',
+'Bijapur',
+'Bilaspur',
+'Dantewada',
+'Dhamtari',
+'Durg',
+'Gariaband',
+'Janjgir-Champa',
+'Jashpur',
+'Kabirdham',
+'Kanker',
+'Kondagaon',
+'Korba',
+'Korea',
+'Mahasamund',
+'Mungeli',
+'Narayanpur',
+'Raigarh',
+'Raipur',
+'Rajnandgaon',
+'Sukma',
+'Surajpur',
+'Surguja'
 ],
 
-"Bihar":[
-"Araria","Arwal","Aurangabad","Banka","Begusarai","Bhagalpur",
-"Bhojpur","Buxar","Darbhanga","East Champaran","Gaya",
-"Gopalganj","Jamui","Jehanabad","Kaimur","Katihar","Khagaria",
-"Kishanganj","Lakhisarai","Madhepura","Madhubani","Munger",
-"Muzaffarpur","Nalanda","Nawada","Patna","Purnia","Rohtas",
-"Saharsa","Samastipur","Saran","Sheikhpura","Sheohar","Sitamarhi",
-"Siwan","Supaul","Vaishali","West Champaran"
+'Goa':
+[
+'North Goa',
+'South Goa'
 ],
 
-"West Bengal":[
-"Alipurduar","Bankura","Birbhum","Cooch Behar","Dakshin Dinajpur",
-"Darjeeling","Hooghly","Howrah","Jalpaiguri","Jhargram",
-"Kalimpong","Kolkata","Malda","Murshidabad","Nadia",
-"North 24 Parganas","Paschim Bardhaman","Paschim Medinipur",
-"Purba Bardhaman","Purba Medinipur","Purulia","South 24 Parganas",
-"Uttar Dinajpur"
+'Gujarat':
+[
+'Ahmedabad',
+'Amreli',
+'Anand',
+'Aravalli',
+'Banaskantha',
+'Bharuch',
+'Bhavnagar',
+'Botad',
+'Chhota Udaipur',
+'Dahod',
+'Dang',
+'Devbhoomi Dwarka',
+'Gandhinagar',
+'Gir Somnath',
+'Jamnagar',
+'Junagadh',
+'Kheda',
+'Kutch',
+'Mahisagar',
+'Mehsana',
+'Morbi',
+'Narmada',
+'Navsari',
+'Panchmahal',
+'Patan',
+'Porbandar',
+'Rajkot',
+'Sabarkantha',
+'Surat',
+'Surendranagar',
+'Tapi',
+'Vadodara',
+'Valsad'
 ],
 
-"Gujarat":[
-"Ahmedabad","Amreli","Anand","Aravalli","Banaskantha","Bharuch",
-"Bhavnagar","Botad","Chhota Udaipur","Dahod","Dang","Devbhoomi Dwarka",
-"Gandhinagar","Gir Somnath","Jamnagar","Junagadh","Kheda","Kutch",
-"Mahisagar","Mehsana","Morbi","Narmada","Navsari","Panchmahal",
-"Patan","Porbandar","Rajkot","Sabarkantha","Surat","Surendranagar",
-"Tapi","Vadodara","Valsad"
+'Haryana':
+[
+'Ambala',
+'Bhiwani',
+'Charkhi Dadri',
+'Faridabad',
+'Fatehabad',
+'Gurugram',
+'Hisar',
+'Jhajjar',
+'Jind',
+'Kaithal',
+'Karnal',
+'Kurukshetra',
+'Mahendragarh',
+'Nuh',
+'Palwal',
+'Panchkula',
+'Panipat',
+'Rewari',
+'Rohtak',
+'Sirsa',
+'Sonipat',
+'Yamunanagar'
 ],
 
-"Punjab":[
-"Amritsar","Barnala","Bathinda","Faridkot","Fatehgarh Sahib",
-"Fazilka","Ferozepur","Gurdaspur","Hoshiarpur","Jalandhar",
-"Kapurthala","Ludhiana","Malerkotla","Mansa","Moga","Pathankot",
-"Patiala","Rupnagar","Sangrur","SAS Nagar","Shaheed Bhagat Singh Nagar",
-"Sri Muktsar Sahib","Tarn Taran"
+'Himachal Pradesh':
+[
+'Bilaspur',
+'Chamba',
+'Hamirpur',
+'Kangra',
+'Kinnaur',
+'Kullu',
+'Lahaul and Spiti',
+'Mandi',
+'Shimla',
+'Sirmaur',
+'Solan',
+'Una'
 ],
 
-"Haryana":[
-"Ambala","Bhiwani","Charkhi Dadri","Faridabad","Fatehabad",
-"Gurugram","Hisar","Jhajjar","Jind","Kaithal","Karnal","Kurukshetra",
-"Mahendragarh","Nuh","Palwal","Panchkula","Panipat","Rewari",
-"Rohtak","Sirsa","Sonipat","Yamunanagar"
+'Jharkhand':
+[
+'Bokaro',
+'Chatra',
+'Deoghar',
+'Dhanbad',
+'Dumka',
+'East Singhbhum',
+'Garhwa',
+'Giridih',
+'Godda',
+'Gumla',
+'Hazaribagh',
+'Jamtara',
+'Khunti',
+'Koderma',
+'Latehar',
+'Lohardaga',
+'Pakur',
+'Palamu',
+'Ramgarh',
+'Ranchi',
+'Sahebganj',
+'Seraikela Kharsawan',
+'Simdega',
+'West Singhbhum'
 ],
 
-"Uttarakhand":[
-"Almora","Bageshwar","Chamoli","Champawat","Dehradun","Haridwar",
-"Nainital","Pauri Garhwal","Pithoragarh","Rudraprayag",
-"Tehri Garhwal","Udham Singh Nagar","Uttarkashi"
+'Karnataka':
+[
+'Bagalkot',
+'Ballari',
+'Belagavi',
+'Bengaluru Rural',
+'Bengaluru Urban',
+'Bidar',
+'Chamarajanagar',
+'Chikkaballapur',
+'Chikkamagaluru',
+'Chitradurga',
+'Dakshina Kannada',
+'Davanagere',
+'Dharwad',
+'Gadag',
+'Hassan',
+'Haveri',
+'Kalaburagi',
+'Kodagu',
+'Kolar',
+'Koppal',
+'Mandya',
+'Mysuru',
+'Raichur',
+'Ramanagara',
+'Shivamogga',
+'Tumakuru',
+'Udupi',
+'Uttara Kannada',
+'Vijayapura',
+'Yadgir'
 ],
 
-"Himachal Pradesh":[
-"Bilaspur","Chamba","Hamirpur","Kangra","Kinnaur","Kullu",
-"Lahaul and Spiti","Mandi","Shimla","Sirmaur","Solan","Una"
+'Kerala':
+[
+'Alappuzha',
+'Ernakulam',
+'Idukki',
+'Kannur',
+'Kasaragod',
+'Kollam',
+'Kottayam',
+'Kozhikode',
+'Malappuram',
+'Palakkad',
+'Pathanamthitta',
+'Thiruvananthapuram',
+'Thrissur',
+'Wayanad'
 ],
 
-"Jharkhand":[
-"Bokaro","Chatra","Deoghar","Dhanbad","Dumka","East Singhbhum",
-"Garhwa","Giridih","Godda","Gumla","Hazaribagh","Jamtara",
-"Khunti","Koderma","Latehar","Lohardaga","Pakur","Palamu",
-"Ramgarh","Ranchi","Sahebganj","Seraikela Kharsawan",
-"Simdega","West Singhbhum"
+'Madhya Pradesh':
+[
+'Agar Malwa',
+'Alirajpur',
+'Anuppur',
+'Ashoknagar',
+'Balaghat',
+'Barwani',
+'Betul',
+'Bhind',
+'Bhopal',
+'Burhanpur',
+'Chhatarpur',
+'Chhindwara',
+'Damoh',
+'Datia',
+'Dewas',
+'Dhar',
+'Dindori',
+'Guna',
+'Gwalior',
+'Harda',
+'Indore',
+'Jabalpur',
+'Jhabua',
+'Katni',
+'Khandwa',
+'Khargone',
+'Mandla',
+'Mandsaur',
+'Morena',
+'Narmadapuram',
+'Narsinghpur',
+'Neemuch',
+'Niwari',
+'Panna',
+'Raisen',
+'Rajgarh',
+'Ratlam',
+'Rewa',
+'Sagar',
+'Satna',
+'Sehore',
+'Seoni',
+'Shahdol',
+'Shajapur',
+'Sheopur',
+'Shivpuri',
+'Sidhi',
+'Singrauli',
+'Tikamgarh',
+'Ujjain',
+'Umaria',
+'Vidisha'
 ],
 
-"Chhattisgarh":[
-"Balod","Baloda Bazar","Balrampur","Bastar","Bemetara","Bijapur",
-"Bilaspur","Dantewada","Dhamtari","Durg","Gariaband","Gaurela Pendra Marwahi",
-"Janjgir Champa","Jashpur","Kabirdham","Kanker","Kondagaon",
-"Korba","Korea","Mahasamund","Mungeli","Narayanpur","Raigarh",
-"Raipur","Rajnandgaon","Sukma","Surajpur","Surguja"
+'Maharashtra':
+[
+'Ahmednagar',
+'Akola',
+'Amravati',
+'Aurangabad',
+'Beed',
+'Bhandara',
+'Buldhana',
+'Chandrapur',
+'Dhule',
+'Gadchiroli',
+'Gondia',
+'Hingoli',
+'Jalgaon',
+'Jalna',
+'Kolhapur',
+'Latur',
+'Mumbai City',
+'Mumbai Suburban',
+'Nagpur',
+'Nanded',
+'Nandurbar',
+'Nashik',
+'Osmanabad',
+'Palghar',
+'Parbhani',
+'Pune',
+'Raigad',
+'Ratnagiri',
+'Sangli',
+'Satara',
+'Sindhudurg',
+'Solapur',
+'Thane',
+'Wardha',
+'Washim',
+'Yavatmal'
 ],
 
-"Odisha":[
-"Angul","Balangir","Balasore","Bargarh","Bhadrak","Boudh",
-"Cuttack","Deogarh","Dhenkanal","Gajapati","Ganjam","Jagatsinghpur",
-"Jajpur","Jharsuguda","Kalahandi","Kandhamal","Kendrapara",
-"Kendujhar","Khordha","Koraput","Malkangiri","Mayurbhanj",
-"Nabarangpur","Nayagarh","Nuapada","Puri","Rayagada","Sambalpur",
-"Subarnapur","Sundargarh"
+'Odisha':
+[
+'Angul',
+'Balangir',
+'Balasore',
+'Bargarh',
+'Bhadrak',
+'Boudh',
+'Cuttack',
+'Deogarh',
+'Dhenkanal',
+'Gajapati',
+'Ganjam',
+'Jagatsinghpur',
+'Jajpur',
+'Jharsuguda',
+'Kalahandi',
+'Kandhamal',
+'Kendrapara',
+'Keonjhar',
+'Khordha',
+'Koraput',
+'Malkangiri',
+'Mayurbhanj',
+'Nabarangpur',
+'Nayagarh',
+'Nuapada',
+'Puri',
+'Rayagada',
+'Sambalpur',
+'Subarnapur',
+'Sundargarh'
 ],
 
-"Andhra Pradesh":[
-"Alluri Sitharama Raju","Anakapalli","Ananthapuramu","Annamayya",
-"Bapatla","Chittoor","East Godavari","Eluru","Guntur","Kakinada",
-"Konaseema","Krishna","Kurnool","Nandyal","Nellore","Palnadu",
-"Parvathipuram Manyam","Prakasam","Srikakulam","Sri Sathya Sai",
-"Tirupati","Visakhapatnam","Vizianagaram","West Godavari","YSR Kadapa"
+'Punjab':
+[
+'Amritsar',
+'Barnala',
+'Bathinda',
+'Faridkot',
+'Fatehgarh Sahib',
+'Fazilka',
+'Ferozepur',
+'Gurdaspur',
+'Hoshiarpur',
+'Jalandhar',
+'Kapurthala',
+'Ludhiana',
+'Malerkotla',
+'Mansa',
+'Moga',
+'Muktsar',
+'Pathankot',
+'Patiala',
+'Rupnagar',
+'Sangrur',
+'SAS Nagar',
+'Shaheed Bhagat Singh Nagar',
+'Tarn Taran'
 ],
 
-"Telangana":[
-"Adilabad","Bhadradri Kothagudem","Hanamkonda","Hyderabad",
-"Jagtial","Jangaon","Jayashankar Bhupalpally","Jogulamba Gadwal",
-"Kamareddy","Karimnagar","Khammam","Komaram Bheem",
-"Mahabubabad","Mahbubnagar","Mancherial","Medak","Medchal Malkajgiri",
-"Mulugu","Nagarkurnool","Nalgonda","Narayanpet","Nirmal","Nizamabad",
-"Peddapalli","Rajanna Sircilla","Rangareddy","Sangareddy",
-"Siddipet","Suryapet","Vikarabad","Wanaparthy","Warangal","Yadadri Bhuvanagiri"
+'Rajasthan':
+[
+'Ajmer',
+'Alwar',
+'Banswara',
+'Baran',
+'Barmer',
+'Beawar',
+'Bharatpur',
+'Bhilwara',
+'Bikaner',
+'Bundi',
+'Chittorgarh',
+'Churu',
+'Dausa',
+'Dholpur',
+'Dungarpur',
+'Ganganagar',
+'Hanumangarh',
+'Jaipur',
+'Jaisalmer',
+'Jalore',
+'Jhalawar',
+'Jhunjhunu',
+'Jodhpur',
+'Karauli',
+'Kota',
+'Nagaur',
+'Pali',
+'Pratapgarh',
+'Rajsamand',
+'Sawai Madhopur',
+'Sikar',
+'Sirohi',
+'Tonk',
+'Udaipur'
 ],
 
-"Karnataka":[
-"Bagalkot","Ballari","Belagavi","Bengaluru Rural","Bengaluru Urban",
-"Bidar","Chamarajanagar","Chikkaballapur","Chikkamagaluru",
-"Chitradurga","Dakshina Kannada","Davanagere","Dharwad","Gadag",
-"Hassan","Haveri","Kalaburagi","Kodagu","Kolar","Koppal",
-"Mandya","Mysuru","Raichur","Ramanagara","Shivamogga","Tumakuru",
-"Udupi","Uttara Kannada","Vijayapura","Yadgir"
+'Sikkim':
+[
+'Gangtok',
+'Gyalshing',
+'Mangan',
+'Namchi',
+'Pakyong',
+'Soreng'
 ],
 
-"Kerala":[
-"Alappuzha","Ernakulam","Idukki","Kannur","Kasaragod","Kollam",
-"Kottayam","Kozhikode","Malappuram","Palakkad","Pathanamthitta",
-"Thiruvananthapuram","Thrissur","Wayanad"
+'Tamil Nadu':
+[
+'Ariyalur',
+'Chengalpattu',
+'Chennai',
+'Coimbatore',
+'Cuddalore',
+'Dharmapuri',
+'Dindigul',
+'Erode',
+'Kallakurichi',
+'Kancheepuram',
+'Karur',
+'Krishnagiri',
+'Madurai',
+'Mayiladuthurai',
+'Nagapattinam',
+'Namakkal',
+'Nilgiris',
+'Perambalur',
+'Pudukkottai',
+'Ramanathapuram',
+'Ranipet',
+'Salem',
+'Sivaganga',
+'Tenkasi',
+'Thanjavur',
+'Theni',
+'Thoothukudi',
+'Tiruchirappalli',
+'Tirunelveli',
+'Tirupathur',
+'Tiruppur',
+'Tiruvallur',
+'Tiruvannamalai',
+'Tiruvarur',
+'Vellore',
+'Viluppuram',
+'Virudhunagar'
 ],
 
-"Tamil Nadu":[
-"Ariyalur","Chengalpattu","Chennai","Coimbatore","Cuddalore",
-"Dharmapuri","Dindigul","Erode","Kallakurichi","Kanchipuram",
-"Karur","Krishnagiri","Madurai","Mayiladuthurai","Nagapattinam",
-"Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram",
-"Ranipet","Salem","Sivaganga","Tenkasi","Thanjavur","Theni",
-"Thoothukudi","Tiruchirappalli","Tirunelveli","Tirupathur",
-"Tiruppur","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore",
-"Viluppuram","Virudhunagar"
+'Telangana':
+[
+'Adilabad',
+'Bhadradri Kothagudem',
+'Hyderabad',
+'Jagtial',
+'Jangaon',
+'Jayashankar Bhupalpally',
+'Jogulamba Gadwal',
+'Kamareddy',
+'Karimnagar',
+'Khammam',
+'Mahabubabad',
+'Mahbubnagar',
+'Mancherial',
+'Medak',
+'Medchal-Malkajgiri',
+'Mulugu',
+'Nagarkurnool',
+'Nalgonda',
+'Narayanpet',
+'Nirmal',
+'Nizamabad',
+'Peddapalli',
+'Rajanna Sircilla',
+'Rangareddy',
+'Sangareddy',
+'Siddipet',
+'Suryapet',
+'Vikarabad',
+'Wanaparthy',
+'Warangal',
+'Yadadri Bhuvanagiri'
 ],
 
-"Goa":[
-"North Goa","South Goa"
+'Tripura':
+[
+'Dhalai',
+'Gomati',
+'Khowai',
+'North Tripura',
+'Sepahijala',
+'South Tripura',
+'Unakoti',
+'West Tripura'
 ],
 
-"Assam":[
-"Baksa","Barpeta","Biswanath","Bongaigaon","Cachar","Charaideo",
-"Chirang","Darrang","Dhemaji","Dhubri","Dibrugarh","Dima Hasao",
-"Goalpara","Golaghat","Hailakandi","Hojai","Jorhat","Kamrup",
-"Kamrup Metropolitan","Karbi Anglong","Karimganj","Kokrajhar",
-"Lakhimpur","Majuli","Morigaon","Nagaon","Nalbari","Sivasagar",
-"Sonitpur","South Salmara Mankachar","Tinsukia","Udalguri","West Karbi Anglong"
+'Uttar Pradesh':
+[
+'Agra',
+'Aligarh',
+'Ambedkar Nagar',
+'Amethi',
+'Amroha',
+'Auraiya',
+'Ayodhya',
+'Azamgarh',
+'Baghpat',
+'Bahraich',
+'Ballia',
+'Balrampur',
+'Banda',
+'Barabanki',
+'Bareilly',
+'Basti',
+'Bhadohi',
+'Bijnor',
+'Budaun',
+'Bulandshahr',
+'Chandauli',
+'Chitrakoot',
+'Deoria',
+'Etah',
+'Etawah',
+'Farrukhabad',
+'Fatehpur',
+'Firozabad',
+'Gautam Buddha Nagar',
+'Ghaziabad',
+'Ghazipur',
+'Gonda',
+'Gorakhpur',
+'Hamirpur',
+'Hapur',
+'Hardoi',
+'Hathras',
+'Jalaun',
+'Jaunpur',
+'Jhansi',
+'Kannauj',
+'Kanpur Dehat',
+'Kanpur Nagar',
+'Kasganj',
+'Kaushambi',
+'Kushinagar',
+'Lakhimpur Kheri',
+'Lalitpur',
+'Lucknow',
+'Maharajganj',
+'Mahoba',
+'Mainpuri',
+'Mathura',
+'Mau',
+'Meerut',
+'Mirzapur',
+'Moradabad',
+'Muzaffarnagar',
+'Pilibhit',
+'Pratapgarh',
+'Prayagraj',
+'Raebareli',
+'Rampur',
+'Saharanpur',
+'Sambhal',
+'Sant Kabir Nagar',
+'Shahjahanpur',
+'Shamli',
+'Shravasti',
+'Siddharthnagar',
+'Sitapur',
+'Sonbhadra',
+'Sultanpur',
+'Unnao',
+'Varanasi'
 ],
 
-"Jammu and Kashmir":[
-"Anantnag","Bandipora","Baramulla","Budgam","Doda","Ganderbal",
-"Jammu","Kathua","Kishtwar","Kulgam","Kupwara","Poonch",
-"Pulwama","Rajouri","Ramban","Reasi","Samba","Shopian",
-"Srinagar","Udhampur"
+'Uttarakhand':
+[
+'Almora',
+'Bageshwar',
+'Chamoli',
+'Champawat',
+'Dehradun',
+'Haridwar',
+'Nainital',
+'Pauri Garhwal',
+'Pithoragarh',
+'Rudraprayag',
+'Tehri Garhwal',
+'Udham Singh Nagar',
+'Uttarkashi'
 ],
 
-"Ladakh":[
-"Leh","Kargil"
+'West Bengal':
+[
+'Alipurduar',
+'Bankura',
+'Paschim Bardhaman',
+'Purba Bardhaman',
+'Birbhum',
+'Cooch Behar',
+'Dakshin Dinajpur',
+'Darjeeling',
+'Hooghly',
+'Howrah',
+'Jalpaiguri',
+'Jhargram',
+'Kalimpong',
+'Kolkata',
+'Maldah',
+'Murshidabad',
+'Nadia',
+'North 24 Parganas',
+'Paschim Medinipur',
+'Purba Medinipur',
+'South 24 Parganas',
+'Uttar Dinajpur'
 ],
 
-"Chandigarh":[
-"Chandigarh"
+'Chandigarh':['Chandigarh'],
+
+'Delhi':
+[
+'Central Delhi',
+'East Delhi',
+'New Delhi',
+'North Delhi',
+'North East Delhi',
+'North West Delhi',
+'Shahdara',
+'South Delhi',
+'South East Delhi',
+'South West Delhi',
+'West Delhi'
 ],
 
-"Puducherry":[
-"Puducherry","Karaikal","Mahe","Yanam"
+'Dadra and Nagar Haveli and Daman and Diu':
+[
+'Dadra and Nagar Haveli',
+'Daman',
+'Diu'
 ],
 
-"Andaman and Nicobar Islands":[
-"Nicobar","North and Middle Andaman","South Andaman"
+'Jammu and Kashmir':
+[
+'Anantnag',
+'Bandipora',
+'Baramulla',
+'Budgam',
+'Doda',
+'Ganderbal',
+'Jammu',
+'Kathua',
+'Kishtwar',
+'Kulgam',
+'Kupwara',
+'Poonch',
+'Pulwama',
+'Rajouri',
+'Ramban',
+'Reasi',
+'Samba',
+'Shopian',
+'Srinagar',
+'Udhampur'
 ],
 
-"Dadra and Nagar Haveli and Daman and Diu":[
-"Dadra and Nagar Haveli","Daman","Diu"
+'Ladakh':
+[
+'Kargil',
+'Leh'
 ],
 
-"Lakshadweep":[
-"Agatti","Amini","Andrott","Bitra","Chetlat","Kadmat","Kalpeni",
-"Kavaratti","Kiltan","Minicoy"
+'Lakshadweep':
+[
+'Agatti',
+'Amini',
+'Andrott',
+'Bitra',
+'Chetlat',
+'Kadmat',
+'Kalpeni',
+'Kavaratti',
+'Kiltan',
+'Minicoy'
 ],
 
-"Manipur":[
-"Bishnupur","Chandel","Churachandpur","Imphal East","Imphal West",
-"Jiribam","Kakching","Kamjong","Kangpokpi","Noney","Pherzawl",
-"Senapati","Tamenglong","Tengnoupal","Thoubal","Ukhrul"
-],
-
-"Meghalaya":[
-"East Garo Hills","East Jaintia Hills","East Khasi Hills",
-"North Garo Hills","Ri Bhoi","South Garo Hills","South West Garo Hills",
-"South West Khasi Hills","West Garo Hills","West Jaintia Hills",
-"West Khasi Hills"
-],
-
-"Mizoram":[
-"Aizawl","Champhai","Hnahthial","Khawzawl","Kolasib","Lawngtlai",
-"Lunglei","Mamit","Saiha","Saitual","Serchhip"
-],
-
-"Nagaland":[
-"Chumoukedima","Dimapur","Kiphire","Kohima","Longleng","Mokokchung",
-"Mon","Niuland","Noklak","Peren","Phek","Shamator","Tuensang",
-"Wokha","Zunheboto"
-],
-
-"Arunachal Pradesh":[
-"Anjaw","Changlang","Dibang Valley","East Kameng","East Siang",
-"Itanagar Capital Complex","Kamle","Kra Daadi","Kurung Kumey",
-"Lepa Rada","Lohit","Longding","Lower Dibang Valley","Lower Siang",
-"Lower Subansiri","Namsai","Pakke Kessang","Papum Pare","Shi Yomi",
-"Siang","Tawang","Tirap","Upper Siang","Upper Subansiri","West Kameng",
-"West Siang"
-],
-
-"Sikkim":[
-"East Sikkim","North Sikkim","South Sikkim","West Sikkim"
-],
-
-"Tripura":[
-"Dhalai","Gomati","Khowai","North Tripura","Sepahijala",
-"South Tripura","Unakoti","West Tripura"
+'Puducherry':
+[
+'Karaikal',
+'Mahe',
+'Puducherry',
+'Yanam'
 ]
 
 };
 
 
-/* =========================================================
-   STATE DROPDOWN
-========================================================= */
+/* =========================================
+   SELECT HELPERS
+========================================= */
 
-const stateSelect = document.getElementById("state");
-const districtSelect = document.getElementById("district");
+function fillSelect(element,items,placeholder){
 
-Object.keys(stateDistricts)
-.sort()
-.forEach(state => {
+    element.innerHTML =
+        '<option value="">'+placeholder+'</option>' +
+        items.map(item =>
+            '<option value="'+esc(item)+'">'+esc(item)+'</option>'
+        ).join('');
 
-    const option = document.createElement("option");
+}
 
-    option.value = state;
-    option.textContent = state;
 
-    stateSelect.appendChild(option);
-});
+/* =========================================
+   INITIAL SELECTS
+========================================= */
 
-stateSelect.addEventListener("change", loadDistricts);
+fillSelect(
+    $('countryCode'),
+    COUNTRY_CODES.map(item => item[0]+' ('+item[1]+')'),
+    'Select Country Code'
+);
 
-function loadDistricts(){
+$('countryCode').value='India (+91)';
 
-    const selectedState = stateSelect.value;
 
-    districtSelect.innerHTML =
-        '<option value="">Select District</option>';
+fillSelect(
+    $('state'),
+    Object.keys(INDIA_LOCATIONS),
+    'Select State / UT'
+);
 
-    if(!selectedState){
-        districtSelect.disabled = true;
-        updatePreview();
-        return;
-    }
 
-    const districts = stateDistricts[selectedState] || [];
+fillSelect(
+    $('skillSelect'),
+    SKILLS,
+    'Select Skill'
+);
 
-    districts.forEach(district => {
 
-        const option = document.createElement("option");
+fillSelect(
+    $('languageSelect'),
+    LANGUAGES,
+    'Select Language'
+);
 
-        option.value = district;
-        option.textContent = district;
 
-        districtSelect.appendChild(option);
-    });
+/* =========================================
+   STATE → DISTRICT
+========================================= */
 
-    districtSelect.disabled = districts.length === 0;
+$('state').addEventListener('change',function(){
+
+    const state=this.value;
+
+    const districts=
+        INDIA_LOCATIONS[state] || [];
+
+    fillSelect(
+        $('district'),
+        districts,
+        'Select District'
+    );
+
+    $('district').disabled =
+        districts.length===0;
 
     updatePreview();
+
+});
+
+
+/* =========================================
+   YEAR OPTIONS
+========================================= */
+
+function yearOptions(value=''){
+
+    return '<option value="">Select Year</option>' +
+
+    YEARS.map(year =>
+        '<option value="'+year+'" '+
+        (String(year)===String(value)?'selected':'')+
+        '>'+year+'</option>'
+    ).join('');
+
 }
 
 
-/* =========================================================
-   YEARS
-========================================================= */
+/* =========================================
+   BOARD OPTIONS
+========================================= */
 
-function yearOptions(includeBlank = true){
+function boardOptions(value=''){
 
-    let html = includeBlank
-        ? '<option value="">Select Year</option>'
-        : '';
+    return '<option value="">Select Board</option>' +
 
-    for(let year = 1950; year <= 2050; year++){
+    BOARDS.map(board =>
+        '<option value="'+esc(board)+'" '+
+        (board===value?'selected':'')+
+        '>'+esc(board)+'</option>'
+    ).join('');
 
-        html += `<option value="${year}">${year}</option>`;
-    }
-
-    return html;
 }
 
 
-/* =========================================================
+/* =========================================
+   COUNTERS
+========================================= */
+
+let educationCount=0;
+let projectCount=0;
+let experienceCount=0;
+let certificationCount=0;
+let linkCount=0;
+
+let skills=[];
+let languages=[];
+let photoData='';
+
+
+/* =========================================
    EDUCATION
-========================================================= */
+========================================= */
 
-let educationCount = 0;
+function addEducation(data={}){
 
-function addEducation(){
+    const id=++educationCount;
 
-    educationCount++;
+    const box=document.createElement('div');
 
-    const id = educationCount;
+    box.className='row-card';
 
-    const container =
-        document.getElementById("educationContainer");
+    box.id='education-'+id;
 
-    const item = document.createElement("div");
+    box.innerHTML=`
 
-    item.className = "dynamic-item";
+    <div class="row-head">
 
-    item.dataset.id = id;
+        <div class="row-title">
+            Education ${id}
+        </div>
 
-    item.innerHTML = `
+        <button
+            type="button"
+            class="btn remove"
+            onclick="removeElement('education-${id}')"
+        >
+            Remove
+        </button>
 
-<div class="dynamic-head">
+    </div>
 
-<strong>Education</strong>
+    <div class="field">
 
-<button
-class="remove-btn"
-onclick="removeEducation(${id})">
-Remove
-</button>
+        <label>
+            Qualification
+        </label>
 
-</div>
+        <select class="edu-qualification">
 
-<div class="field">
+            <option value="10th">10th</option>
 
-<label>Qualification</label>
+            <option value="12th">
+                12th / Intermediate
+            </option>
 
-<select
-class="edu-qualification"
-onchange="educationTypeChanged(this, ${id})">
+            <option value="Diploma">
+                Diploma
+            </option>
 
-<option value="">Select Qualification</option>
-<option value="10th">10th</option>
-<option value="12th">12th / Intermediate</option>
-<option value="Diploma">Diploma</option>
-<option value="Graduation">Graduation</option>
-<option value="Post Graduation">Post Graduation</option>
-<option value="Other">Other</option>
+            <option value="Graduation">
+                Graduation
+            </option>
 
-</select>
+            <option value="Post Graduation">
+                Post Graduation
+            </option>
 
-</div>
+            <option value="Other">
+                Other Qualification
+            </option>
 
-<div class="field">
+        </select>
 
-<label>Course / Degree</label>
+    </div>
 
-<input
-class="edu-course"
-placeholder="e.g. BCA">
+    <div class="edu-fields grid"></div>
+    `;
 
-</div>
+    $('educationList').appendChild(box);
 
-<div class="field">
+    box.querySelector('.edu-qualification').value =
+        data.qualification || '10th';
 
-<label>School / College / Institute</label>
+    box.querySelector('.edu-qualification')
+    .addEventListener('change',function(){
 
-<input
-class="edu-institute"
-list="collegeInstituteList"
-placeholder="Type or select an institution">
+        renderEducationFields(
+            box,
+            {}
+        );
 
-</div>
+    });
 
-<div class="field edu-affiliation-field">
+    renderEducationFields(
+        box,
+        data
+    );
 
-<label class="edu-affiliation-label">
-Board
-</label>
+    updatePreview();
 
-<input
-class="edu-affiliation"
-list="boardList"
-placeholder="Type or select Board">
+}
 
-</div>
 
-<div class="grid-2">
+/* =========================================
+   EDUCATION FIELD RENDERER
+========================================= */
 
-<div class="field">
-
-<label>Study Status</label>
-
-<select class="edu-status">
-
-<option value="">Select Status</option>
-<option value="Completed">Completed</option>
-<option value="Pursuing">Pursuing</option>
-
-</select>
-
-</div>
-
-<div class="field">
-
-<label>Start Year</label>
-
-<select class="edu-start-year">
-${yearOptions()}
-</select>
-
-</div>
-
-</div>
-
-<div class="field">
-
-<label>Completion Year</label>
-
-<select class="edu-end-year">
-${yearOptions()}
-</select>
-
-</div>
-
-<div class="field">
-
-<label>Percentage / CGPA</label>
-
-<input
-class="edu-score"
-placeholder="e.g. 82% or 8.4 CGPA">
-
-</div>
-
-<div class="semester-area">
-
-</div>
-
-`;
-
-    container.appendChild(item);
+function renderEducationFields(box,data={}){
 
     const qualification =
-        item.querySelector(".edu-qualification");
+        box.querySelector('.edu-qualification').value;
 
-    educationTypeChanged(qualification,id);
+    const container =
+        box.querySelector('.edu-fields');
 
-    bindInputs(item);
+    let html='';
 
-    updatePreview();
-}
 
-function educationTypeChanged(select,id){
+    /* 10TH */
 
-    const item =
-        document.querySelector(
-            `.dynamic-item[data-id="${id}"]`
-        );
+    if(qualification==='10th'){
 
-    if(!item) return;
+        html=`
 
-    const value = select.value;
+        <div class="field">
 
-    const affiliationLabel =
-        item.querySelector(".edu-affiliation-label");
+            <label>
+                School Name
+            </label>
 
-    const affiliationInput =
-        item.querySelector(".edu-affiliation");
+            <input
+                class="edu-school"
+                placeholder="ABC School"
+                value="${esc(data.school||'')}"
+            >
 
-    const courseInput =
-        item.querySelector(".edu-course");
+        </div>
 
-    const semesterArea =
-        item.querySelector(".semester-area");
 
-    if(value === "10th" || value === "12th"){
+        <div class="field">
 
-        affiliationLabel.textContent = "Board";
+            <label>
+                Board
+            </label>
 
-        affiliationInput.setAttribute("list","boardList");
+            <select class="edu-board">
 
-        affiliationInput.placeholder =
-            "Type or select Board";
+                ${boardOptions(data.board)}
 
-    }
-    else{
+            </select>
 
-        affiliationLabel.textContent =
-            "University";
+        </div>
 
-        affiliationInput.setAttribute(
-            "list",
-            "universityList"
-        );
 
-        affiliationInput.placeholder =
-            "Type or select University";
-    }
+        <div class="field">
 
-    if(value === "10th"){
+            <label>
+                Passing Year
+            </label>
 
-        courseInput.value = "";
+            <select class="edu-year">
 
-        courseInput.placeholder =
-            "Optional";
+                ${yearOptions(data.year)}
 
-    }
-    else if(value === "12th"){
+            </select>
 
-        courseInput.value = "";
+        </div>
 
-        courseInput.placeholder =
-            "Optional";
 
-    }
-    else if(value === "Diploma"){
+        <div class="field">
 
-        courseInput.placeholder =
-            "e.g. Diploma in Computer Applications";
+            <label>
+                Percentage
+            </label>
 
-    }
-    else if(value === "Graduation"){
+            <input
+                class="edu-score"
+                placeholder="85%"
+                value="${esc(data.score||'')}"
+            >
 
-        courseInput.placeholder =
-            "e.g. BCA / B.Tech / B.Sc";
+        </div>
 
-    }
-    else if(value === "Post Graduation"){
-
-        courseInput.placeholder =
-            "e.g. MCA / M.Tech / MBA";
-
-    }
-    else{
-
-        courseInput.placeholder =
-            "e.g. Course / Degree";
+        `;
 
     }
 
-    semesterArea.innerHTML = "";
 
-    if(
-        value === "Graduation" ||
-        value === "Post Graduation"
+    /* 12TH */
+
+    else if(qualification==='12th'){
+
+        html=`
+
+        <div class="field">
+
+            <label>
+                School / College Name
+            </label>
+
+            <input
+                class="edu-school"
+                list="collegeList"
+                placeholder="ABC College"
+                value="${esc(data.school||'')}"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Board
+            </label>
+
+            <select class="edu-board">
+
+                ${boardOptions(data.board)}
+
+            </select>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Passing Year
+            </label>
+
+            <select class="edu-year">
+
+                ${yearOptions(data.year)}
+
+            </select>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Percentage
+            </label>
+
+            <input
+                class="edu-score"
+                placeholder="85%"
+                value="${esc(data.score||'')}"
+            >
+
+        </div>
+
+        `;
+
+    }
+
+
+    /* DIPLOMA */
+
+    else if(qualification==='Diploma'){
+
+        html=`
+
+        <div class="field">
+
+            <label>
+                Diploma / Course Name
+            </label>
+
+            <input
+                class="edu-course"
+                placeholder="Diploma in Computer Applications"
+                value="${esc(data.course||'')}"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Institute
+            </label>
+
+            <input
+                class="edu-institute"
+                list="collegeList"
+                placeholder="ABC Institute"
+                value="${esc(data.institute||'')}"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Board / University
+            </label>
+
+            <input
+                class="edu-university"
+                list="universityList"
+                placeholder="Board / University Name"
+                value="${esc(data.university||'')}"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Passing Year
+            </label>
+
+            <select class="edu-year">
+
+                ${yearOptions(data.year)}
+
+            </select>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Percentage / CGPA
+            </label>
+
+            <input
+                class="edu-score"
+                placeholder="8.5 CGPA or 85%"
+                value="${esc(data.score||'')}"
+            >
+
+        </div>
+
+        `;
+
+    }
+
+
+    /* GRADUATION / PG */
+
+    else if(
+        qualification==='Graduation' ||
+        qualification==='Post Graduation'
     ){
 
-        semesterArea.innerHTML = `
+        html=`
 
-<div class="status-note">
-Enter only semesters that are available. Blank future semesters will not appear in the resume.
-</div>
+        <div class="field">
 
-${semesterBlock(id,1,1,2)}
+            <label>
+                Course / Degree
+            </label>
 
-${semesterBlock(id,2,3,4)}
+            <input
+                class="edu-course"
+                placeholder="BCA"
+                value="${esc(data.course||'')}"
+            >
 
-${semesterBlock(id,3,5,6)}
+        </div>
 
-${semesterBlock(id,4,7,8)}
 
-`;
+        <div class="field">
+
+            <label>
+                College / Institute
+            </label>
+
+            <input
+                class="edu-institute"
+                list="collegeList"
+                placeholder="ABC College"
+                value="${esc(data.institute||'')}"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                University
+            </label>
+
+            <input
+                class="edu-university"
+                list="universityList"
+                placeholder="XYZ University"
+                value="${esc(data.university||'')}"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Study Status
+            </label>
+
+            <select class="edu-status">
+
+                <option value="Completed">
+                    Completed
+                </option>
+
+                <option value="Pursuing">
+                    Pursuing
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Start Year
+            </label>
+
+            <select class="edu-start">
+
+                ${yearOptions(data.start)}
+
+            </select>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Completion Year
+            </label>
+
+            <select class="edu-end">
+
+                ${yearOptions(data.end)}
+
+            </select>
+
+        </div>
+
+
+        <div class="field full">
+
+            <label>
+                Year-wise Semester Details
+            </label>
+
+            <div class="help">
+                Leave unavailable or future semesters blank.
+                Blank semesters will not appear in the resume.
+            </div>
+
+            <div class="semester-holder"></div>
+
+        </div>
+
+        `;
 
     }
 
-    bindInputs(item);
 
-    updatePreview();
-}
+    /* OTHER */
 
-function semesterBlock(id,year,sem1,sem2){
+    else{
 
-    return `
+        html=`
 
-<div style="margin-top:10px;padding:10px;border:1px solid #eee;border-radius:8px;">
+        <div class="field">
 
-<div style="font-size:11px;font-weight:800;margin-bottom:8px;">
-Year ${year}
-</div>
+            <label>
+                Qualification Name
+            </label>
 
-<div class="grid-2">
+            <input
+                class="edu-course"
+                placeholder="Professional Qualification"
+                value="${esc(data.course||'')}"
+            >
 
-<div>
+        </div>
 
-<div class="field">
 
-<label>Semester ${sem1} CGPA</label>
+        <div class="field">
 
-<input
-class="sem-cgpa"
-data-sem="${sem1}"
-placeholder="e.g. 8.40">
+            <label>
+                Institute
+            </label>
 
-</div>
+            <input
+                class="edu-institute"
+                list="collegeList"
+                placeholder="ABC Institute"
+                value="${esc(data.institute||'')}"
+            >
 
-<div class="field">
+        </div>
 
-<label>Semester ${sem1} SGPA / SGP</label>
 
-<input
-class="sem-sgpa"
-data-sem="${sem1}"
-placeholder="e.g. 8.10">
+        <div class="field">
 
-</div>
+            <label>
+                Board / University
+            </label>
 
-</div>
+            <input
+                class="edu-university"
+                list="universityList"
+                placeholder="XYZ University"
+                value="${esc(data.university||'')}"
+            >
 
-<div>
+        </div>
 
-<div class="field">
 
-<label>Semester ${sem2} CGPA</label>
+        <div class="field">
 
-<input
-class="sem-cgpa"
-data-sem="${sem2}"
-placeholder="e.g. 8.50">
+            <label>
+                Completion Year
+            </label>
 
-</div>
+            <select class="edu-year">
 
-<div class="field">
+                ${yearOptions(data.year)}
 
-<label>Semester ${sem2} SGPA / SGP</label>
+            </select>
 
-<input
-class="sem-sgpa"
-data-sem="${sem2}"
-placeholder="e.g. 8.30">
+        </div>
 
-</div>
 
-</div>
+        <div class="field">
 
-</div>
+            <label>
+                Percentage / CGPA
+            </label>
 
-</div>
+            <input
+                class="edu-score"
+                placeholder="8.5 CGPA or 85%"
+                value="${esc(data.score||'')}"
+            >
 
-`;
-}
+        </div>
 
-function removeEducation(id){
+        `;
 
-    const item =
-        document.querySelector(
-            `.dynamic-item[data-id="${id}"]`
-        );
-
-    if(item){
-        item.remove();
-        updatePreview();
     }
-}
 
 
-/* =========================================================
-   DATALISTS
-========================================================= */
-
-const boardList = document.createElement("datalist");
-boardList.id = "boardList";
-
-[
-"CBSE",
-"ICSE",
-"UP Board",
-"NIOS",
-"ISC",
-"MP Board",
-"RBSE",
-"BSEB",
-"WBCHSE",
-"Maharashtra State Board",
-"Punjab School Education Board",
-"Haryana Board",
-"Other"
-].forEach(value => {
-
-    const option =
-        document.createElement("option");
-
-    option.value = value;
-
-    boardList.appendChild(option);
-});
-
-document.body.appendChild(boardList);
+    container.innerHTML=html;
 
 
-const universityList = document.createElement("datalist");
-universityList.id = "universityList";
+    if(
+        qualification==='Graduation' ||
+        qualification==='Post Graduation'
+    ){
 
-[
-"Chhatrapati Shahu Ji Maharaj University",
-"University of Delhi",
-"University of Mumbai",
-"University of Calcutta",
-"University of Rajasthan",
-"University of Lucknow",
-"University of Allahabad",
-"Banaras Hindu University",
-"Jawaharlal Nehru University",
-"Indira Gandhi National Open University",
-"Dr. A.P.J. Abdul Kalam Technical University",
-"Other"
-].forEach(value => {
+        const holder=
+            container.querySelector('.semester-holder');
 
-    const option =
-        document.createElement("option");
+        for(let year=1;year<=4;year++){
 
-    option.value = value;
+            let semesterHTML='';
 
-    universityList.appendChild(option);
-});
+            for(let sem=1;sem<=2;sem++){
 
-document.body.appendChild(universityList);
+                const semesterNumber=
+                    ((year-1)*2)+sem;
 
+                semesterHTML+=`
 
-const collegeInstituteList =
-    document.createElement("datalist");
+                <div class="grid">
 
-collegeInstituteList.id =
-    "collegeInstituteList";
+                    <div class="field">
 
-[
-"Axis Institute of Higher Education",
-"ABC College",
-"XYZ Institute",
-"ABC University College",
-"XYZ College"
-].forEach(value => {
+                        <label>
+                            Semester ${semesterNumber} CGPA
+                        </label>
 
-    const option =
-        document.createElement("option");
+                        <input
+                            class="semester-cgpa"
+                            data-semester="${semesterNumber}"
+                            placeholder="8.5"
+                        >
 
-    option.value = value;
-
-    collegeInstituteList.appendChild(option);
-});
-
-document.body.appendChild(collegeInstituteList);
+                    </div>
 
 
-/* =========================================================
-   SKILLS
-========================================================= */
+                    <div class="field">
 
-let selectedSkills = [];
+                        <label>
+                            Semester ${semesterNumber} SGPA / SGP
+                        </label>
 
-document.querySelectorAll(
-    "#skillChips .chip"
-).forEach(button => {
+                        <input
+                            class="semester-sgpa"
+                            data-semester="${semesterNumber}"
+                            placeholder="8.2"
+                        >
 
-    button.addEventListener("click",()=>{
+                    </div>
 
-        const skill =
-            button.dataset.skill;
+                </div>
 
-        if(selectedSkills.includes(skill)){
+                `;
 
-            selectedSkills =
-                selectedSkills.filter(
-                    item => item !== skill
-                );
+            }
 
-            button.classList.remove("active");
 
-        }else{
+            holder.innerHTML+=`
 
-            selectedSkills.push(skill);
+            <div class="sem-year">
 
-            button.classList.add("active");
+                <h4>
+                    Year ${year}
+                </h4>
+
+                ${semesterHTML}
+
+            </div>
+
+            `;
+
         }
 
-        updatePreview();
-    });
-});
 
-function addCustomSkill(){
+        if(data.semesters){
 
-    const input =
-        document.getElementById("customSkill");
+            Object.entries(data.semesters)
+            .forEach(([number,value])=>{
 
-    const value =
-        input.value.trim();
+                const cgpa=
+                    container.querySelector(
+                        `.semester-cgpa[data-semester="${number}"]`
+                    );
 
-    if(!value) return;
+                const sgpa=
+                    container.querySelector(
+                        `.semester-sgpa[data-semester="${number}"]`
+                    );
 
-    if(!selectedSkills.includes(value)){
-        selectedSkills.push(value);
+                if(cgpa)
+                    cgpa.value=value.cgpa||'';
+
+                if(sgpa)
+                    sgpa.value=value.sgpa||'';
+
+            });
+
+        }
+
+
+        const status=
+            container.querySelector('.edu-status');
+
+        if(status)
+            status.value=
+                data.status||'Completed';
+
     }
 
-    input.value = "";
+
+    container
+    .querySelectorAll('input,select')
+    .forEach(element=>{
+
+        element.addEventListener(
+            'input',
+            updatePreview
+        );
+
+        element.addEventListener(
+            'change',
+            updatePreview
+        );
+
+    });
+
 
     updatePreview();
+
 }
 
 
-/* =========================================================
-   PROJECTS
-========================================================= */
+/* =========================================
+   EDUCATION DATA
+========================================= */
 
-let projectCount = 0;
+function getEducation(){
+
+    return [
+
+        ...document.querySelectorAll(
+            '#educationList .row-card'
+        )
+
+    ].map(box=>{
+
+        const qualification=
+            box.querySelector(
+                '.edu-qualification'
+            ).value;
+
+        const data={
+            qualification
+        };
+
+
+        const fields={
+
+            school:'.edu-school',
+            course:'.edu-course',
+            institute:'.edu-institute',
+            university:'.edu-university',
+            board:'.edu-board',
+            score:'.edu-score',
+            year:'.edu-year',
+            status:'.edu-status',
+            start:'.edu-start',
+            end:'.edu-end'
+
+        };
+
+
+        Object.entries(fields)
+        .forEach(([key,selector])=>{
+
+            const element=
+                box.querySelector(selector);
+
+            if(element)
+                data[key]=element.value;
+
+        });
+
+
+        if(
+            qualification==='Graduation' ||
+            qualification==='Post Graduation'
+        ){
+
+            data.semesters={};
+
+            box.querySelectorAll(
+                '.semester-cgpa'
+            ).forEach(cgpa=>{
+
+                const number=
+                    cgpa.dataset.semester;
+
+                const sgpa=
+                    box.querySelector(
+                        `.semester-sgpa[data-semester="${number}"]`
+                    );
+
+                const cgpaValue=
+                    cgpa.value.trim();
+
+                const sgpaValue=
+                    sgpa ? sgpa.value.trim() : '';
+
+                if(
+                    cgpaValue ||
+                    sgpaValue
+                ){
+
+                    data.semesters[number]={
+                        cgpa:cgpaValue,
+                        sgpa:sgpaValue
+                    };
+
+                }
+
+            });
+
+        }
+
+
+        return data;
+
+    });
+
+}
+
+
+/* =========================================
+   SKILLS
+========================================= */
+
+function addSkill(){
+
+    const custom=
+        $('customSkill').value.trim();
+
+    const selected=
+        $('skillSelect').value;
+
+    const value=
+        custom || selected;
+
+    if(!value)
+        return;
+
+    if(!skills.includes(value))
+        skills.push(value);
+
+    $('customSkill').value='';
+    $('skillSelect').value='';
+
+    renderSkills();
+
+    updatePreview();
+
+}
+
+
+function renderSkills(){
+
+    $('skillInputChips').innerHTML=
+        skills.map((skill,index)=>`
+
+        <span class="chip">
+
+            ${esc(skill)}
+
+            <button
+                type="button"
+                onclick="removeSkill(${index})"
+                style="border:0;background:none;cursor:pointer"
+            >
+                ×
+            </button>
+
+        </span>
+
+        `).join('');
+
+}
+
+
+function removeSkill(index){
+
+    skills.splice(index,1);
+
+    renderSkills();
+
+    updatePreview();
+
+}
+
+
+/* =========================================
+   LANGUAGES
+========================================= */
+
+function addLanguage(){
+
+    const custom=
+        $('customLanguage').value.trim();
+
+    const selected=
+        $('languageSelect').value;
+
+    const value=
+        custom || selected;
+
+    if(!value)
+        return;
+
+    if(!languages.includes(value))
+        languages.push(value);
+
+    $('customLanguage').value='';
+    $('languageSelect').value='';
+
+    renderLanguages();
+
+    updatePreview();
+
+}
+
+
+function renderLanguages(){
+
+    $('languageInputChips').innerHTML=
+        languages.map((language,index)=>`
+
+        <span class="chip">
+
+            ${esc(language)}
+
+            <button
+                type="button"
+                onclick="removeLanguage(${index})"
+                style="border:0;background:none;cursor:pointer"
+            >
+                ×
+            </button>
+
+        </span>
+
+        `).join('');
+
+}
+
+
+function removeLanguage(index){
+
+    languages.splice(index,1);
+
+    renderLanguages();
+
+    updatePreview();
+
+}
+
+
+/* =========================================
+   PROJECTS
+========================================= */
 
 function addProject(){
 
-    projectCount++;
+    const id=++projectCount;
 
-    const id = projectCount;
+    const box=
+        document.createElement('div');
 
-    const container =
-        document.getElementById("projectContainer");
+    box.className='row-card';
 
-    const item =
-        document.createElement("div");
+    box.id='project-'+id;
 
-    item.className =
-        "dynamic-item";
+    box.innerHTML=`
 
-    item.dataset.id = id;
+    <div class="row-head">
 
-    item.innerHTML = `
+        <div class="row-title">
+            Project ${id}
+        </div>
 
-<div class="dynamic-head">
+        <button
+            type="button"
+            class="btn remove"
+            onclick="removeElement('project-${id}')"
+        >
+            Remove
+        </button>
 
-<strong>Project</strong>
+    </div>
 
-<button
-class="remove-btn"
-onclick="removeProject(${id})">
-Remove
-</button>
 
-</div>
+    <div class="grid">
 
-<div class="field">
+        <div class="field">
 
-<label>Project Name</label>
+            <label>
+                Project Name
+            </label>
 
-<input
-class="project-name"
-placeholder="e.g. Student Management System">
+            <input
+                class="project-name"
+                placeholder="ABC Project"
+            >
 
-</div>
+        </div>
 
-<div class="field">
 
-<label>Project Description</label>
+        <div class="field">
 
-<textarea
-class="project-description"
-placeholder="Describe the project, technologies used and your contribution..."></textarea>
+            <label>
+                Role / Technology
+            </label>
 
-</div>
+            <input
+                class="project-role"
+                placeholder="Python Developer"
+            >
 
-`;
+        </div>
 
-    container.appendChild(item);
 
-    bindInputs(item);
+        <div class="field full">
 
-    updatePreview();
-}
+            <label>
+                Description
+            </label>
 
-function removeProject(id){
+            <textarea
+                class="project-description"
+                placeholder="Describe the project, your role, and key work."
+            ></textarea>
 
-    const item =
-        document.querySelector(
-            `#projectContainer .dynamic-item[data-id="${id}"]`
+        </div>
+
+
+        <div class="field full">
+
+            <label>
+                Project Link (Optional)
+            </label>
+
+            <input
+                class="project-link"
+                placeholder="https://example.com"
+            >
+
+        </div>
+
+    </div>
+
+    `;
+
+
+    $('projectList').appendChild(box);
+
+
+    box.querySelectorAll(
+        'input,textarea'
+    ).forEach(element=>{
+
+        element.addEventListener(
+            'input',
+            updatePreview
         );
 
-    if(item){
-        item.remove();
-        updatePreview();
-    }
+    });
+
+
+    updatePreview();
+
 }
 
 
-/* =========================================================
+/* =========================================
    EXPERIENCE
-========================================================= */
-
-let experienceCount = 0;
+========================================= */
 
 function addExperience(){
 
-    experienceCount++;
+    const id=++experienceCount;
 
-    const id = experienceCount;
+    const box=
+        document.createElement('div');
 
-    const container =
-        document.getElementById("experienceContainer");
+    box.className='row-card';
 
-    const item =
-        document.createElement("div");
+    box.id='experience-'+id;
 
-    item.className =
-        "dynamic-item";
+    box.innerHTML=`
 
-    item.dataset.id = id;
+    <div class="row-head">
 
-    item.innerHTML = `
+        <div class="row-title">
+            Experience / Activity ${id}
+        </div>
 
-<div class="dynamic-head">
+        <button
+            type="button"
+            class="btn remove"
+            onclick="removeElement('experience-${id}')"
+        >
+            Remove
+        </button>
 
-<strong>Experience / Activity</strong>
+    </div>
 
-<button
-class="remove-btn"
-onclick="removeExperience(${id})">
-Remove
-</button>
 
-</div>
+    <div class="grid">
 
-<div class="field">
+        <div class="field">
 
-<label>Experience Type</label>
+            <label>
+                Type
+            </label>
 
-<select class="experience-type">
+            <select class="experience-type">
 
-<option value="">Select Type</option>
-<option>Job</option>
-<option>Internship</option>
-<option>Freelance Work</option>
-<option>Project Experience</option>
-<option>Volunteer Work</option>
-<option>Training</option>
-<option>Workshop</option>
-<option>Leadership</option>
-<option>College Activity</option>
-<option>Event Management</option>
-<option>Teaching / Tutoring</option>
-<option>Content Creation</option>
-<option>Business / Self-Employment</option>
-<option>Other</option>
+                <option>Job</option>
+                <option>Internship</option>
+                <option>Freelance Work</option>
+                <option>Project Experience</option>
+                <option>Volunteer Work</option>
+                <option>Training</option>
+                <option>Workshop</option>
+                <option>Leadership</option>
+                <option>College Activity</option>
+                <option>Event Management</option>
+                <option>Teaching / Tutoring</option>
+                <option>Content Creation</option>
+                <option>Business / Self-employment</option>
+                <option>Other</option>
 
-</select>
+            </select>
 
-</div>
+        </div>
 
-<div class="field">
 
-<label>Organization / Company / Institute</label>
+        <div class="field">
 
-<input
-class="experience-company"
-placeholder="e.g. ABC Organization">
+            <label>
+                Organization / Company
+            </label>
 
-</div>
+            <input
+                class="experience-organization"
+                placeholder="ABC Company"
+            >
 
-<div class="grid-2">
+        </div>
 
-<div class="field">
 
-<label>Start Year</label>
+        <div class="field">
 
-<select class="experience-start">
-${yearOptions()}
-</select>
+            <label>
+                Role / Position
+            </label>
 
-</div>
+            <input
+                class="experience-role"
+                placeholder="Intern"
+            >
 
-<div class="field">
+        </div>
 
-<label>End Year</label>
 
-<select class="experience-end">
-${yearOptions()}
-</select>
+        <div class="field">
 
-</div>
+            <label>
+                Start Year
+            </label>
 
-</div>
+            <select class="experience-start">
 
-<div class="field">
+                ${yearOptions()}
 
-<label>Description</label>
+            </select>
 
-<textarea
-class="experience-description"
-placeholder="Describe your work, responsibilities or achievement..."></textarea>
+        </div>
 
-</div>
 
-`;
+        <div class="field">
 
-    container.appendChild(item);
+            <label>
+                End Year
+            </label>
 
-    bindInputs(item);
+            <select class="experience-end">
 
-    updatePreview();
-}
+                ${yearOptions()}
 
-function removeExperience(id){
+            </select>
 
-    const item =
-        document.querySelector(
-            `#experienceContainer .dynamic-item[data-id="${id}"]`
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Current Status
+            </label>
+
+            <select class="experience-current">
+
+                <option value="No">
+                    Completed
+                </option>
+
+                <option value="Yes">
+                    Present
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="field full">
+
+            <label>
+                Description
+            </label>
+
+            <textarea
+                class="experience-description"
+                placeholder="Describe responsibilities, achievements, or activities."
+            ></textarea>
+
+        </div>
+
+    </div>
+
+    `;
+
+
+    $('experienceList').appendChild(box);
+
+
+    const current=
+        box.querySelector(
+            '.experience-current'
         );
 
-    if(item){
-        item.remove();
-        updatePreview();
-    }
+    const end=
+        box.querySelector(
+            '.experience-end'
+        );
+
+
+    current.addEventListener(
+        'change',
+        function(){
+
+            end.disabled=
+                current.value==='Yes';
+
+            updatePreview();
+
+        }
+    );
+
+
+    box.querySelectorAll(
+        'input,select,textarea'
+    ).forEach(element=>{
+
+        element.addEventListener(
+            'input',
+            updatePreview
+        );
+
+        element.addEventListener(
+            'change',
+            updatePreview
+        );
+
+    });
+
+
+    updatePreview();
+
 }
 
 
-/* =========================================================
+/* =========================================
    CERTIFICATIONS
-========================================================= */
-
-let certificationCount = 0;
+========================================= */
 
 function addCertification(){
 
-    certificationCount++;
+    const id=++certificationCount;
 
-    const id = certificationCount;
+    const box=
+        document.createElement('div');
 
-    const container =
-        document.getElementById(
-            "certificationContainer"
+    box.className='row-card';
+
+    box.id='certification-'+id;
+
+    box.innerHTML=`
+
+    <div class="row-head">
+
+        <div class="row-title">
+            Certification ${id}
+        </div>
+
+        <button
+            type="button"
+            class="btn remove"
+            onclick="removeElement('certification-${id}')"
+        >
+            Remove
+        </button>
+
+    </div>
+
+
+    <div class="grid">
+
+        <div class="field">
+
+            <label>
+                Certification Name
+            </label>
+
+            <input
+                class="cert-name"
+                placeholder="ABC Certification"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Issuing Organization
+            </label>
+
+            <input
+                class="cert-organization"
+                placeholder="XYZ Organization"
+            >
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Year
+            </label>
+
+            <select class="cert-year">
+
+                ${yearOptions()}
+
+            </select>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Credential Link (Optional)
+            </label>
+
+            <input
+                class="cert-link"
+                placeholder="https://example.com"
+            >
+
+        </div>
+
+    </div>
+
+    `;
+
+
+    $('certificationList').appendChild(box);
+
+
+    box.querySelectorAll(
+        'input,select'
+    ).forEach(element=>{
+
+        element.addEventListener(
+            'input',
+            updatePreview
         );
 
-    const item =
-        document.createElement("div");
-
-    item.className =
-        "dynamic-item";
-
-    item.dataset.id = id;
-
-    item.innerHTML = `
-
-<div class="dynamic-head">
-
-<strong>Certification</strong>
-
-<button
-class="remove-btn"
-onclick="removeCertification(${id})">
-Remove
-</button>
-
-</div>
-
-<div class="field">
-
-<label>Certification Name</label>
-
-<input
-class="cert-name"
-placeholder="e.g. Python Programming">
-
-</div>
-
-<div class="grid-2">
-
-<div class="field">
-
-<label>Issuing Organization</label>
-
-<input
-class="cert-org"
-placeholder="e.g. ABC Organization">
-
-</div>
-
-<div class="field">
-
-<label>Year</label>
-
-<select class="cert-year">
-${yearOptions()}
-</select>
-
-</div>
-
-</div>
-
-`;
-
-    container.appendChild(item);
-
-    bindInputs(item);
-
-    updatePreview();
-}
-
-function removeCertification(id){
-
-    const item =
-        document.querySelector(
-            `#certificationContainer .dynamic-item[data-id="${id}"]`
+        element.addEventListener(
+            'change',
+            updatePreview
         );
 
-    if(item){
-        item.remove();
-        updatePreview();
-    }
-}
-
-
-/* =========================================================
-   LANGUAGES
-========================================================= */
-
-let selectedLanguages = [];
-
-document.querySelectorAll(
-    "#languageChips .chip"
-).forEach(button => {
-
-    button.addEventListener("click",()=>{
-
-        const language =
-            button.dataset.language;
-
-        if(selectedLanguages.includes(language)){
-
-            selectedLanguages =
-                selectedLanguages.filter(
-                    item => item !== language
-                );
-
-            button.classList.remove("active");
-
-        }else{
-
-            selectedLanguages.push(language);
-
-            button.classList.add("active");
-        }
-
-        updatePreview();
     });
-});
 
-function addCustomLanguage(){
-
-    const input =
-        document.getElementById("customLanguage");
-
-    const value =
-        input.value.trim();
-
-    if(!value) return;
-
-    if(!selectedLanguages.includes(value)){
-        selectedLanguages.push(value);
-    }
-
-    input.value = "";
 
     updatePreview();
+
 }
 
 
-/* =========================================================
+/* =========================================
+   PROFESSIONAL LINKS
+========================================= */
+
+function addLink(){
+
+    const id=++linkCount;
+
+    const box=
+        document.createElement('div');
+
+    box.className='row-card';
+
+    box.id='link-'+id;
+
+    box.innerHTML=`
+
+    <div class="row-head">
+
+        <div class="row-title">
+            Professional Link ${id}
+        </div>
+
+        <button
+            type="button"
+            class="btn remove"
+            onclick="removeElement('link-${id}')"
+        >
+            Remove
+        </button>
+
+    </div>
+
+
+    <div class="grid">
+
+        <div class="field">
+
+            <label>
+                Link Type
+            </label>
+
+            <select class="link-type">
+
+                <option>LinkedIn</option>
+                <option>GitHub</option>
+                <option>Portfolio</option>
+                <option>Website</option>
+                <option>Other</option>
+
+            </select>
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                URL
+            </label>
+
+            <input
+                class="link-url"
+                placeholder="https://example.com"
+            >
+
+        </div>
+
+    </div>
+
+    `;
+
+
+    $('linkList').appendChild(box);
+
+
+    box.querySelectorAll(
+        'input,select'
+    ).forEach(element=>{
+
+        element.addEventListener(
+            'input',
+            updatePreview
+        );
+
+        element.addEventListener(
+            'change',
+            updatePreview
+        );
+
+    });
+
+
+    updatePreview();
+
+}
+
+
+/* =========================================
+   REMOVE
+========================================= */
+
+function removeElement(id){
+
+    const element=$(id);
+
+    if(element)
+        element.remove();
+
+    updatePreview();
+
+}
+
+
+/* =========================================
    PHOTO
-========================================================= */
+========================================= */
 
-document.getElementById(
-    "profilePhoto"
-).addEventListener("change",function(){
+$('photoInput').addEventListener(
+    'change',
+    function(event){
 
-    const file = this.files[0];
+        const file=
+            event.target.files[0];
 
-    if(!file) return;
+        if(!file)
+            return;
 
-    const reader =
-        new FileReader();
+        const reader=
+            new FileReader();
 
-    reader.onload = function(event){
+        reader.onload=function(){
 
-        document.getElementById(
-            "photoPreview"
-        ).src = event.target.result;
+            photoData=
+                reader.result;
 
-        document.getElementById(
-            "photoPreview"
-        ).style.display = "block";
+            $('photoThumb').style.display=
+                'flex';
 
-        document.getElementById(
-            "previewPhoto"
-        ).src = event.target.result;
+            $('photoThumbImg').src=
+                photoData;
 
-        document.getElementById(
-            "previewPhoto"
-        ).style.display = "block";
+            updatePreview();
 
-    };
+        };
 
-    reader.readAsDataURL(file);
-});
+        reader.readAsDataURL(file);
 
-
-/* =========================================================
-   INPUT BINDING
-========================================================= */
-
-function bindInputs(element){
-
-    element
-    .querySelectorAll("input,select,textarea")
-    .forEach(input => {
-
-        input.removeEventListener(
-            "input",
-            updatePreview
-        );
-
-        input.removeEventListener(
-            "change",
-            updatePreview
-        );
-
-        input.addEventListener(
-            "input",
-            updatePreview
-        );
-
-        input.addEventListener(
-            "change",
-            updatePreview
-        );
-
-    });
-}
-
-document.querySelectorAll(
-    "body > main input, body > main select, body > main textarea"
-).forEach(input => {
-
-    input.addEventListener(
-        "input",
-        updatePreview
-    );
-
-    input.addEventListener(
-        "change",
-        updatePreview
-    );
-});
+    }
+);
 
 
-/* =========================================================
+/* =========================================
    PREVIEW
-========================================================= */
-
-function safe(value){
-
-    return String(value || "")
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
-}
-
-function getValue(id){
-
-    const element =
-        document.getElementById(id);
-
-    return element
-        ? element.value.trim()
-        : "";
-}
+========================================= */
 
 function updatePreview(){
 
-    const name =
-        getValue("fullName") || "Your Name";
+    const name=
+        $('fullName').value.trim() ||
+        'Your Name';
 
-    const title =
-        getValue("professionalTitle") ||
-        "Professional Title";
+    const headline=
+        $('headline').value.trim() ||
+        'Professional Title';
 
-    const email =
-        getValue("email");
 
-    const phone =
-        getValue("phone");
+    $('pName').textContent=
+        name;
 
-    const countryCode =
-        getValue("countryCode") || "+91";
+    $('pHeadline').textContent=
+        headline;
 
-    const city =
-        getValue("city");
 
-    const state =
-        getValue("state");
+    const country=
+        $('countryCode').value ||
+        'India (+91)';
 
-    const district =
-        getValue("district");
+    const codeMatch=
+        country.match(/\(([^)]+)\)$/);
 
-    const pin =
-        getValue("pinCode");
+    const code=
+        codeMatch ?
+        codeMatch[1] :
+        '+91';
 
-    document.getElementById(
-        "previewName"
-    ).textContent = name;
 
-    document.getElementById(
-        "previewTitle"
-    ).textContent = title;
+    const phone=
+        $('phone').value.trim();
 
-    let contact = [];
+    const locationParts=[
 
-    if(email)
-        contact.push(email);
+        $('address').value.trim(),
 
-    if(phone)
-        contact.push(`${countryCode} ${phone}`);
+        $('district').value,
 
-    let location = [];
+        $('state').value
 
-    if(city) location.push(city);
+    ].filter(Boolean);
 
-    if(district) location.push(district);
 
-    if(state) location.push(state);
+    const contactParts=[
 
-    if(pin) location.push(pin);
+        $('email').value.trim(),
 
-    if(location.length)
-        contact.push(location.join(", "));
+        phone ?
+        code+' '+phone :
+        '',
 
-    document.getElementById(
-        "previewContact"
-    ).textContent =
-        contact.length
-        ? contact.join("  •  ")
-        : "Email • Phone • Location";
+        locationParts.join(', ')
+
+    ].filter(Boolean);
+
+
+    $('pContact').textContent=
+        contactParts.join(' · ') ||
+        'email@example.com · +91 0000000000 · City, State';
 
 
     /* SUMMARY */
 
-    const summary =
-        getValue("summary");
+    const summary=
+        $('summary').value.trim();
 
-    const summarySection =
-        document.getElementById(
-            "previewSummarySection"
-        );
+    $('pSummary').textContent=
+        summary;
 
-    if(summary){
-
-        summarySection.classList.remove(
-            "hidden"
-        );
-
-        document.getElementById(
-            "previewSummary"
-        ).textContent = summary;
-
-    }else{
-
-        summarySection.classList.add(
-            "hidden"
-        );
-    }
+    $('pSummarySection').style.display=
+        summary ?
+        'block' :
+        'none';
 
 
     /* EDUCATION */
 
-    const educationPreview =
-        document.getElementById(
-            "previewEducation"
-        );
+    const education=
+        getEducation();
 
-    educationPreview.innerHTML = "";
 
-    document.querySelectorAll(
-        "#educationContainer .dynamic-item"
-    ).forEach(item => {
+    $('pEducation').innerHTML=
+        education.map(item=>{
 
-        const qualification =
-            item.querySelector(
-                ".edu-qualification"
-            ).value;
+            let title='';
 
-        const course =
-            item.querySelector(
-                ".edu-course"
-            ).value.trim();
+            if(item.qualification==='10th')
+                title='10th';
 
-        const institute =
-            item.querySelector(
-                ".edu-institute"
-            ).value.trim();
+            else if(item.qualification==='12th')
+                title='12th / Intermediate';
 
-        const affiliation =
-            item.querySelector(
-                ".edu-affiliation"
-            ).value.trim();
+            else
+                title=
+                    item.course ||
+                    item.qualification;
 
-        const status =
-            item.querySelector(
-                ".edu-status"
-            ).value;
 
-        const start =
-            item.querySelector(
-                ".edu-start-year"
-            ).value;
+            const meta=[];
 
-        const end =
-            item.querySelector(
-                ".edu-end-year"
-            ).value;
 
-        const score =
-            item.querySelector(
-                ".edu-score"
-            ).value.trim();
+            if(item.school)
+                meta.push(item.school);
 
-        if(
-            !qualification &&
-            !course &&
-            !institute
-        ) return;
+            if(item.institute)
+                meta.push(item.institute);
 
-        let title =
-            course ||
-            qualification ||
-            "Education";
+            if(item.university)
+                meta.push(item.university);
 
-        let html = `
+            if(item.board)
+                meta.push(item.board);
 
-<div class="edu-block">
 
-<div class="resume-item-title">
-${safe(title)}
-</div>
-`;
+            if(
+                item.qualification==='Graduation' ||
+                item.qualification==='Post Graduation'
+            ){
 
-        if(qualification){
+                if(item.start)
+                    meta.push(
+                        'Start Year: '+item.start
+                    );
 
-            html += `
-<div class="resume-meta">
-${safe(qualification)}
-</div>
-`;
 
-        }
+                if(item.end)
+                    meta.push(
+                        'Completion Year: '+item.end
+                    );
 
-        if(institute){
+                else if(
+                    item.status==='Pursuing'
+                ){
 
-            html += `
-<div class="resume-meta">
-${safe(institute)}
-</div>
-`;
+                    meta.push('Present');
 
-        }
+                }
 
-        if(affiliation){
-
-            const label =
-                qualification === "10th" ||
-                qualification === "12th"
-                ? "Board"
-                : "University";
-
-            html += `
-<div class="resume-meta">
-${label}: ${safe(affiliation)}
-</div>
-`;
-
-        }
-
-        let years = [];
-
-        if(start)
-            years.push(`Start Year: ${start}`);
-
-        if(end)
-            years.push(`End Year: ${end}`);
-
-        if(status)
-            years.push(status);
-
-        if(years.length){
-
-            html += `
-<div class="resume-meta">
-${safe(years.join(" • "))}
-</div>
-`;
-
-        }
-
-        if(score){
-
-            html += `
-<div class="resume-meta">
-${safe(score)}
-</div>
-`;
-
-        }
-
-        /* SEMESTERS */
-
-        const semesterValues = [];
-
-        item.querySelectorAll(
-            ".semester-area .sem-cgpa"
-        ).forEach(input => {
-
-            const value =
-                input.value.trim();
-
-            if(value){
-
-                const sem =
-                    input.dataset.sem;
-
-                semesterValues.push({
-                    sem,
-                    cgpa:value,
-                    sgpa:""
-                });
             }
-        });
 
-        item.querySelectorAll(
-            ".semester-area .sem-sgpa"
-        ).forEach(input => {
 
-            const value =
-                input.value.trim();
-
-            if(!value) return;
-
-            const sem =
-                input.dataset.sem;
-
-            const found =
-                semesterValues.find(
-                    x => x.sem === sem
+            if(item.year)
+                meta.push(
+                    'Passing Year: '+item.year
                 );
 
-            if(found){
 
-                found.sgpa = value;
+            if(item.score)
+                meta.push(item.score);
 
-            }else{
 
-                semesterValues.push({
-                    sem,
-                    cgpa:"",
-                    sgpa:value
-                });
+            let semesterHTML='';
+
+
+            if(
+                item.semesters &&
+                Object.keys(item.semesters).length
+            ){
+
+                semesterHTML=`
+
+                <table class="sem-table">
+
+                    <tr>
+                        <th>Semester</th>
+                        <th>CGPA</th>
+                        <th>SGPA / SGP</th>
+                    </tr>
+
+                    ${
+                        Object.entries(
+                            item.semesters
+                        ).map(([number,value])=>`
+
+                        <tr>
+
+                            <td>
+                                Semester ${number}
+                            </td>
+
+                            <td>
+                                ${esc(value.cgpa||'—')}
+                            </td>
+
+                            <td>
+                                ${esc(value.sgpa||'—')}
+                            </td>
+
+                        </tr>
+
+                        `).join('')
+                    }
+
+                </table>
+
+                `;
+
             }
 
-        });
 
-        semesterValues.forEach(data => {
+            return `
 
-            html += `
+            <div class="edu-item">
 
-<div class="semester-box">
+                <div class="item-title">
+                    ${esc(title)}
+                </div>
 
-<div class="semester-title">
-Semester ${safe(data.sem)}
-</div>
+                <div class="item-meta">
+                    ${esc(meta.join(' · '))}
+                </div>
 
-<div class="resume-meta">
+                ${semesterHTML}
 
-${data.cgpa
-    ? `CGPA: ${safe(data.cgpa)}`
-    : ""
-}
+            </div>
 
-${data.sgpa
-    ? ` ${data.cgpa ? " • " : ""}
-       SGPA / SGP: ${safe(data.sgpa)}`
-    : ""
-}
+            `;
 
-</div>
+        }).join('');
 
-</div>
 
-`;
-
-        });
-
-        html += `</div>`;
-
-        educationPreview.innerHTML += html;
-
-    });
-
-    if(!educationPreview.innerHTML){
-
-        educationPreview.innerHTML =
-            `<div class="empty-message">
-            Education details will appear here.
-            </div>`;
-    }
+    $('pEducationSection').style.display=
+        education.length ?
+        'block' :
+        'none';
 
 
     /* SKILLS */
 
-    const skillsSection =
-        document.getElementById(
-            "previewSkillsSection"
-        );
+    $('pSkills').innerHTML=
+        skills.map(skill=>
+            '<span class="chip">'+
+            esc(skill)+
+            '</span>'
+        ).join('');
 
-    const skillsPreview =
-        document.getElementById(
-            "previewSkills"
-        );
 
-    skillsPreview.innerHTML = "";
-
-    selectedSkills.forEach(skill => {
-
-        skillsPreview.innerHTML +=
-            `<span class="resume-skill">
-            ${safe(skill)}
-            </span>`;
-
-    });
-
-    if(selectedSkills.length){
-
-        skillsSection.classList.remove(
-            "hidden"
-        );
-
-    }else{
-
-        skillsSection.classList.add(
-            "hidden"
-        );
-    }
+    $('pSkillsSection').style.display=
+        skills.length ?
+        'block' :
+        'none';
 
 
     /* PROJECTS */
 
-    const projectsSection =
-        document.getElementById(
-            "previewProjectsSection"
-        );
+    const projects=[
 
-    const projectsPreview =
-        document.getElementById(
-            "previewProjects"
-        );
+        ...document.querySelectorAll(
+            '#projectList .row-card'
+        )
 
-    projectsPreview.innerHTML = "";
+    ].map(box=>({
 
-    document.querySelectorAll(
-        "#projectContainer .dynamic-item"
-    ).forEach(item => {
+        name:
+            box.querySelector(
+                '.project-name'
+            ).value,
 
-        const name =
-            item.querySelector(
-                ".project-name"
-            ).value.trim();
+        role:
+            box.querySelector(
+                '.project-role'
+            ).value,
 
-        const description =
-            item.querySelector(
-                ".project-description"
-            ).value.trim();
+        description:
+            box.querySelector(
+                '.project-description'
+            ).value,
 
-        if(!name && !description)
-            return;
+        link:
+            box.querySelector(
+                '.project-link'
+            ).value
 
-        projectsPreview.innerHTML += `
+    })).filter(item=>
+        item.name ||
+        item.role ||
+        item.description
+    );
 
-<div class="project-block">
 
-<div class="resume-item-title">
-${safe(name || "Project")}
-</div>
+    $('pProjects').innerHTML=
+        projects.map(item=>`
 
-<div class="resume-text">
-${safe(description)}
-</div>
+        <div class="project-item">
 
-</div>
+            <div class="item-title">
 
-`;
+                ${esc(item.name||'Project')}
 
-    });
+                ${
+                    item.role ?
+                    ' — '+esc(item.role) :
+                    ''
+                }
 
-    if(projectsPreview.innerHTML){
+            </div>
 
-        projectsSection.classList.remove(
-            "hidden"
-        );
+            <div class="item-desc">
 
-    }else{
+                ${esc(item.description||'')}
 
-        projectsSection.classList.add(
-            "hidden"
-        );
-    }
+            </div>
+
+            ${
+                item.link ?
+
+                '<div class="item-meta">'+
+                esc(item.link)+
+                '</div>' :
+
+                ''
+            }
+
+        </div>
+
+        `).join('');
+
+
+    $('pProjectsSection').style.display=
+        projects.length ?
+        'block' :
+        'none';
 
 
     /* EXPERIENCE */
 
-    const experienceSection =
-        document.getElementById(
-            "previewExperienceSection"
-        );
+    const experiences=[
 
-    const experiencePreview =
-        document.getElementById(
-            "previewExperience"
-        );
+        ...document.querySelectorAll(
+            '#experienceList .row-card'
+        )
 
-    experiencePreview.innerHTML = "";
+    ].map(box=>({
 
-    document.querySelectorAll(
-        "#experienceContainer .dynamic-item"
-    ).forEach(item => {
+        type:
+            box.querySelector(
+                '.experience-type'
+            ).value,
 
-        const type =
-            item.querySelector(
-                ".experience-type"
-            ).value;
+        organization:
+            box.querySelector(
+                '.experience-organization'
+            ).value,
 
-        const company =
-            item.querySelector(
-                ".experience-company"
-            ).value.trim();
+        role:
+            box.querySelector(
+                '.experience-role'
+            ).value,
 
-        const start =
-            item.querySelector(
-                ".experience-start"
-            ).value;
+        start:
+            box.querySelector(
+                '.experience-start'
+            ).value,
 
-        const end =
-            item.querySelector(
-                ".experience-end"
-            ).value;
+        end:
+            box.querySelector(
+                '.experience-end'
+            ).value,
 
-        const description =
-            item.querySelector(
-                ".experience-description"
-            ).value.trim();
+        current:
+            box.querySelector(
+                '.experience-current'
+            ).value,
 
-        if(
-            !type &&
-            !company &&
-            !description
-        ) return;
+        description:
+            box.querySelector(
+                '.experience-description'
+            ).value
 
-        let yearText = "";
+    })).filter(item=>
+        item.organization ||
+        item.role ||
+        item.description
+    );
 
-        if(start)
-            yearText +=
-                `Start Year: ${start}`;
 
-        if(end)
-            yearText +=
-                `${yearText ? " • " : ""}
-                 End Year: ${end}`;
+    $('pExperience').innerHTML=
+        experiences.map(item=>`
 
-        experiencePreview.innerHTML += `
+        <div class="exp-item">
 
-<div class="exp-block">
+            <div class="item-title">
 
-<div class="resume-item-title">
-${safe(company || type || "Experience")}
-</div>
+                ${esc(item.role||item.type)}
 
-<div class="resume-meta">
-${safe(type)}
-${yearText ? ` • ${safe(yearText)}` : ""}
-</div>
+                ${
+                    item.organization ?
+                    ' — '+esc(item.organization) :
+                    ''
+                }
 
-<div class="resume-text">
-${safe(description)}
-</div>
+            </div>
 
-</div>
 
-`;
+            <div class="item-meta">
 
-    });
+                ${esc(item.type)}
 
-    if(experiencePreview.innerHTML){
+                ·
 
-        experienceSection.classList.remove(
-            "hidden"
-        );
+                ${
+                    esc(item.start||'')
+                }
 
-    }else{
+                –
 
-        experienceSection.classList.add(
-            "hidden"
-        );
-    }
+                ${
+                    item.current==='Yes' ?
+                    'Present' :
+                    esc(item.end||'')
+                }
+
+            </div>
+
+
+            <div class="item-desc">
+
+                ${esc(item.description||'')}
+
+            </div>
+
+        </div>
+
+        `).join('');
+
+
+    $('pExperienceSection').style.display=
+        experiences.length ?
+        'block' :
+        'none';
 
 
     /* CERTIFICATIONS */
 
-    const certificationSection =
-        document.getElementById(
-            "previewCertificationSection"
-        );
+    const certifications=[
 
-    const certificationPreview =
-        document.getElementById(
-            "previewCertifications"
-        );
+        ...document.querySelectorAll(
+            '#certificationList .row-card'
+        )
 
-    certificationPreview.innerHTML = "";
+    ].map(box=>({
 
-    document.querySelectorAll(
-        "#certificationContainer .dynamic-item"
-    ).forEach(item => {
+        name:
+            box.querySelector(
+                '.cert-name'
+            ).value,
 
-        const name =
-            item.querySelector(
-                ".cert-name"
-            ).value.trim();
+        organization:
+            box.querySelector(
+                '.cert-organization'
+            ).value,
 
-        const org =
-            item.querySelector(
-                ".cert-org"
-            ).value.trim();
+        year:
+            box.querySelector(
+                '.cert-year'
+            ).value,
 
-        const year =
-            item.querySelector(
-                ".cert-year"
-            ).value;
+        link:
+            box.querySelector(
+                '.cert-link'
+            ).value
 
-        if(!name && !org)
-            return;
+    })).filter(item=>
+        item.name ||
+        item.organization
+    );
 
-        certificationPreview.innerHTML += `
 
-<div class="cert-block">
+    $('pCert').innerHTML=
+        certifications.map(item=>`
 
-<div class="resume-item-title">
-${safe(name || "Certification")}
-</div>
+        <div class="cert-item">
 
-<div class="resume-meta">
-${safe(org)}
-${year ? ` • ${safe(year)}` : ""}
-</div>
+            <div class="item-title">
 
-</div>
+                ${esc(
+                    item.name ||
+                    'Certification'
+                )}
 
-`;
+            </div>
 
-    });
 
-    if(certificationPreview.innerHTML){
+            <div class="item-meta">
 
-        certificationSection.classList.remove(
-            "hidden"
-        );
+                ${esc(
+                    [
+                        item.organization,
+                        item.year
+                    ]
+                    .filter(Boolean)
+                    .join(' · ')
+                )}
 
-    }else{
+            </div>
 
-        certificationSection.classList.add(
-            "hidden"
-        );
-    }
+
+            ${
+                item.link ?
+
+                '<div class="item-meta">'+
+                esc(item.link)+
+                '</div>' :
+
+                ''
+            }
+
+        </div>
+
+        `).join('');
+
+
+    $('pCertSection').style.display=
+        certifications.length ?
+        'block' :
+        'none';
 
 
     /* LANGUAGES */
 
-    const languageSection =
-        document.getElementById(
-            "previewLanguagesSection"
-        );
+    $('pLanguages').innerHTML=
+        languages.map(language=>
+            '<span class="chip">'+
+            esc(language)+
+            '</span>'
+        ).join('');
 
-    const languagePreview =
-        document.getElementById(
-            "previewLanguages"
-        );
 
-    languagePreview.innerHTML = "";
-
-    selectedLanguages.forEach(language => {
-
-        languagePreview.innerHTML +=
-            `<span class="resume-skill">
-            ${safe(language)}
-            </span>`;
-
-    });
-
-    if(selectedLanguages.length){
-
-        languageSection.classList.remove(
-            "hidden"
-        );
-
-    }else{
-
-        languageSection.classList.add(
-            "hidden"
-        );
-    }
+    $('pLanguagesSection').style.display=
+        languages.length ?
+        'block' :
+        'none';
 
 
     /* LINKS */
 
-    const linksSection =
-        document.getElementById(
-            "previewLinksSection"
-        );
+    const links=[
 
-    const linksPreview =
-        document.getElementById(
-            "previewLinks"
-        );
+        ...document.querySelectorAll(
+            '#linkList .row-card'
+        )
 
-    linksPreview.innerHTML = "";
+    ].map(box=>({
 
-    const links = [
-        ["LinkedIn",getValue("linkedin")],
-        ["GitHub",getValue("github")],
-        ["Portfolio",getValue("portfolio")],
-        ["Other",getValue("otherLink")]
-    ];
+        type:
+            box.querySelector(
+                '.link-type'
+            ).value,
 
-    links.forEach(([label,value]) => {
+        url:
+            box.querySelector(
+                '.link-url'
+            ).value
 
-        if(!value) return;
+    })).filter(item=>item.url);
 
-        linksPreview.innerHTML += `
 
-<div class="resume-link-item">
+    $('pLinks').innerHTML=
+        links.map(item=>`
 
-<strong>${safe(label)}:</strong>
+        <div>
 
-<span>${safe(value)}</span>
+            ${esc(item.type)}:
+            ${esc(item.url)}
 
-</div>
+        </div>
 
-`;
+        `).join('');
 
-    });
 
-    if(linksPreview.innerHTML){
+    $('pLinksSection').style.display=
+        links.length ?
+        'block' :
+        'none';
 
-        linksSection.classList.remove(
-            "hidden"
-        );
+
+    /* PHOTO */
+
+    if(photoData){
+
+        $('pPhotoBox').style.display=
+            'flex';
+
+        $('pPhoto').src=
+            photoData;
 
     }else{
 
-        linksSection.classList.add(
-            "hidden"
+        $('pPhotoBox').style.display=
+            'none';
+
+        $('pPhoto').removeAttribute(
+            'src'
         );
+
     }
 
 }
 
 
-/* =========================================================
-   PDF MENU
-========================================================= */
-
-function togglePdfMenu(){
-
-    const menu =
-        document.getElementById(
-            "pdfMenu"
-        );
-
-    menu.style.display =
-        menu.style.display === "block"
-        ? "none"
-        : "block";
-}
-
-document.addEventListener("click",function(event){
-
-    const wrap =
-        document.querySelector(".pdf-wrap");
-
-    const menu =
-        document.getElementById("pdfMenu");
-
-    if(
-        wrap &&
-        !wrap.contains(event.target)
-    ){
-
-        menu.style.display = "none";
-    }
-
-});
-
-
-/* =========================================================
-   DOWNLOAD PDF
-========================================================= */
+/* =========================================
+   PDF DOWNLOAD
+========================================= */
 
 async function downloadPDF(){
 
-    updatePreview();
+    const resume=
+        $('resumePreview');
 
-    const menu =
-        document.getElementById("pdfMenu");
+    resume.classList.add(
+        'pdf-mode'
+    );
 
-    menu.style.display = "none";
 
-    const element =
-        document.getElementById(
-            "resumePreview"
+    const cleanName=
+        (
+            $('fullName').value.trim() ||
+            'Toolora_Resume'
+        )
+        .replace(
+            /[^\w\s-]/g,
+            ''
+        )
+        .trim()
+        .replace(
+            /\s+/g,
+            '_'
         );
 
-    const name =
-        getValue("fullName")
-        .replace(/[^a-z0-9]+/gi,"_")
-        .replace(/^_+|_+$/g,"");
 
-    const filename =
-        `${name || "Professional_Resume"}.pdf`;
-
-    const options = {
+    const options={
 
         margin:0,
 
-        filename:filename,
+        filename:
+            cleanName+'.pdf',
 
         image:{
-            type:"jpeg",
-            quality:0.98
+            type:'jpeg',
+            quality:.98
         },
 
         html2canvas:{
             scale:2,
             useCORS:true,
-            backgroundColor:"#ffffff"
+            backgroundColor:'#ffffff'
         },
 
         jsPDF:{
-            unit:"mm",
-            format:"a4",
-            orientation:"portrait"
+            unit:'mm',
+            format:'a4',
+            orientation:'portrait'
         },
 
         pagebreak:{
-            mode:["css","legacy"]
+            mode:[
+                'css',
+                'legacy'
+            ]
         }
 
     };
 
-    await html2pdf()
+
+    try{
+
+        await html2pdf()
         .set(options)
-        .from(element)
+        .from(resume)
         .save();
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        alert(
+            'PDF generation failed. Please try again.'
+        );
+
+    }
+
+    finally{
+
+        resume.classList.remove(
+            'pdf-mode'
+        );
+
+    }
+
 }
 
 
-/* =========================================================
+/* =========================================
    PRINT
-========================================================= */
+========================================= */
 
 function printResume(){
 
-    document.getElementById(
-        "pdfMenu"
-    ).style.display = "none";
+    window.print();
 
-    updatePreview();
-
-    setTimeout(() => {
-        window.print();
-    },100);
 }
 
 
-/* =========================================================
-   RESET
-========================================================= */
+/* =========================================
+   LIVE UPDATE FOR MAIN FORM
+========================================= */
 
-function resetResume(){
+document
+.querySelectorAll(
+    '#resumeForm input,'+
+    '#resumeForm select,'+
+    '#resumeForm textarea'
+)
+.forEach(element=>{
 
-    if(!confirm(
-        "Are you sure you want to reset the resume?"
-    )){
-        return;
-    }
+    element.addEventListener(
+        'input',
+        updatePreview
+    );
 
-    document.querySelectorAll(
-        "input,textarea"
-    ).forEach(input => {
+    element.addEventListener(
+        'change',
+        updatePreview
+    );
 
-        if(input.type !== "file")
-            input.value = "";
-
-    });
-
-    document.querySelectorAll(
-        "select"
-    ).forEach(select => {
-
-        if(select.id !== "countryCode")
-            select.selectedIndex = 0;
-
-    });
-
-    document.getElementById(
-        "countryCode"
-    ).value = "+91";
-
-    districtSelect.innerHTML =
-        '<option value="">Select District</option>';
-
-    districtSelect.disabled = true;
-
-    document.getElementById(
-        "photoPreview"
-    ).style.display = "none";
-
-    document.getElementById(
-        "previewPhoto"
-    ).style.display = "none";
-
-    document.getElementById(
-        "educationContainer"
-    ).innerHTML = "";
-
-    document.getElementById(
-        "projectContainer"
-    ).innerHTML = "";
-
-    document.getElementById(
-        "experienceContainer"
-    ).innerHTML = "";
-
-    document.getElementById(
-        "certificationContainer"
-    ).innerHTML = "";
-
-    selectedSkills = [];
-
-    selectedLanguages = [];
-
-    document.querySelectorAll(
-        ".chip"
-    ).forEach(chip => {
-
-        chip.classList.remove("active");
-
-    });
-
-    educationCount = 0;
-    projectCount = 0;
-    experienceCount = 0;
-    certificationCount = 0;
-
-    addEducation();
-
-    updatePreview();
-}
+});
 
 
-/* =========================================================
-   INITIALIZE
-========================================================= */
+/* =========================================
+   START WITH ONE EDUCATION RECORD
+========================================= */
 
 addEducation();
+
+
+/* =========================================
+   INITIAL PREVIEW
+========================================= */
 
 updatePreview();
 
