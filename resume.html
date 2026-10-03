@@ -1,1665 +1,1154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Resume Maker | Toolora</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toolora - Professional Resume Maker</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+<style>
+* {
+    box-sizing: border-box;
+}
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+html {
+    scroll-behavior: smooth;
+}
 
-        body {
-            margin: 0;
-            background: #f3f4f6;
-            color: #111827;
-            font-family: Arial, Helvetica, sans-serif;
-        }
+body {
+    margin: 0;
+    background: #f5f6f8;
+    color: #111827;
+    font-family: Arial, Helvetica, sans-serif;
+}
 
-        input,
-        select,
-        textarea,
-        button {
-            font-family: inherit;
-        }
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
 
-        .form-card {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            padding: 18px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-        }
+button {
+    cursor: pointer;
+}
 
-        .field-label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #374151;
-        }
+.site-header {
+    height: 64px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
 
-        .field-input {
-            width: 100%;
-            min-height: 38px;
-            padding: 9px 10px;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            background: #ffffff;
-            color: #111827;
-            font-size: 12px;
-            outline: none;
-        }
+.logo {
+    font-size: 21px;
+    font-weight: 800;
+    color: #111827;
+}
 
-        .field-input:focus {
-            border-color: #111827;
-            box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.08);
-        }
+.home-link {
+    color: #374151;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
 
-        textarea.field-input {
-            min-height: 90px;
-            resize: vertical;
-        }
+.page-container {
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 16px;
+}
 
-        .section-title {
-            font-size: 15px;
-            font-weight: 800;
-            color: #111827;
-            margin-bottom: 14px;
-        }
+.top-title {
+    margin-bottom: 16px;
+}
 
-        .sub-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 14px;
-            background: #fafafa;
-            margin-bottom: 12px;
-        }
+.top-title h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 800;
+}
 
-        .chip {
-            border: 1px solid #e5e7eb;
-            background: #ffffff;
-            color: #374151;
-            border-radius: 999px;
-            padding: 5px 9px;
-            font-size: 11px;
-            cursor: pointer;
-        }
+.top-title p {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
 
-        .chip.active {
-            background: #111827;
-            color: #ffffff;
-            border-color: #111827;
-        }
+.builder-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+}
 
-        .remove-btn {
-            border: 0;
-            background: #fee2e2;
-            color: #dc2626;
-            border-radius: 7px;
-            padding: 5px 9px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-        }
+.form-panel {
+    min-width: 0;
+}
 
-        .add-btn {
-            border: 0;
-            background: #eef2ff;
-            color: #3730a3;
-            border-radius: 8px;
-            padding: 8px 11px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-        }
+.preview-panel {
+    min-width: 0;
+}
 
-        .primary-btn {
-            border: 0;
-            background: #111827;
-            color: white;
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-        }
+.card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+}
 
-        .secondary-btn {
-            border: 1px solid #e5e7eb;
-            background: white;
-            color: #111827;
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-        }
+.section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+}
 
-        .photo-upload {
-            width: 100%;
-            border: 1px dashed #d1d5db;
-            border-radius: 10px;
-            padding: 12px;
-            background: #ffffff;
-        }
+.section-title h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+}
 
-        .photo-preview-small {
-            width: 70px;
-            height: 90px;
-            aspect-ratio: 7 / 9;
-            object-fit: cover;
-            object-position: center;
-            border-radius: 4px;
-            border: 1px solid #d1d5db;
-            display: none;
-        }
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 11px;
+}
 
-        .preview-wrapper {
-            width: 100%;
-        }
+.field {
+    min-width: 0;
+}
 
-        .resume-page {
-            width: 100%;
-            max-width: 794px;
-            min-height: 1123px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 42px;
-            color: #111827;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.10);
-            overflow-wrap: anywhere;
-        }
+.field.full {
+    grid-column: 1 / -1;
+}
 
-        .resume-header {
-            display: flex;
-            justify-content: space-between;
-            gap: 22px;
-            border-bottom: 2px solid #111827;
-            padding-bottom: 18px;
-            margin-bottom: 18px;
-        }
+label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 5px;
+}
 
-        .resume-header-main {
-            flex: 1;
-            min-width: 0;
-        }
+input,
+select,
+textarea {
+    width: 100%;
+    border: 1px solid #d9dee7;
+    background: #ffffff;
+    color: #111827;
+    border-radius: 7px;
+    padding: 9px 10px;
+    outline: none;
+    font-size: 12px;
+}
 
-        .resume-name {
-            font-size: 29px;
-            font-weight: 800;
-            line-height: 1.15;
-            margin-bottom: 5px;
-            word-break: break-word;
-        }
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #111827;
+    box-shadow: 0 0 0 2px rgba(17,24,39,0.06);
+}
 
-        .resume-headline {
-            font-size: 12px;
-            color: #4b5563;
-            margin-bottom: 9px;
-        }
+textarea {
+    min-height: 85px;
+    resize: vertical;
+    line-height: 1.5;
+}
 
-        .resume-contact {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px 12px;
-            font-size: 9.5px;
-            color: #374151;
-        }
+.photo-upload {
+    border: 1px dashed #cfd5df;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    background: #fafafa;
+}
 
-        .resume-photo-wrap {
-            flex: 0 0 100px;
-            display: flex;
-            justify-content: flex-end;
-            align-items: flex-start;
-        }
+.photo-upload input {
+    border: 0;
+    padding: 0;
+    font-size: 11px;
+}
 
-        .resume-photo {
-            width: 100px;
-            height: 128.5px;
-            aspect-ratio: 7 / 9;
-            object-fit: cover;
-            object-position: center;
-            border: 1px solid #d1d5db;
-            border-radius: 2px;
-            display: none;
-        }
+.photo-preview-box {
+    margin-top: 10px;
+    display: none;
+    justify-content: center;
+}
 
-        .resume-section {
-            margin-bottom: 17px;
-        }
+.photo-preview-box img {
+    max-width: 120px;
+    max-height: 150px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
 
-        .resume-section-title {
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            border-bottom: 1px solid #111827;
-            padding-bottom: 4px;
-            margin-bottom: 8px;
-        }
+.primary-btn,
+.secondary-btn,
+.danger-btn,
+.dark-btn {
+    border: 0;
+    border-radius: 7px;
+    padding: 9px 12px;
+    font-size: 11px;
+    font-weight: 700;
+}
 
-        .resume-text {
-            font-size: 9.5px;
-            line-height: 1.55;
-            color: #374151;
-            white-space: pre-line;
-        }
+.primary-btn {
+    background: #111827;
+    color: white;
+}
 
-        .resume-item {
-            margin-bottom: 10px;
-        }
+.secondary-btn {
+    background: #f1f3f6;
+    color: #111827;
+}
 
-        .resume-item:last-child {
-            margin-bottom: 0;
-        }
+.danger-btn {
+    background: #fee2e2;
+    color: #991b1b;
+}
 
-        .resume-item-title {
-            font-size: 10px;
-            font-weight: 800;
-        }
+.dark-btn {
+    background: #111827;
+    color: white;
+}
 
-        .resume-item-subtitle {
-            font-size: 9.5px;
-            color: #4b5563;
-            margin-top: 2px;
-        }
+.add-btn {
+    margin-top: 10px;
+}
 
-        .resume-item-meta {
-            font-size: 8.5px;
-            color: #6b7280;
-            margin-top: 2px;
-        }
+.dynamic-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+    padding: 12px;
+    margin-bottom: 11px;
+    background: #fcfcfd;
+}
 
-        .resume-list {
-            margin: 4px 0 0 15px;
-            padding: 0;
-        }
+.dynamic-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
 
-        .resume-list li {
-            font-size: 9.5px;
-            line-height: 1.45;
-            margin-bottom: 2px;
-        }
+.dynamic-head strong {
+    font-size: 12px;
+}
 
-        .skill-list,
-        .language-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px 7px;
-        }
+.custom-field {
+    display: none;
+    margin-top: 8px;
+}
 
-        .resume-chip {
-            font-size: 8.5px;
-            border: 1px solid #d1d5db;
-            border-radius: 3px;
-            padding: 3px 6px;
-        }
+.semester-box {
+    margin-top: 12px;
+    border-top: 1px solid #eceff3;
+    padding-top: 12px;
+}
 
-        .semester-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
+.semester-title {
+    font-size: 12px;
+    font-weight: 800;
+    margin: 0 0 9px;
+}
 
-        .semester-box {
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 9px;
-            background: white;
-        }
+.semester-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
 
-        .semester-title {
-            font-size: 11px;
-            font-weight: 800;
-            margin-bottom: 6px;
-        }
+.skill-list,
+.language-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
 
-        .semester-info {
-            font-size: 9px;
-            color: #4b5563;
-            line-height: 1.5;
-        }
+.chip-option {
+    border: 1px solid #d9dee7;
+    background: white;
+    color: #374151;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 10px;
+}
 
-        .hidden {
-            display: none !important;
-        }
+.chip-option.active {
+    background: #111827;
+    color: white;
+    border-color: #111827;
+}
 
-        @media (max-width: 767px) {
-            body {
-                background: #f3f4f6;
-            }
+.inline-add {
+    display: flex;
+    gap: 7px;
+}
 
-            .form-card {
-                padding: 14px;
-                border-radius: 12px;
-            }
+.inline-add input {
+    flex: 1;
+}
 
-            .resume-page {
-                width: 100%;
-                min-height: auto;
-                padding: 22px 17px;
-                box-shadow: none;
-                border-radius: 10px;
-            }
+.preview-header {
+    margin-bottom: 10px;
+}
 
-            .resume-header {
-                gap: 12px;
-            }
+.preview-header h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+}
 
-            .resume-name {
-                font-size: 23px;
-            }
+.preview-header p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 11px;
+}
 
-            .resume-photo-wrap {
-                flex-basis: 75px;
-            }
+.preview-actions {
+    display: flex;
+    gap: 7px;
+    margin-top: 10px;
+}
 
-            .resume-photo {
-                width: 75px;
-                height: 96.5px;
-            }
+.preview-actions button {
+    flex: 1;
+}
 
-            .semester-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+.preview-scroll {
+    width: 100%;
+    overflow-x: hidden;
+}
 
-        @media print {
-            body {
-                background: white;
-            }
+.resume-page {
+    width: 100%;
+    max-width: 794px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 28px 24px;
+    border-radius: 10px;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.08);
+    color: #111827;
+}
 
-            body * {
-                visibility: hidden !important;
-            }
+.resume-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 17px;
+    border-bottom: 1.5px solid #111827;
+}
 
-            #previewArea,
-            #previewArea * {
-                visibility: visible !important;
-            }
+.resume-person {
+    min-width: 0;
+}
 
-            #previewArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                margin: 0;
-                padding: 0;
-            }
+.resume-name {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0 0 6px;
+    word-break: break-word;
+}
 
-            .resume-page {
-                width: 210mm;
-                min-height: 297mm;
-                max-width: none;
-                padding: 14mm;
-                margin: 0;
-                box-shadow: none;
-                border-radius: 0;
-            }
+.resume-degree {
+    font-size: 12px;
+    color: #374151;
+    margin-bottom: 10px;
+}
 
-            @page {
-                size: A4;
-                margin: 0;
-            }
-        }
-    </style>
+.contact-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 13px;
+    font-size: 10px;
+    color: #374151;
+    line-height: 1.6;
+}
+
+.resume-photo-wrap {
+    flex: 0 0 auto;
+    width: 105px;
+    max-height: 135px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+.resume-photo {
+    display: block;
+    max-width: 105px;
+    max-height: 135px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 3px;
+}
+
+.resume-section {
+    margin-top: 18px;
+}
+
+.resume-section-title {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #9ca3af;
+    margin-bottom: 10px;
+}
+
+.resume-text {
+    font-size: 10.5px;
+    line-height: 1.65;
+    color: #222;
+    white-space: pre-line;
+}
+
+.education-entry {
+    margin-bottom: 12px;
+}
+
+.education-entry:last-child {
+    margin-bottom: 0;
+}
+
+.education-main {
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.education-sub {
+    font-size: 9.5px;
+    color: #374151;
+    margin-top: 3px;
+    line-height: 1.5;
+}
+
+.semester-preview {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+}
+
+.sem-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 7px;
+    padding: 9px;
+    font-size: 9.5px;
+    line-height: 1.5;
+}
+
+.sem-card strong {
+    display: block;
+    margin-bottom: 3px;
+}
+
+.preview-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.preview-chip {
+    border: 1px solid #d9dee7;
+    border-radius: 5px;
+    padding: 4px 7px;
+    font-size: 9px;
+}
+
+.project-entry,
+.experience-entry,
+.cert-entry {
+    margin-bottom: 11px;
+}
+
+.entry-title {
+    font-size: 10.5px;
+    font-weight: 800;
+}
+
+.entry-meta {
+    font-size: 9px;
+    color: #555;
+    margin-top: 2px;
+}
+
+.entry-description {
+    font-size: 9.5px;
+    line-height: 1.55;
+    margin-top: 4px;
+    white-space: pre-line;
+}
+
+.link-entry {
+    margin-bottom: 9px;
+}
+
+.link-label {
+    font-size: 9.5px;
+    font-weight: 800;
+}
+
+.link-value {
+    font-size: 9px;
+    color: #444;
+    margin-top: 2px;
+    word-break: break-word;
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (min-width: 700px) {
+    .page-container {
+        padding: 22px;
+    }
+
+    .form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .semester-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .resume-page {
+        padding: 42px;
+    }
+}
+
+@media (min-width: 1050px) {
+    .builder-layout {
+        grid-template-columns: minmax(450px, 0.9fr) minmax(500px, 1.1fr);
+        align-items: start;
+    }
+
+    .preview-panel {
+        position: sticky;
+        top: 82px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-container {
+        padding: 10px;
+    }
+
+    .card {
+        padding: 12px;
+    }
+
+    .top-title h1 {
+        font-size: 22px;
+    }
+
+    .resume-page {
+        padding: 22px 17px;
+        border-radius: 9px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+    }
+
+    .resume-name {
+        font-size: 23px;
+    }
+
+    .resume-photo-wrap {
+        width: 78px;
+        max-height: 105px;
+    }
+
+    .resume-photo {
+        max-width: 78px;
+        max-height: 105px;
+    }
+
+    .semester-preview {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media print {
+    body {
+        background: white;
+    }
+
+    .site-header,
+    .top-title,
+    .form-panel,
+    .preview-header,
+    .preview-actions {
+        display: none !important;
+    }
+
+    .page-container {
+        max-width: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .builder-layout {
+        display: block;
+    }
+
+    .preview-panel {
+        position: static;
+    }
+
+    .preview-scroll {
+        overflow: visible;
+    }
+
+    .resume-page {
+        width: 210mm;
+        max-width: none;
+        min-height: 297mm;
+        margin: 0;
+        padding: 14mm;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    @page {
+        size: A4;
+        margin: 0;
+    }
+}
+</style>
 </head>
 
 <body>
 
-<header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <a href="index.html" class="font-extrabold text-lg text-gray-900">
-            Toolora
-        </a>
-
-        <a href="index.html"
-           class="text-xs font-semibold text-gray-600 hover:text-gray-900">
-            Back to Home
-        </a>
-    </div>
+<header class="site-header">
+    <div class="logo">Toolora</div>
+    <a class="home-link" href="index.html">Back to Home</a>
 </header>
 
-<main class="max-w-7xl mx-auto px-3 sm:px-5 py-6">
+<main class="page-container">
 
-    <div class="mb-6">
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">
-            Professional Resume Maker
-        </h1>
-        <p class="text-sm text-gray-500 mt-1">
-            Create a clean, professional resume and save it as a PDF.
-        </p>
+    <div class="top-title">
+        <h1>Professional Resume Maker</h1>
+        <p>Create a clean, professional resume that is ready for printing and PDF sharing.</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="builder-layout">
 
-        <!-- FORM -->
-        <div class="space-y-5">
+        <div class="form-panel">
 
             <!-- PERSONAL INFORMATION -->
-            <section class="form-card">
-                <h2 class="section-title">1. Personal Information</h2>
+            <section class="card">
+                <div class="section-title">
+                    <h2>1. Personal Information</h2>
+                </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="form-grid">
 
-                    <div>
-                        <label class="field-label">Full Name</label>
-                        <input id="fullName"
-                               class="field-input"
-                               placeholder="ABC XYZ">
+                    <div class="field">
+                        <label>Full Name</label>
+                        <input id="fullName" type="text" placeholder="ABC XYZ">
                     </div>
 
-                    <div>
-                        <label class="field-label">Email</label>
-                        <input id="email"
-                               type="email"
-                               class="field-input"
-                               placeholder="abc@example.com">
+                    <div class="field">
+                        <label>Email</label>
+                        <input id="email" type="email" placeholder="abc@example.com">
                     </div>
 
-                    <div>
-                        <label class="field-label">Phone</label>
-                        <input id="phone"
-                               class="field-input"
-                               placeholder="+91 9876543210">
+                    <div class="field">
+                        <label>Phone</label>
+                        <input id="phone" type="tel" placeholder="+91 9876543210">
                     </div>
 
-                    <div>
-                        <label class="field-label">City</label>
-                        <input id="city"
-                               class="field-input"
-                               placeholder="Kanpur">
+                    <div class="field">
+                        <label>City</label>
+                        <input id="city" type="text" placeholder="Kanpur">
                     </div>
 
-                    <div>
-                        <label class="field-label">State</label>
-                        <select id="state" class="field-input">
+                    <div class="field">
+                        <label>State</label>
+                        <select id="state">
                             <option value="">Select State</option>
                         </select>
                     </div>
 
-                    <div>
-                        <label class="field-label">District</label>
-                        <select id="district" class="field-input" disabled>
+                    <div class="field">
+                        <label>District</label>
+                        <select id="district" disabled>
                             <option value="">Select District</option>
                         </select>
                     </div>
 
-                    <div>
-                        <label class="field-label">PIN Code</label>
-                        <input id="pinCode"
-                               class="field-input"
-                               inputmode="numeric"
-                               placeholder="208001">
+                    <div class="field">
+                        <label>PIN Code</label>
+                        <input id="pin" type="text" inputmode="numeric" placeholder="208001">
                     </div>
 
-                    <div>
-                        <label class="field-label">Professional Title</label>
-                        <input id="professionalTitle"
-                               class="field-input"
-                               placeholder="BCA Student">
+                    <div class="field">
+                        <label>Professional Title</label>
+                        <input id="professionalTitle" type="text" placeholder="BCA Student">
                     </div>
 
-                </div>
-
-                <div class="mt-4">
-                    <label class="field-label">Profile Photo</label>
-
-                    <div class="photo-upload">
-                        <div class="flex items-center gap-3">
-
-                            <img id="smallPhotoPreview"
-                                 class="photo-preview-small"
-                                 alt="Profile Photo Preview">
-
-                            <div class="flex-1">
-                                <input id="profilePhoto"
-                                       type="file"
-                                       accept="image/*"
-                                       class="block w-full text-xs text-gray-500">
-
-                                <p class="text-[10px] text-gray-400 mt-1">
-                                    Recommended professional portrait photo. The resume uses a 35 × 45 mm style ratio.
-                                </p>
+                    <div class="field full">
+                        <label>Profile Photo</label>
+                        <div class="photo-upload">
+                            <input id="profilePhoto" type="file" accept="image/*">
+                            <div class="photo-preview-box" id="photoPreviewBox">
+                                <img id="photoPreview" alt="Profile Preview">
                             </div>
-
                         </div>
                     </div>
+
                 </div>
             </section>
 
-
             <!-- SUMMARY -->
-            <section class="form-card">
-                <h2 class="section-title">2. Professional Summary</h2>
+            <section class="card">
+                <div class="section-title">
+                    <h2>2. Professional Summary</h2>
+                </div>
 
-                <textarea id="summary"
-                          class="field-input"
-                          placeholder="Write a short professional summary about yourself."></textarea>
+                <textarea id="summary" placeholder="Write a short professional summary about yourself."></textarea>
             </section>
 
-
             <!-- EDUCATION -->
-            <section class="form-card">
-                <div class="flex items-center justify-between gap-3 mb-3">
-                    <h2 class="section-title mb-0">3. Education</h2>
+            <section class="card">
+                <div class="section-title">
+                    <h2>3. Education</h2>
                 </div>
 
                 <div id="educationContainer"></div>
 
-                <button type="button"
-                        id="addEducationBtn"
-                        class="add-btn">
+                <button class="secondary-btn add-btn" type="button" onclick="addEducation()">
                     + Add Education
                 </button>
             </section>
 
-
             <!-- SKILLS -->
-            <section class="form-card">
-                <h2 class="section-title">4. Skills</h2>
+            <section class="card">
+                <div class="section-title">
+                    <h2>4. Skills</h2>
+                </div>
 
-                <div id="skillChips"
-                     class="flex flex-wrap gap-2 mb-3"></div>
+                <div class="skill-list" id="skillList"></div>
 
-                <div class="flex gap-2">
-                    <input id="customSkill"
-                           class="field-input"
-                           placeholder="Add custom skill">
-
-                    <button type="button"
-                            id="addSkillBtn"
-                            class="primary-btn">
-                        Add
-                    </button>
+                <div class="inline-add">
+                    <input id="customSkill" type="text" placeholder="Add custom skill">
+                    <button class="dark-btn" type="button" onclick="addCustomSkill()">Add</button>
                 </div>
             </section>
 
-
             <!-- PROJECTS -->
-            <section class="form-card">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="section-title mb-0">5. Projects</h2>
+            <section class="card">
+                <div class="section-title">
+                    <h2>5. Projects</h2>
                 </div>
 
                 <div id="projectsContainer"></div>
 
-                <button type="button"
-                        id="addProjectBtn"
-                        class="add-btn">
+                <button class="secondary-btn add-btn" type="button" onclick="addProject()">
                     + Add Project
                 </button>
             </section>
 
-
             <!-- EXPERIENCE -->
-            <section class="form-card">
-                <h2 class="section-title">6. Experience & Activities</h2>
+            <section class="card">
+                <div class="section-title">
+                    <h2>6. Experience & Activities</h2>
+                </div>
 
                 <div id="experienceContainer"></div>
 
-                <button type="button"
-                        id="addExperienceBtn"
-                        class="add-btn">
+                <button class="secondary-btn add-btn" type="button" onclick="addExperience()">
                     + Add Experience / Activity
                 </button>
             </section>
 
-
             <!-- CERTIFICATIONS -->
-            <section class="form-card">
-                <h2 class="section-title">7. Certifications</h2>
+            <section class="card">
+                <div class="section-title">
+                    <h2>7. Certifications</h2>
+                </div>
 
-                <div id="certificationsContainer"></div>
+                <div id="certificationContainer"></div>
 
-                <button type="button"
-                        id="addCertificationBtn"
-                        class="add-btn">
+                <button class="secondary-btn add-btn" type="button" onclick="addCertification()">
                     + Add Certification
                 </button>
             </section>
 
-
             <!-- LANGUAGES -->
-            <section class="form-card">
-                <h2 class="section-title">8. Languages</h2>
+            <section class="card">
+                <div class="section-title">
+                    <h2>8. Languages</h2>
+                </div>
 
-                <div id="languageChips"
-                     class="flex flex-wrap gap-2 mb-3"></div>
+                <div class="language-list" id="languageList"></div>
 
-                <div class="flex gap-2">
-                    <input id="customLanguage"
-                           class="field-input"
-                           placeholder="Add custom language">
-
-                    <button type="button"
-                            id="addLanguageBtn"
-                            class="primary-btn">
-                        Add
-                    </button>
+                <div class="inline-add">
+                    <input id="customLanguage" type="text" placeholder="Add custom language">
+                    <button class="dark-btn" type="button" onclick="addCustomLanguage()">Add</button>
                 </div>
             </section>
 
-
             <!-- LINKS -->
-            <section class="form-card">
-                <h2 class="section-title">9. Professional Links</h2>
+            <section class="card">
+                <div class="section-title">
+                    <h2>9. Professional Links</h2>
+                </div>
 
-                <div class="space-y-3">
-
-                    <div>
-                        <label class="field-label">LinkedIn</label>
-                        <input id="linkedin"
-                               class="field-input"
-                               placeholder="https://linkedin.com/in/abc">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>LinkedIn</label>
+                        <input id="linkedin" type="text" placeholder="https://linkedin.com/in/abc">
                     </div>
 
-                    <div>
-                        <label class="field-label">GitHub</label>
-                        <input id="github"
-                               class="field-input"
-                               placeholder="https://github.com/abc">
+                    <div class="field">
+                        <label>GitHub</label>
+                        <input id="github" type="text" placeholder="https://github.com/abc">
                     </div>
 
-                    <div>
-                        <label class="field-label">Portfolio</label>
-                        <input id="portfolio"
-                               class="field-input"
-                               placeholder="https://example.com">
+                    <div class="field">
+                        <label>Portfolio</label>
+                        <input id="portfolio" type="text" placeholder="https://example.com">
                     </div>
 
-                    <div>
-                        <label class="field-label">Other Professional Link</label>
-                        <input id="otherLink"
-                               class="field-input"
-                               placeholder="https://example.com">
+                    <div class="field">
+                        <label>Other Professional Link</label>
+                        <input id="otherLink" type="text" placeholder="https://example.com">
                     </div>
-
                 </div>
             </section>
 
         </div>
 
+        <!-- LIVE PREVIEW -->
+        <div class="preview-panel">
 
-        <!-- PREVIEW -->
-        <div class="preview-wrapper">
+            <div class="preview-header">
+                <h2>Live Preview</h2>
+                <p>Your resume updates automatically as you type.</p>
 
-            <div class="sticky top-20">
+                <div class="preview-actions">
+                    <button class="primary-btn" type="button" onclick="window.print()">
+                        Print / Save PDF
+                    </button>
 
-                <div class="form-card mb-4">
-                    <div class="flex items-center justify-between gap-3">
-                        <div>
-                            <h2 class="text-sm font-extrabold text-gray-900">
-                                Live Preview
-                            </h2>
-                            <p class="text-[10px] text-gray-500">
-                                Your resume updates automatically.
-                            </p>
-                        </div>
-
-                        <div class="flex gap-2">
-                            <button type="button"
-                                    id="printBtn"
-                                    class="primary-btn">
-                                Print / Save PDF
-                            </button>
-
-                            <button type="button"
-                                    id="resetBtn"
-                                    class="secondary-btn">
-                                Reset
-                            </button>
-                        </div>
-                    </div>
+                    <button class="secondary-btn" type="button" onclick="resetResume()">
+                        Reset
+                    </button>
                 </div>
+            </div>
 
+            <div class="preview-scroll">
 
-                <div id="previewArea">
+                <div class="resume-page" id="resumePreview">
 
-                    <div id="resumePreview"
-                         class="resume-page">
+                    <div class="resume-top">
 
-                        <!-- HEADER -->
-                        <div class="resume-header">
+                        <div class="resume-person">
+                            <h1 class="resume-name" id="previewName">Your Name</h1>
+                            <div class="resume-degree" id="previewTitle">Professional Title</div>
 
-                            <div class="resume-header-main">
-
-                                <div id="previewName"
-                                     class="resume-name">
-                                    Your Name
-                                </div>
-
-                                <div id="previewTitle"
-                                     class="resume-headline">
-                                    Professional Title
-                                </div>
-
-                                <div id="previewContact"
-                                     class="resume-contact">
-                                </div>
-
+                            <div class="contact-line" id="previewContact">
+                                <span>Email</span>
+                                <span>Phone</span>
+                                <span>City</span>
                             </div>
-
-                            <div id="previewPhotoWrap"
-                                 class="resume-photo-wrap hidden">
-
-                                <img id="previewPhoto"
-                                     class="resume-photo"
-                                     alt="Profile Photo">
-
-                            </div>
-
                         </div>
 
-
-                        <!-- SUMMARY -->
-                        <section id="previewSummarySection"
-                                 class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Professional Summary
-                            </div>
-
-                            <div id="previewSummary"
-                                 class="resume-text">
-                            </div>
-
-                        </section>
-
-
-                        <!-- EDUCATION -->
-                        <section id="previewEducationSection"
-                                 class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Education
-                            </div>
-
-                            <div id="previewEducation"></div>
-
-                        </section>
-
-
-                        <!-- SKILLS -->
-                        <section id="previewSkillsSection"
-                                 class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Skills
-                            </div>
-
-                            <div id="previewSkills"
-                                 class="skill-list">
-                            </div>
-
-                        </section>
-
-
-                        <!-- PROJECTS -->
-                        <section id="previewProjectsSection"
-                                 class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Projects
-                            </div>
-
-                            <div id="previewProjects"></div>
-
-                        </section>
-
-
-                        <!-- EXPERIENCE -->
-                        <section id="previewExperienceSection"
-                                 class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Experience & Activities
-                            </div>
-
-                            <div id="previewExperience"></div>
-
-                        </section>
-
-
-                        <!-- CERTIFICATIONS -->
-                        <section id="previewCertificationsSection"
-                                 class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Certifications
-                            </div>
-
-                            <div id="previewCertifications"></div>
-
-                        </section>
-
-
-                        <!-- LANGUAGES -->
-                        <section id="previewLanguagesSection"
-                                 class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Languages
-                            </div>
-
-                            <div id="previewLanguages"
-                                 class="language-list">
-                            </div>
-
-                        </section>
-
-
-                        <!-- LINKS -->
-                        <section id="previewLinksSection"
-                                 class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Professional Links
-                            </div>
-
-                            <div id="previewLinks"
-                                 class="resume-text">
-                            </div>
-
-                        </section>
+                        <div class="resume-photo-wrap" id="previewPhotoWrap"></div>
 
                     </div>
+
+                    <section class="resume-section hidden" id="previewSummarySection">
+                        <div class="resume-section-title">Professional Summary</div>
+                        <div class="resume-text" id="previewSummary"></div>
+                    </section>
+
+                    <section class="resume-section hidden" id="previewEducationSection">
+                        <div class="resume-section-title">Education</div>
+                        <div id="previewEducation"></div>
+                    </section>
+
+                    <section class="resume-section hidden" id="previewSkillsSection">
+                        <div class="resume-section-title">Skills</div>
+                        <div class="preview-chips" id="previewSkills"></div>
+                    </section>
+
+                    <section class="resume-section hidden" id="previewProjectsSection">
+                        <div class="resume-section-title">Projects</div>
+                        <div id="previewProjects"></div>
+                    </section>
+
+                    <section class="resume-section hidden" id="previewExperienceSection">
+                        <div class="resume-section-title">Experience & Activities</div>
+                        <div id="previewExperience"></div>
+                    </section>
+
+                    <section class="resume-section hidden" id="previewCertificationsSection">
+                        <div class="resume-section-title">Certifications</div>
+                        <div id="previewCertifications"></div>
+                    </section>
+
+                    <section class="resume-section hidden" id="previewLanguagesSection">
+                        <div class="resume-section-title">Languages</div>
+                        <div class="preview-chips" id="previewLanguages"></div>
+                    </section>
+
+                    <section class="resume-section hidden" id="previewLinksSection">
+                        <div class="resume-section-title">Professional Links</div>
+                        <div id="previewLinks"></div>
+                    </section>
 
                 </div>
 
             </div>
-
         </div>
 
     </div>
-
 </main>
 
-
 <script>
-/* =========================================================
-   TOOLORA RESUME MAKER
-   ========================================================= */
-
-
-/* -----------------------------
-   STATE / DISTRICT DATA
------------------------------ */
+/* =========================
+   INDIA STATES & DISTRICTS
+========================= */
 
 const stateDistricts = {
-
     "Andhra Pradesh": [
-        "Alluri Sitharama Raju",
-        "Anakapalli",
-        "Ananthapuramu",
-        "Annamayya",
-        "Bapatla",
-        "Chittoor",
-        "Dr. B. R. Ambedkar Konaseema",
-        "East Godavari",
-        "Eluru",
-        "Guntur",
-        "Kakinada",
-        "Krishna",
-        "Kurnool",
-        "Nandyal",
-        "NTR",
-        "Palnadu",
-        "Parvathipuram Manyam",
-        "Prakasam",
-        "Srikakulam",
-        "Sri Sathya Sai",
-        "Tirupati",
-        "Visakhapatnam",
-        "Vizianagaram",
-        "West Godavari",
-        "YSR Kadapa"
+        "Alluri Sitharama Raju","Anakapalli","Anantapur","Annamayya",
+        "Bapatla","Chittoor","Dr. B. R. Ambedkar Konaseema","East Godavari",
+        "Eluru","Guntur","Kakinada","Krishna","Kurnool","Nandyal",
+        "NTR","Palnadu","Parvathipuram Manyam","Prakasam",
+        "Srikakulam","Sri Sathya Sai","Tirupati","Visakhapatnam",
+        "Vizianagaram","West Godavari","YSR Kadapa"
     ],
 
     "Arunachal Pradesh": [
-        "Anjaw",
-        "Changlang",
-        "East Kameng",
-        "East Siang",
-        "Kamle",
-        "Kra Daadi",
-        "Kurung Kumey",
-        "Lepa Rada",
-        "Lohit",
-        "Longding",
-        "Lower Dibang Valley",
-        "Lower Siang",
-        "Lower Subansiri",
-        "Namsai",
-        "Pakke Kessang",
-        "Papum Pare",
-        "Shi Yomi",
-        "Siang",
-        "Tawang",
-        "Tirap",
-        "Upper Dibang Valley",
-        "Upper Siang",
-        "Upper Subansiri",
-        "West Kameng",
+        "Anjaw","Changlang","Dibang Valley","East Kameng","East Siang",
+        "Kamle","Kra Daadi","Kurung Kumey","Lepa Rada","Lohit",
+        "Longding","Lower Dibang Valley","Lower Siang","Lower Subansiri",
+        "Namsai","Pakke Kessang","Papum Pare","Shi Yomi","Siang",
+        "Tawang","Tirap","Upper Siang","Upper Subansiri","West Kameng",
         "West Siang"
     ],
 
     "Assam": [
-        "Baksa",
-        "Barpeta",
-        "Biswanath",
-        "Bongaigaon",
-        "Cachar",
-        "Charaideo",
-        "Chirang",
-        "Darrang",
-        "Dhemaji",
-        "Dhubri",
-        "Dibrugarh",
-        "Dima Hasao",
-        "Goalpara",
-        "Golaghat",
-        "Hailakandi",
-        "Hojai",
-        "Jorhat",
-        "Kamrup",
-        "Kamrup Metropolitan",
-        "Karbi Anglong",
-        "Karimganj",
-        "Kokrajhar",
-        "Lakhimpur",
-        "Majuli",
-        "Morigaon",
-        "Nagaon",
-        "Nalbari",
-        "Sivasagar",
-        "Sonitpur",
-        "South Salmara-Mankachar",
-        "Tinsukia",
-        "Udalguri",
+        "Baksa","Barpeta","Biswanath","Bongaigaon","Cachar","Charaideo",
+        "Chirang","Darrang","Dhemaji","Dhubri","Dibrugarh","Dima Hasao",
+        "Goalpara","Golaghat","Hailakandi","Hojai","Jorhat","Kamrup",
+        "Kamrup Metropolitan","Karbi Anglong","Karimganj","Kokrajhar",
+        "Lakhimpur","Majuli","Morigaon","Nagaon","Nalbari","Sivasagar",
+        "Sonitpur","South Salmara-Mankachar","Tinsukia","Udalguri",
         "West Karbi Anglong"
     ],
 
     "Bihar": [
-        "Araria",
-        "Arwal",
-        "Aurangabad",
-        "Banka",
-        "Begusarai",
-        "Bhagalpur",
-        "Bhojpur",
-        "Buxar",
-        "Darbhanga",
-        "East Champaran",
-        "Gaya",
-        "Gopalganj",
-        "Jamui",
-        "Jehanabad",
-        "Kaimur",
-        "Katihar",
-        "Khagaria",
-        "Kishanganj",
-        "Lakhisarai",
-        "Madhepura",
-        "Madhubani",
-        "Munger",
-        "Muzaffarpur",
-        "Nalanda",
-        "Nawada",
-        "Patna",
-        "Purnia",
-        "Rohtas",
-        "Saharsa",
-        "Samastipur",
-        "Saran",
-        "Sheikhpura",
-        "Sheohar",
-        "Sitamarhi",
-        "Siwan",
-        "Supaul",
-        "Vaishali",
-        "West Champaran"
+        "Araria","Arwal","Aurangabad","Banka","Begusarai","Bhagalpur",
+        "Bhojpur","Buxar","Darbhanga","East Champaran","Gaya","Gopalganj",
+        "Jamui","Jehanabad","Kaimur","Katihar","Khagaria","Kishanganj",
+        "Lakhisarai","Madhepura","Madhubani","Munger","Muzaffarpur",
+        "Nalanda","Nawada","Patna","Purnia","Rohtas","Saharsa","Samastipur",
+        "Saran","Sheikhpura","Sheohar","Sitamarhi","Siwan","Supaul",
+        "Vaishali","West Champaran"
     ],
 
     "Chhattisgarh": [
-        "Balod",
-        "Baloda Bazar",
-        "Balrampur-Ramanujganj",
-        "Bastar",
-        "Bemetara",
-        "Bijapur",
-        "Bilaspur",
-        "Dantewada",
-        "Dhamtari",
-        "Durg",
-        "Gariaband",
-        "Gaurela-Pendra-Marwahi",
-        "Janjgir-Champa",
-        "Jashpur",
-        "Kabirdham",
-        "Kanker",
-        "Khairagarh-Chhuikhadan-Gandai",
-        "Kondagaon",
-        "Korba",
-        "Koriya",
-        "Mahasamund",
-        "Manendragarh-Chirmiri-Bharatpur",
-        "Mohla-Manpur-Ambagarh Chowki",
-        "Mungeli",
-        "Narayanpur",
-        "Raigarh",
-        "Raipur",
-        "Rajnandgaon",
-        "Sarangarh-Bilaigarh",
-        "Sukma",
-        "Surajpur",
-        "Surguja"
+        "Balod","Baloda Bazar","Balrampur-Ramanujganj","Bastar",
+        "Bemetara","Bijapur","Bilaspur","Dantewada","Dhamtari","Durg",
+        "Gariaband","Gaurela-Pendra-Marwahi","Janjgir-Champa",
+        "Jashpur","Kabirdham","Kanker","Khairagarh-Chhuikhadan-Gandai",
+        "Kondagaon","Korba","Koriya","Mahasamund","Manendragarh-Chirmiri-Bharatpur",
+        "Mohla-Manpur-Ambagarh Chowki","Mungeli","Narayanpur",
+        "Raigarh","Raipur","Rajnandgaon","Sarangarh-Bilaigarh",
+        "Sukma","Surajpur","Surguja"
     ],
 
     "Goa": [
-        "North Goa",
-        "South Goa"
+        "North Goa","South Goa"
     ],
 
     "Gujarat": [
-        "Ahmedabad",
-        "Amreli",
-        "Anand",
-        "Aravalli",
-        "Banaskantha",
-        "Bharuch",
-        "Bhavnagar",
-        "Botad",
-        "Chhota Udaipur",
-        "Dahod",
-        "Dang",
-        "Devbhoomi Dwarka",
-        "Gandhinagar",
-        "Gir Somnath",
-        "Jamnagar",
-        "Junagadh",
-        "Kheda",
-        "Kutch",
-        "Mahisagar",
-        "Mehsana",
-        "Morbi",
-        "Narmada",
-        "Navsari",
-        "Panchmahal",
-        "Patan",
-        "Porbandar",
-        "Rajkot",
-        "Sabarkantha",
-        "Surat",
-        "Surendranagar",
-        "Tapi",
-        "Vadodara",
-        "Valsad"
+        "Ahmedabad","Amreli","Anand","Aravalli","Banaskantha","Bharuch",
+        "Bhavnagar","Botad","Chhota Udaipur","Dahod","Dang","Devbhumi Dwarka",
+        "Gandhinagar","Gir Somnath","Jamnagar","Junagadh","Kheda","Kutch",
+        "Mahisagar","Mehsana","Morbi","Narmada","Navsari","Panchmahal",
+        "Patan","Porbandar","Rajkot","Sabarkantha","Surat","Surendranagar",
+        "Tapi","Vadodara","Valsad"
     ],
 
     "Haryana": [
-        "Ambala",
-        "Bhiwani",
-        "Charkhi Dadri",
-        "Faridabad",
-        "Fatehabad",
-        "Gurugram",
-        "Hisar",
-        "Jhajjar",
-        "Jind",
-        "Kaithal",
-        "Karnal",
-        "Kurukshetra",
-        "Mahendragarh",
-        "Nuh",
-        "Palwal",
-        "Panchkula",
-        "Panipat",
-        "Rewari",
-        "Rohtak",
-        "Sirsa",
-        "Sonipat",
-        "Yamunanagar"
+        "Ambala","Bhiwani","Charkhi Dadri","Faridabad","Fatehabad",
+        "Gurugram","Hisar","Jhajjar","Jind","Kaithal","Karnal","Kurukshetra",
+        "Mahendragarh","Nuh","Palwal","Panchkula","Panipat","Rewari",
+        "Rohtak","Sirsa","Sonipat","Yamunanagar"
     ],
 
     "Himachal Pradesh": [
-        "Bilaspur",
-        "Chamba",
-        "Hamirpur",
-        "Kangra",
-        "Kinnaur",
-        "Kullu",
-        "Lahaul and Spiti",
-        "Mandi",
-        "Shimla",
-        "Sirmaur",
-        "Solan",
-        "Una"
+        "Bilaspur","Chamba","Hamirpur","Kangra","Kinnaur","Kullu",
+        "Lahaul and Spiti","Mandi","Shimla","Sirmaur","Solan","Una"
     ],
 
     "Jharkhand": [
-        "Bokaro",
-        "Chatra",
-        "Deoghar",
-        "Dhanbad",
-        "Dumka",
-        "East Singhbhum",
-        "Garhwa",
-        "Giridih",
-        "Godda",
-        "Gumla",
-        "Hazaribagh",
-        "Jamtara",
-        "Khunti",
-        "Koderma",
-        "Latehar",
-        "Lohardaga",
-        "Pakur",
-        "Palamu",
-        "Ramgarh",
-        "Ranchi",
-        "Sahebganj",
-        "Seraikela Kharsawan",
-        "Simdega",
-        "West Singhbhum"
+        "Bokaro","Chatra","Deoghar","Dhanbad","Dumka","East Singhbhum",
+        "Garhwa","Giridih","Godda","Gumla","Hazaribagh","Jamtara",
+        "Khunti","Koderma","Latehar","Lohardaga","Pakur","Palamu",
+        "Ramgarh","Ranchi","Sahibganj","Seraikela Kharsawan",
+        "Simdega","West Singhbhum"
     ],
 
     "Karnataka": [
-        "Bagalkot",
-        "Ballari",
-        "Belagavi",
-        "Bengaluru Rural",
-        "Bengaluru Urban",
-        "Bidar",
-        "Chamarajanagar",
-        "Chikkaballapur",
-        "Chikkamagaluru",
-        "Chitradurga",
-        "Dakshina Kannada",
-        "Davanagere",
-        "Dharwad",
-        "Gadag",
-        "Hassan",
-        "Haveri",
-        "Kalaburagi",
-        "Kodagu",
-        "Kolar",
-        "Koppal",
-        "Mandya",
-        "Mysuru",
-        "Raichur",
-        "Ramanagara",
-        "Shivamogga",
-        "Tumakuru",
-        "Udupi",
-        "Uttara Kannada",
-        "Vijayapura",
-        "Vijayanagara",
+        "Bagalkot","Ballari","Belagavi","Bengaluru Rural","Bengaluru Urban",
+        "Bidar","Chamarajanagar","Chikkaballapur","Chikkamagaluru",
+        "Chitradurga","Dakshina Kannada","Davanagere","Dharwad","Gadag",
+        "Hassan","Haveri","Kalaburagi","Kodagu","Kolar","Koppal",
+        "Mandya","Mysuru","Raichur","Ramanagara","Shivamogga",
+        "Tumakuru","Udupi","Uttara Kannada","Vijayanagara","Vijayapura",
         "Yadgir"
     ],
 
     "Kerala": [
-        "Alappuzha",
-        "Ernakulam",
-        "Idukki",
-        "Kannur",
-        "Kasaragod",
-        "Kollam",
-        "Kottayam",
-        "Kozhikode",
-        "Malappuram",
-        "Palakkad",
-        "Pathanamthitta",
-        "Thiruvananthapuram",
-        "Thrissur",
-        "Wayanad"
+        "Alappuzha","Ernakulam","Idukki","Kannur","Kasaragod","Kollam",
+        "Kottayam","Kozhikode","Malappuram","Palakkad","Pathanamthitta",
+        "Thiruvananthapuram","Thrissur","Wayanad"
     ],
 
     "Madhya Pradesh": [
-        "Agar Malwa",
-        "Alirajpur",
-        "Anuppur",
-        "Ashoknagar",
-        "Balaghat",
-        "Barwani",
-        "Betul",
-        "Bhind",
-        "Bhopal",
-        "Burhanpur",
-        "Chhatarpur",
-        "Chhindwara",
-        "Damoh",
-        "Datia",
-        "Dewas",
-        "Dhar",
-        "Dindori",
-        "Guna",
-        "Gwalior",
-        "Harda",
-        "Indore",
-        "Jabalpur",
-        "Jhabua",
-        "Katni",
-        "Khandwa",
-        "Khargone",
-        "Maihar",
-        "Mandla",
-        "Mandsaur",
-        "Mauganj",
-        "Morena",
-        "Narmadapuram",
-        "Narsinghpur",
-        "Neemuch",
-        "Niwari",
-        "Panna",
-        "Raisen",
-        "Rajgarh",
-        "Ratlam",
-        "Rewa",
-        "Sagar",
-        "Satna",
-        "Sehore",
-        "Seoni",
-        "Shahdol",
-        "Shajapur",
-        "Sheopur",
-        "Shivpuri",
-        "Sidhi",
-        "Singrauli",
-        "Tikamgarh",
-        "Ujjain",
-        "Umaria",
-        "Vidisha"
+        "Agar Malwa","Alirajpur","Anuppur","Ashoknagar","Balaghat",
+        "Barwani","Betul","Bhind","Bhopal","Burhanpur","Chhatarpur",
+        "Chhindwara","Damoh","Datia","Dewas","Dhar","Dindori","Guna",
+        "Gwalior","Harda","Indore","Jabalpur","Jhabua","Katni","Khandwa",
+        "Khargone","Maihar","Mandla","Mandsaur","Mauganj","Morena",
+        "Narmadapuram","Narsinghpur","Neemuch","Niwari","Panna","Raisen",
+        "Rajgarh","Ratlam","Rewa","Sagar","Satna","Sehore","Seoni",
+        "Shahdol","Shajapur","Sheopur","Shivpuri","Sidhi","Singrauli",
+        "Tikamgarh","Ujjain","Umaria","Vidisha"
     ],
 
     "Maharashtra": [
-        "Ahmednagar",
-        "Akola",
-        "Amravati",
-        "Aurangabad",
-        "Beed",
-        "Bhandara",
-        "Buldhana",
-        "Chandrapur",
-        "Dhule",
-        "Gadchiroli",
-        "Gondia",
-        "Hingoli",
-        "Jalgaon",
-        "Jalna",
-        "Kolhapur",
-        "Latur",
-        "Mumbai City",
-        "Mumbai Suburban",
-        "Nagpur",
-        "Nanded",
-        "Nandurbar",
-        "Nashik",
-        "Osmanabad",
-        "Palghar",
-        "Parbhani",
-        "Pune",
-        "Raigad",
-        "Ratnagiri",
-        "Sangli",
-        "Satara",
-        "Sindhudurg",
-        "Solapur",
-        "Thane",
-        "Wardha",
-        "Washim",
-        "Yavatmal"
+        "Ahmednagar","Akola","Amravati","Aurangabad","Beed","Bhandara",
+        "Buldhana","Chandrapur","Dhule","Gadchiroli","Gondia","Hingoli",
+        "Jalgaon","Jalna","Kolhapur","Latur","Mumbai City","Mumbai Suburban",
+        "Nagpur","Nanded","Nandurbar","Nashik","Osmanabad","Palghar",
+        "Parbhani","Pune","Raigad","Ratnagiri","Sangli","Satara",
+        "Sindhudurg","Solapur","Thane","Wardha","Washim","Yavatmal"
     ],
 
     "Odisha": [
-        "Angul",
-        "Balangir",
-        "Balasore",
-        "Bargarh",
-        "Bhadrak",
-        "Boudh",
-        "Cuttack",
-        "Deogarh",
-        "Dhenkanal",
-        "Gajapati",
-        "Ganjam",
-        "Jagatsinghpur",
-        "Jajpur",
-        "Jharsuguda",
-        "Kalahandi",
-        "Kandhamal",
-        "Kendrapara",
-        "Kendujhar",
-        "Khordha",
-        "Koraput",
-        "Malkangiri",
-        "Mayurbhanj",
-        "Nabarangpur",
-        "Nayagarh",
-        "Nuapada",
-        "Puri",
-        "Rayagada",
-        "Sambalpur",
-        "Subarnapur",
-        "Sundargarh"
+        "Angul","Balangir","Balasore","Bargarh","Bhadrak","Boudh",
+        "Cuttack","Deogarh","Dhenkanal","Gajapati","Ganjam","Jagatsinghpur",
+        "Jajpur","Jharsuguda","Kalahandi","Kandhamal","Kendrapara",
+        "Kendujhar","Khordha","Koraput","Malkangiri","Mayurbhanj",
+        "Nabarangpur","Nayagarh","Nuapada","Puri","Rayagada",
+        "Sambalpur","Subarnapur","Sundargarh"
     ],
 
     "Punjab": [
-        "Amritsar",
-        "Barnala",
-        "Bathinda",
-        "Faridkot",
-        "Fatehgarh Sahib",
-        "Fazilka",
-        "Ferozepur",
-        "Gurdaspur",
-        "Hoshiarpur",
-        "Jalandhar",
-        "Kapurthala",
-        "Ludhiana",
-        "Malerkotla",
-        "Mansa",
-        "Moga",
-        "Pathankot",
-        "Patiala",
-        "Rupnagar",
-        "Sahibzada Ajit Singh Nagar",
-        "Sangrur",
-        "Shaheed Bhagat Singh Nagar",
-        "Sri Muktsar Sahib",
-        "Tarn Taran"
+        "Amritsar","Barnala","Bathinda","Faridkot","Fatehgarh Sahib",
+        "Fazilka","Ferozepur","Gurdaspur","Hoshiarpur","Jalandhar",
+        "Kapurthala","Ludhiana","Malerkotla","Mansa","Moga","Muktsar",
+        "Pathankot","Patiala","Rupnagar","Sahibzada Ajit Singh Nagar",
+        "Sangrur","Shaheed Bhagat Singh Nagar","Tarn Taran"
     ],
 
     "Rajasthan": [
-        "Ajmer",
-        "Alwar",
-        "Anupgarh",
-        "Balotra",
-        "Banswara",
-        "Baran",
-        "Barmer",
-        "Beawar",
-        "Bharatpur",
-        "Bhilwara",
-        "Bikaner",
-        "Bundi",
-        "Chittorgarh",
-        "Churu",
-        "Dausa",
-        "Deeg",
-        "Dholpur",
-        "Didwana-Kuchamana",
-        "Dudu",
-        "Dungarpur",
-        "Hanumangarh",
-        "Jaipur",
-        "Jaisalmer",
-        "Jalore",
-        "Jhalawar",
-        "Jhunjhunu",
-        "Jodhpur",
-        "Karauli",
-        "Kekri",
-        "Khairthal-Tijara",
-        "Kota",
-        "Kotputli-Behror",
-        "Nagaur",
-        "Neem Ka Thana",
-        "Pali",
-        "Phalodi",
-        "Pratapgarh",
-        "Rajsamand",
-        "Salumbar",
-        "Sawai Madhopur",
-        "Shahpura",
-        "Sikar",
-        "Sirohi",
-        "Sri Ganganagar",
-        "Tonk",
-        "Udaipur"
+        "Ajmer","Alwar","Anupgarh","Balotra","Banswara","Baran","Barmer",
+        "Beawar","Bharatpur","Bhilwara","Bikaner","Bundi","Chittorgarh",
+        "Churu","Dausa","Deeg","Dholpur","Didwana-Kuchamana","Dudu",
+        "Dungarpur","Gangapur City","Hanumangarh","Jaipur","Jaisalmer",
+        "Jalore","Jhalawar","Jhunjhunu","Jodhpur","Karauli","Khairthal-Tijara",
+        "Kota","Kotputli-Behror","Nagaur","Neem Ka Thana","Pali",
+        "Phalodi","Pratapgarh","Rajsamand","Salumbar","Sawai Madhopur",
+        "Sikar","Sirohi","Sri Ganganagar","Tonk","Udaipur"
     ],
 
     "Tamil Nadu": [
-        "Ariyalur",
-        "Chengalpattu",
-        "Chennai",
-        "Coimbatore",
-        "Cuddalore",
-        "Dharmapuri",
-        "Dindigul",
-        "Erode",
-        "Kallakurichi",
-        "Kancheepuram",
-        "Karur",
-        "Krishnagiri",
-        "Madurai",
-        "Mayiladuthurai",
-        "Nagapattinam",
-        "Namakkal",
-        "Nilgiris",
-        "Perambalur",
-        "Pudukkottai",
-        "Ramanathapuram",
-        "Ranipet",
-        "Salem",
-        "Sivaganga",
-        "Tenkasi",
-        "Thanjavur",
-        "Theni",
-        "Thoothukudi",
-        "Tiruchirappalli",
-        "Tirunelveli",
-        "Tirupathur",
-        "Tiruppur",
-        "Tiruvallur",
-        "Tiruvannamalai",
-        "Tiruvarur",
-        "Vellore",
-        "Viluppuram",
-        "Virudhunagar"
+        "Ariyalur","Chengalpattu","Chennai","Coimbatore","Cuddalore",
+        "Dharmapuri","Dindigul","Erode","Kallakurichi","Kancheepuram",
+        "Karur","Krishnagiri","Madurai","Mayiladuthurai","Nagapattinam",
+        "Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram",
+        "Ranipet","Salem","Sivaganga","Tenkasi","Thanjavur","Theni",
+        "Thoothukudi","Tiruchirappalli","Tirunelveli","Tirupathur",
+        "Tiruppur","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore",
+        "Viluppuram","Virudhunagar"
     ],
 
     "Telangana": [
-        "Adilabad",
-        "Bhadradri Kothagudem",
-        "Hanamkonda",
-        "Hyderabad",
-        "Jagtial",
-        "Jangaon",
-        "Jayashankar Bhupalpally",
-        "Jogulamba Gadwal",
-        "Kamareddy",
-        "Karimnagar",
-        "Khammam",
-        "Komaram Bheem Asifabad",
-        "Mahabubabad",
-        "Mahbubnagar",
-        "Mancherial",
-        "Medak",
-        "Medchal-Malkajgiri",
-        "Mulugu",
-        "Nagarkurnool",
-        "Nalgonda",
-        "Narayanpet",
-        "Nirmal",
-        "Nizamabad",
-        "Peddapalli",
-        "Rajanna Sircilla",
-        "Rangareddy",
-        "Sangareddy",
-        "Siddipet",
-        "Suryapet",
-        "Vikarabad",
-        "Wanaparthy",
-        "Warangal",
-        "Yadadri Bhuvanagiri"
+        "Adilabad","Bhadradri Kothagudem","Hanamkonda","Hyderabad","Jagtial",
+        "Jangaon","Jayashankar Bhupalpally","Jogulamba Gadwal","Kamareddy",
+        "Karimnagar","Khammam","Komaram Bheem Asifabad","Mahabubabad",
+        "Mahbubnagar","Mancherial","Medak","Medchal-Malkajgiri",
+        "Mulugu","Nagarkurnool","Nalgonda","Narayanpet","Nirmal",
+        "Nizamabad","Peddapalli","Rajanna Sircilla","Rangareddy",
+        "Sangareddy","Siddipet","Suryapet","Vikarabad","Wanaparthy",
+        "Warangal","Yadadri Bhuvanagiri"
     ],
 
     "Uttar Pradesh": [
-        "Agra",
-        "Aligarh",
-        "Ambedkar Nagar",
-        "Amethi",
-        "Amroha",
-        "Auraiya",
-        "Ayodhya",
-        "Azamgarh",
-        "Baghpat",
-        "Bahraich",
-        "Ballia",
-        "Balrampur",
-        "Banda",
-        "Barabanki",
-        "Bareilly",
-        "Basti",
-        "Bhadohi",
-        "Bijnor",
-        "Budaun",
-        "Bulandshahr",
-        "Chandauli",
-        "Chitrakoot",
-        "Deoria",
-        "Etah",
-        "Etawah",
-        "Farrukhabad",
-        "Fatehpur",
-        "Firozabad",
-        "Gautam Buddha Nagar",
-        "Ghaziabad",
-        "Ghazipur",
-        "Gonda",
-        "Gorakhpur",
-        "Hamirpur",
-        "Hapur",
-        "Hardoi",
-        "Hathras",
-        "Jalaun",
-        "Jaunpur",
-        "Jhansi",
-        "Kannauj",
-        "Kanpur Dehat",
-        "Kanpur Nagar",
-        "Kasganj",
-        "Kaushambi",
-        "Kheri",
-        "Kushinagar",
-        "Lalitpur",
-        "Lucknow",
-        "Maharajganj",
-        "Mahoba",
-        "Mainpuri",
-        "Mathura",
-        "Mau",
-        "Meerut",
-        "Mirzapur",
-        "Moradabad",
-        "Muzaffarnagar",
-        "Pilibhit",
-        "Pratapgarh",
-        "Prayagraj",
-        "Raebareli",
-        "Rampur",
-        "Saharanpur",
-        "Sambhal",
-        "Sant Kabir Nagar",
-        "Shahjahanpur",
-        "Shamli",
-        "Shravasti",
-        "Siddharthnagar",
-        "Sitapur",
-        "Sonbhadra",
-        "Sultanpur",
-        "Unnao",
-        "Varanasi"
+        "Agra","Aligarh","Ambedkar Nagar","Amethi","Amroha","Auraiya",
+        "Ayodhya","Azamgarh","Baghpat","Bahraich","Ballia","Balrampur",
+        "Banda","Barabanki","Bareilly","Basti","Bhadohi","Bijnor",
+        "Budaun","Bulandshahr","Chandauli","Chitrakoot","Deoria",
+        "Etah","Etawah","Farrukhabad","Fatehpur","Firozabad",
+        "Gautam Buddha Nagar","Ghaziabad","Ghazipur","Gonda","Gorakhpur",
+        "Hamirpur","Hapur","Hardoi","Hathras","Jalaun","Jaunpur",
+        "Jhansi","Kannauj","Kanpur Dehat","Kanpur Nagar","Kasganj",
+        "Kaushambi","Kushinagar","Lakhimpur Kheri","Lalitpur","Lucknow",
+        "Maharajganj","Mahoba","Mainpuri","Mathura","Mau","Meerut",
+        "Mirzapur","Moradabad","Muzaffarnagar","Pilibhit","Pratapgarh",
+        "Prayagraj","Raebareli","Rampur","Saharanpur","Sambhal",
+        "Sant Kabir Nagar","Shahjahanpur","Shamli","Shravasti","Siddharthnagar",
+        "Sitapur","Sonbhadra","Sultanpur","Unnao","Varanasi"
     ],
 
     "Uttarakhand": [
-        "Almora",
-        "Bageshwar",
-        "Chamoli",
-        "Champawat",
-        "Dehradun",
-        "Haridwar",
-        "Nainital",
-        "Pauri Garhwal",
-        "Pithoragarh",
-        "Rudraprayag",
-        "Tehri Garhwal",
-        "Udham Singh Nagar",
-        "Uttarkashi"
+        "Almora","Bageshwar","Chamoli","Champawat","Dehradun",
+        "Haridwar","Nainital","Pauri Garhwal","Pithoragarh",
+        "Rudraprayag","Tehri Garhwal","Udham Singh Nagar","Uttarkashi"
     ],
 
     "West Bengal": [
-        "Alipurduar",
-        "Bankura",
-        "Birbhum",
-        "Cooch Behar",
-        "Dakshin Dinajpur",
-        "Darjeeling",
-        "Hooghly",
-        "Howrah",
-        "Jalpaiguri",
-        "Jhargram",
-        "Kalimpong",
-        "Kolkata",
-        "Maldah",
-        "Murshidabad",
-        "Nadia",
-        "North 24 Parganas",
-        "Paschim Bardhaman",
-        "Paschim Medinipur",
-        "Purba Bardhaman",
-        "Purba Medinipur",
-        "Purulia",
-        "South 24 Parganas",
-        "Uttar Dinajpur"
+        "Alipurduar","Bankura","Paschim Bardhaman","Purba Bardhaman",
+        "Birbhum","Cooch Behar","Darjeeling","Hooghly","Howrah",
+        "Jalpaiguri","Jhargram","Kalimpong","Kolkata","Maldah",
+        "Murshidabad","Nadia","North 24 Parganas","South 24 Parganas",
+        "Uttar Dinajpur","Dakshin Dinajpur","Paschim Medinipur",
+        "Purba Medinipur"
     ],
 
     "Delhi": [
-        "Central Delhi",
-        "East Delhi",
-        "New Delhi",
-        "North Delhi",
-        "North East Delhi",
-        "North West Delhi",
-        "Shahdara",
-        "South Delhi",
-        "South East Delhi",
-        "South West Delhi",
+        "Central Delhi","East Delhi","New Delhi","North Delhi",
+        "North East Delhi","North West Delhi","Shahdara",
+        "South Delhi","South East Delhi","South West Delhi",
         "West Delhi"
     ],
 
     "Jammu and Kashmir": [
-        "Anantnag",
-        "Bandipora",
-        "Baramulla",
-        "Budgam",
-        "Doda",
-        "Ganderbal",
-        "Jammu",
-        "Kathua",
-        "Kishtwar",
-        "Kulgam",
-        "Kupwara",
-        "Poonch",
-        "Pulwama",
-        "Rajouri",
-        "Ramban",
-        "Reasi",
-        "Samba",
-        "Shopian",
-        "Srinagar",
-        "Udhampur"
+        "Anantnag","Bandipora","Baramulla","Budgam","Doda","Ganderbal",
+        "Jammu","Kathua","Kishtwar","Kulgam","Kupwara","Poonch",
+        "Pulwama","Rajouri","Ramban","Reasi","Samba","Shopian",
+        "Srinagar","Udhampur"
     ],
 
     "Ladakh": [
-        "Kargil",
-        "Leh"
+        "Kargil","Leh"
     ],
 
     "Chandigarh": [
@@ -1667,106 +1156,123 @@ const stateDistricts = {
     ],
 
     "Puducherry": [
-        "Karaikal",
-        "Mahe",
-        "Puducherry",
-        "Yanam"
-    ],
-
-    "Andaman and Nicobar Islands": [
-        "Nicobar",
-        "North and Middle Andaman",
-        "South Andaman"
-    ],
-
-    "Dadra and Nagar Haveli and Daman and Diu": [
-        "Dadra and Nagar Haveli",
-        "Daman",
-        "Diu"
-    ],
-
-    "Lakshadweep": [
-        "Lakshadweep"
+        "Karaikal","Mahe","Puducherry","Yanam"
     ]
 };
 
 
-/* -----------------------------
-   COMMON OPTIONS
------------------------------ */
+/* =========================
+   COMMON COLLEGE / UNIVERSITY OPTIONS
+========================= */
+
+const collegeOptions = [
+    "University of Delhi",
+    "Jawaharlal Nehru University",
+    "Banaras Hindu University",
+    "Aligarh Muslim University",
+    "University of Allahabad",
+    "Chhatrapati Shahu Ji Maharaj University",
+    "University of Lucknow",
+    "Dr. A.P.J. Abdul Kalam Technical University",
+    "Mahatma Gandhi Kashi Vidyapith",
+    "Dr. Ram Manohar Lohia Avadh University",
+    "University of Mumbai",
+    "Savitribai Phule Pune University",
+    "University of Calcutta",
+    "University of Rajasthan",
+    "University of Rajasthan",
+    "University of Madras",
+    "Bangalore University",
+    "University of Hyderabad",
+    "Osmania University",
+    "University of Kerala",
+    "Panjab University",
+    "Kurukshetra University",
+    "Amity University",
+    "Lovely Professional University",
+    "Chandigarh University",
+    "Sharda University",
+    "Galgotias University",
+    "Manipal University",
+    "Other"
+];
+
+const instituteOptions = [
+    "Government College",
+    "Government Polytechnic",
+    "Government Degree College",
+    "Private College",
+    "Private Institute",
+    "Engineering College",
+    "Management Institute",
+    "Polytechnic Institute",
+    "Technical Institute",
+    "University Campus",
+    "Autonomous College",
+    "Other"
+];
+
+const universityOptions = [
+    "Chhatrapati Shahu Ji Maharaj University",
+    "Dr. A.P.J. Abdul Kalam Technical University",
+    "University of Delhi",
+    "Jawaharlal Nehru University",
+    "Banaras Hindu University",
+    "Aligarh Muslim University",
+    "University of Allahabad",
+    "University of Lucknow",
+    "Dr. Ram Manohar Lohia Avadh University",
+    "Mahatma Gandhi Kashi Vidyapith",
+    "University of Mumbai",
+    "Savitribai Phule Pune University",
+    "University of Calcutta",
+    "University of Rajasthan",
+    "University of Madras",
+    "Bangalore University",
+    "Osmania University",
+    "University of Hyderabad",
+    "University of Kerala",
+    "Panjab University",
+    "Kurukshetra University",
+    "Amity University",
+    "Lovely Professional University",
+    "Chandigarh University",
+    "Sharda University",
+    "Galgotias University",
+    "Manipal University",
+    "Other"
+];
 
 const boards = [
     "CBSE",
-    "CISCE / ICSE / ISC",
+    "CISCE / ICSE",
     "UP Board",
-    "BSEB",
-    "RBSE",
-    "MPBSE",
-    "MSBSHSE",
-    "WBBSE",
-    "BSE Odisha",
-    "PSEB",
-    "HBSE",
-    "CGBSE",
-    "JAC",
+    "Bihar Board",
+    "MP Board",
+    "Rajasthan Board",
+    "Haryana Board",
+    "Punjab School Education Board",
+    "Maharashtra State Board",
+    "Gujarat Board",
+    "West Bengal Board",
     "Karnataka Board",
-    "Kerala Board",
     "Tamil Nadu Board",
     "Telangana Board",
     "Andhra Pradesh Board",
     "Other"
 ];
 
-const years = [];
-for (let year = 2026; year >= 1980; year--) {
-    years.push(year);
-}
-
-const qualifications = [
-    "10th",
-    "12th / Intermediate",
-    "Diploma",
-    "Graduation",
-    "Post Graduation",
-    "Other"
-];
-
 const skills = [
-    "HTML",
-    "CSS",
-    "JavaScript",
-    "Python",
-    "C",
-    "C++",
-    "Java",
-    "SQL",
-    "Git",
-    "GitHub",
-    "MS Office",
-    "Excel",
-    "Communication",
-    "Problem Solving",
-    "Logical Thinking",
-    "Computer Fundamentals",
-    "Leadership",
-    "Teamwork",
-    "Data Analysis",
-    "UI/UX"
+    "HTML","CSS","JavaScript","Python","C","C++","Java",
+    "SQL","MS Office","Excel","PowerPoint","Communication",
+    "Problem Solving","Logical Thinking","Critical Thinking",
+    "Teamwork","Leadership","Git","GitHub","Data Analysis",
+    "Computer Fundamentals"
 ];
 
 const languages = [
-    "English",
-    "Hindi",
-    "Urdu",
-    "Bengali",
-    "Marathi",
-    "Gujarati",
-    "Tamil",
-    "Telugu",
-    "Kannada",
-    "Malayalam",
-    "Punjabi",
-    "Other"
+    "English","Hindi","Urdu","Bengali","Marathi","Gujarati",
+    "Punjabi","Tamil","Telugu","Kannada","Malayalam"
 ];
 
 const experienceTypes = [
@@ -1787,25 +1293,27 @@ const experienceTypes = [
 ];
 
 
-/* -----------------------------
-   DOM ELEMENTS
------------------------------ */
+/* =========================
+   YEAR OPTIONS
+========================= */
+
+function yearOptions(start = 1990, end = 2050) {
+    let html = '<option value="">Select Year</option>';
+
+    for (let year = end; year >= start; year--) {
+        html += `<option value="${year}">${year}</option>`;
+    }
+
+    return html;
+}
+
+
+/* =========================
+   INITIALIZE STATES
+========================= */
 
 const stateSelect = document.getElementById("state");
 const districtSelect = document.getElementById("district");
-
-const educationContainer = document.getElementById("educationContainer");
-const projectsContainer = document.getElementById("projectsContainer");
-const experienceContainer = document.getElementById("experienceContainer");
-const certificationsContainer = document.getElementById("certificationsContainer");
-
-const skillChips = document.getElementById("skillChips");
-const languageChips = document.getElementById("languageChips");
-
-
-/* -----------------------------
-   STATE DROPDOWN
------------------------------ */
 
 Object.keys(stateDistricts).sort().forEach(state => {
     const option = document.createElement("option");
@@ -1814,627 +1322,507 @@ Object.keys(stateDistricts).sort().forEach(state => {
     stateSelect.appendChild(option);
 });
 
+stateSelect.addEventListener("change", loadDistricts);
+
 function loadDistricts() {
+    const state = stateSelect.value;
 
-    const selectedState = stateSelect.value;
+    districtSelect.innerHTML = '<option value="">Select District</option>';
 
-    districtSelect.innerHTML =
-        '<option value="">Select District</option>';
-
-    if (!selectedState || !stateDistricts[selectedState]) {
+    if (!state || !stateDistricts[state]) {
         districtSelect.disabled = true;
         return;
     }
 
     districtSelect.disabled = false;
 
-    stateDistricts[selectedState].forEach(district => {
-
+    stateDistricts[state].forEach(district => {
         const option = document.createElement("option");
-
         option.value = district;
         option.textContent = district;
-
         districtSelect.appendChild(option);
     });
 
     updatePreview();
 }
 
-stateSelect.addEventListener("change", loadDistricts);
 
-
-/* -----------------------------
-   YEAR OPTIONS
------------------------------ */
-
-function yearOptions(includeBlank = true) {
-
-    let html = includeBlank
-        ? '<option value="">Select Year</option>'
-        : "";
-
-    years.forEach(year => {
-        html += `<option value="${year}">${year}</option>`;
-    });
-
-    return html;
-}
-
-
-/* -----------------------------
-   BOARD OPTIONS
------------------------------ */
+/* =========================
+   GENERATE SELECT OPTIONS
+========================= */
 
 function boardOptions() {
-
-    let html = '<option value="">Select Board / University</option>';
-
-    boards.forEach(board => {
-        html += `<option value="${escapeHtml(board)}">${escapeHtml(board)}</option>`;
-    });
-
-    return html;
+    return boards.map(board =>
+        `<option value="${escapeHtml(board)}">${escapeHtml(board)}</option>`
+    ).join("");
 }
 
+function instituteSelect(id, type = "institute") {
 
-/* -----------------------------
-   EDUCATION
------------------------------ */
+    const list = type === "college" ? collegeOptions : instituteOptions;
 
-function addEducation() {
+    return `
+        <select id="${id}" onchange="handleCustomSelect('${id}','${id}Custom')">
+            <option value="">Select College / Institute</option>
+            ${list.map(item => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join("")}
+        </select>
 
-    const id = Date.now() + Math.random();
-
-    const div = document.createElement("div");
-
-    div.className = "sub-card education-item";
-
-    div.dataset.id = id;
-
-    div.innerHTML = `
-
-        <div class="flex items-center justify-between gap-2 mb-3">
-
-            <div class="text-xs font-extrabold text-gray-800">
-                Education
-            </div>
-
-            <button type="button"
-                    class="remove-btn remove-education">
-                Remove
-            </button>
-
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-            <div>
-                <label class="field-label">
-                    Qualification
-                </label>
-
-                <select class="field-input education-qualification">
-                    ${qualifications.map(q =>
-                        `<option value="${escapeHtml(q)}">${escapeHtml(q)}</option>`
-                    ).join("")}
-                </select>
-            </div>
-
-            <div class="education-name-field">
-                <label class="field-label education-name-label">
-                    School Name
-                </label>
-
-                <input class="field-input education-name"
-                       placeholder="ABC School">
-            </div>
-
-            <div class="education-board-field">
-                <label class="field-label education-board-label">
-                    Board
-                </label>
-
-                <select class="field-input education-board">
-                    ${boardOptions()}
-                </select>
-            </div>
-
-            <div class="education-year-field">
-                <label class="field-label">
-                    Passing Year
-                </label>
-
-                <select class="field-input education-year">
-                    ${yearOptions()}
-                </select>
-            </div>
-
-            <div class="education-score-field">
-                <label class="field-label education-score-label">
-                    Percentage / CGPA
-                </label>
-
-                <input class="field-input education-score"
-                       placeholder="Example: 82% or 8.4 CGPA">
-            </div>
-
-        </div>
-
-        <div class="graduation-extra hidden mt-3">
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-                <div>
-                    <label class="field-label">
-                        Study Status
-                    </label>
-
-                    <select class="field-input education-status">
-                        <option value="">Select Status</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Pursuing">Pursuing</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Start Year
-                    </label>
-
-                    <select class="field-input education-start-year">
-                        ${yearOptions()}
-                    </select>
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Completion Year
-                    </label>
-
-                    <select class="field-input education-completion-year">
-                        ${yearOptions()}
-                    </select>
-                </div>
-
-            </div>
-
-            <div class="mt-4">
-
-                <div class="text-xs font-extrabold text-gray-800 mb-2">
-                    Semester Details
-                </div>
-
-                <div class="semester-grid">
-
-                    ${semesterBox(1)}
-                    ${semesterBox(2)}
-                    ${semesterBox(3)}
-                    ${semesterBox(4)}
-                    ${semesterBox(5)}
-                    ${semesterBox(6)}
-                    ${semesterBox(7)}
-                    ${semesterBox(8)}
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="custom-qualification-extra hidden mt-3">
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-                <div>
-                    <label class="field-label">
-                        Completion Year
-                    </label>
-
-                    <select class="field-input custom-completion-year">
-                        ${yearOptions()}
-                    </select>
-                </div>
-
-            </div>
-
+        <div class="custom-field" id="${id}Custom">
+            <input type="text" placeholder="Enter College / Institute name">
         </div>
     `;
+}
 
-    educationContainer.appendChild(div);
+function universitySelect(id) {
 
-    setupEducationItem(div);
+    return `
+        <select id="${id}" onchange="handleCustomSelect('${id}','${id}Custom')">
+            <option value="">Select University</option>
+            ${universityOptions.map(item => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join("")}
+        </select>
+
+        <div class="custom-field" id="${id}Custom">
+            <input type="text" placeholder="Enter University name">
+        </div>
+    `;
+}
+
+function boardSelect(id) {
+
+    return `
+        <select id="${id}" onchange="handleCustomSelect('${id}','${id}Custom')">
+            <option value="">Select Board</option>
+            ${boardOptions()}
+        </select>
+
+        <div class="custom-field" id="${id}Custom">
+            <input type="text" placeholder="Enter Board name">
+        </div>
+    `;
+}
+
+function handleCustomSelect(selectId, customId) {
+
+    const select = document.getElementById(selectId);
+    const customBox = document.getElementById(customId);
+
+    if (!select || !customBox) return;
+
+    if (select.value === "Other") {
+        customBox.style.display = "block";
+    } else {
+        customBox.style.display = "none";
+        const input = customBox.querySelector("input");
+        if (input) input.value = "";
+    }
 
     updatePreview();
 }
 
 
-function semesterBox(number) {
+/* =========================
+   EDUCATION
+========================= */
 
-    return `
-        <div class="semester-box">
+let educationCount = 0;
 
-            <div class="semester-title">
-                Semester ${number}
+function addEducation() {
+
+    educationCount++;
+
+    const id = educationCount;
+
+    const div = document.createElement("div");
+    div.className = "dynamic-item";
+    div.dataset.educationId = id;
+
+    div.innerHTML = `
+        <div class="dynamic-head">
+            <strong>Education</strong>
+            <button class="danger-btn" type="button" onclick="this.closest('.dynamic-item').remove(); updatePreview();">
+                Remove
+            </button>
+        </div>
+
+        <div class="form-grid">
+
+            <div class="field">
+                <label>Qualification</label>
+                <select class="edu-qualification" onchange="changeEducationFields(this, ${id})">
+                    <option value="10th">10th</option>
+                    <option value="12th / Intermediate">12th / Intermediate</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="Graduation">Graduation</option>
+                    <option value="Post Graduation">Post Graduation</option>
+                    <option value="Other">Other</option>
+                </select>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="field edu-custom-qualification hidden">
+                <label>Custom Qualification</label>
+                <input class="edu-custom-name" type="text" placeholder="Example: BCA">
+            </div>
 
-                <div>
-                    <label class="field-label">
-                        CGPA
-                    </label>
+            <div class="field">
+                <label class="institution-label">School Name</label>
+                <input class="edu-school" type="text" placeholder="ABC School">
+            </div>
 
-                    <input class="field-input semester-cgpa"
-                           data-semester="${number}"
-                           placeholder="8.5">
-                </div>
+            <div class="field edu-board-field">
+                <label>Board</label>
+                ${boardSelect("eduBoard_" + id)}
+            </div>
 
-                <div>
-                    <label class="field-label">
-                        SGPA / SGP
-                    </label>
+            <div class="field edu-institute-field hidden">
+                <label>College / Institute</label>
+                ${instituteSelect("eduInstitute_" + id, "college")}
+            </div>
 
-                    <input class="field-input semester-sgpa"
-                           data-semester="${number}"
-                           placeholder="8.7">
-                </div>
+            <div class="field edu-university-field hidden">
+                <label>University</label>
+                ${universitySelect("eduUniversity_" + id)}
+            </div>
 
+            <div class="field">
+                <label>Study Status</label>
+                <select class="edu-status" onchange="toggleEducationYears(this)">
+                    <option value="">Select Status</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Pursuing">Pursuing</option>
+                </select>
+            </div>
+
+            <div class="field edu-start-year hidden">
+                <label>Start Year</label>
+                <select class="edu-start">
+                    ${yearOptions()}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Passing / Completion Year</label>
+                <select class="edu-year">
+                    ${yearOptions()}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Percentage / CGPA</label>
+                <input class="edu-score" type="text" placeholder="Example: 82% or 8.4 CGPA">
             </div>
 
         </div>
+
+        <div class="semester-box hidden">
+            <div class="semester-title">Semester Details</div>
+
+            <div class="semester-grid">
+
+                <div class="field">
+                    <label>Semester 1 CGPA</label>
+                    <input class="sem1-cgpa" type="text" placeholder="Example: 8.20">
+                </div>
+
+                <div class="field">
+                    <label>Semester 1 SGPA / SGP</label>
+                    <input class="sem1-sgpa" type="text" placeholder="Example: 8.10">
+                </div>
+
+                <div class="field">
+                    <label>Semester 2 CGPA</label>
+                    <input class="sem2-cgpa" type="text" placeholder="Example: 8.40">
+                </div>
+
+                <div class="field">
+                    <label>Semester 2 SGPA / SGP</label>
+                    <input class="sem2-sgpa" type="text" placeholder="Example: 8.30">
+                </div>
+
+                <div class="field">
+                    <label>Semester 3 CGPA</label>
+                    <input class="sem3-cgpa" type="text" placeholder="Example: 8.50">
+                </div>
+
+                <div class="field">
+                    <label>Semester 3 SGPA / SGP</label>
+                    <input class="sem3-sgpa" type="text" placeholder="Example: 8.40">
+                </div>
+
+                <div class="field">
+                    <label>Semester 4 CGPA</label>
+                    <input class="sem4-cgpa" type="text" placeholder="Example: 8.60">
+                </div>
+
+                <div class="field">
+                    <label>Semester 4 SGPA / SGP</label>
+                    <input class="sem4-sgpa" type="text" placeholder="Example: 8.50">
+                </div>
+
+                <div class="field">
+                    <label>Semester 5 CGPA</label>
+                    <input class="sem5-cgpa" type="text" placeholder="Example: 8.70">
+                </div>
+
+                <div class="field">
+                    <label>Semester 5 SGPA / SGP</label>
+                    <input class="sem5-sgpa" type="text" placeholder="Example: 8.60">
+                </div>
+
+                <div class="field">
+                    <label>Semester 6 CGPA</label>
+                    <input class="sem6-cgpa" type="text" placeholder="Example: 8.80">
+                </div>
+
+                <div class="field">
+                    <label>Semester 6 SGPA / SGP</label>
+                    <input class="sem6-sgpa" type="text" placeholder="Example: 8.70">
+                </div>
+
+                <div class="field">
+                    <label>Semester 7 CGPA</label>
+                    <input class="sem7-cgpa" type="text" placeholder="Example: 8.90">
+                </div>
+
+                <div class="field">
+                    <label>Semester 7 SGPA / SGP</label>
+                    <input class="sem7-sgpa" type="text" placeholder="Example: 8.80">
+                </div>
+
+                <div class="field">
+                    <label>Semester 8 CGPA</label>
+                    <input class="sem8-cgpa" type="text" placeholder="Example: 9.00">
+                </div>
+
+                <div class="field">
+                    <label>Semester 8 SGPA / SGP</label>
+                    <input class="sem8-sgpa" type="text" placeholder="Example: 8.90">
+                </div>
+
+            </div>
+        </div>
     `;
-}
 
+    document.getElementById("educationContainer").appendChild(div);
 
-function setupEducationItem(item) {
-
-    const qualification =
-        item.querySelector(".education-qualification");
-
-    const nameLabel =
-        item.querySelector(".education-name-label");
-
-    const nameInput =
-        item.querySelector(".education-name");
-
-    const boardLabel =
-        item.querySelector(".education-board-label");
-
-    const boardSelect =
-        item.querySelector(".education-board");
-
-    const scoreLabel =
-        item.querySelector(".education-score-label");
-
-    const graduationExtra =
-        item.querySelector(".graduation-extra");
-
-    const customExtra =
-        item.querySelector(".custom-qualification-extra");
-
-    function updateQualificationUI() {
-
-        const value = qualification.value;
-
-        graduationExtra.classList.add("hidden");
-        customExtra.classList.add("hidden");
-
-        if (value === "10th") {
-
-            nameLabel.textContent = "School Name";
-            nameInput.placeholder = "ABC School";
-
-            boardLabel.textContent = "Board";
-            scoreLabel.textContent = "Percentage";
-
-            boardSelect.classList.remove("hidden");
-
-        } else if (value === "12th / Intermediate") {
-
-            nameLabel.textContent = "School / College Name";
-            nameInput.placeholder = "ABC Inter College";
-
-            boardLabel.textContent = "Board";
-            scoreLabel.textContent = "Percentage";
-
-            boardSelect.classList.remove("hidden");
-
-        } else if (value === "Diploma") {
-
-            nameLabel.textContent = "Diploma / Course Name";
-            nameInput.placeholder = "Diploma in Computer Applications";
-
-            boardLabel.textContent = "Board / University";
-            scoreLabel.textContent = "Percentage / CGPA";
-
-            boardSelect.classList.remove("hidden");
-
-        } else if (
-            value === "Graduation" ||
-            value === "Post Graduation"
-        ) {
-
-            nameLabel.textContent =
-                value === "Graduation"
-                    ? "Course / Degree"
-                    : "Post Graduation / Degree";
-
-            nameInput.placeholder =
-                value === "Graduation"
-                    ? "Bachelor of Computer Applications"
-                    : "Master of Computer Applications";
-
-            boardLabel.textContent = "University";
-
-            scoreLabel.textContent = "Percentage / CGPA";
-
-            boardSelect.classList.remove("hidden");
-
-            graduationExtra.classList.remove("hidden");
-
-        } else {
-
-            nameLabel.textContent = "Qualification";
-            nameInput.placeholder = "Professional Qualification";
-
-            boardLabel.textContent = "Board / University";
-            scoreLabel.textContent = "Percentage / CGPA";
-
-            boardSelect.classList.remove("hidden");
-
-            customExtra.classList.remove("hidden");
-        }
-
-        updatePreview();
-    }
-
-    qualification.addEventListener(
-        "change",
-        updateQualificationUI
+    changeEducationFields(
+        div.querySelector(".edu-qualification"),
+        id
     );
 
-    item.querySelectorAll("input, select, textarea")
-        .forEach(element => {
+    attachInputListeners(div);
 
-            element.addEventListener(
-                "input",
-                updatePreview
-            );
+    updatePreview();
+}
 
-            element.addEventListener(
-                "change",
-                updatePreview
-            );
-        });
+function changeEducationFields(select, id) {
 
-    item.querySelector(".remove-education")
-        .addEventListener("click", () => {
+    const item = select.closest(".dynamic-item");
+    const value = select.value;
 
-            item.remove();
-            updatePreview();
-        });
+    const boardField = item.querySelector(".edu-board-field");
+    const instituteField = item.querySelector(".edu-institute-field");
+    const universityField = item.querySelector(".edu-university-field");
+    const customQualification = item.querySelector(".edu-custom-qualification");
+    const schoolInput = item.querySelector(".edu-school");
+    const schoolLabel = item.querySelector(".institution-label");
+    const semesterBox = item.querySelector(".semester-box");
+    const statusField = item.querySelector(".edu-status").closest(".field");
+    const startField = item.querySelector(".edu-start-year").closest(".field");
 
-    updateQualificationUI();
+    boardField.classList.add("hidden");
+    instituteField.classList.add("hidden");
+    universityField.classList.add("hidden");
+    customQualification.classList.add("hidden");
+    semesterBox.classList.add("hidden");
+
+    if (value === "10th") {
+        boardField.classList.remove("hidden");
+        schoolLabel.textContent = "School Name";
+        schoolInput.placeholder = "ABC School";
+        statusField.classList.add("hidden");
+        startField.classList.add("hidden");
+    }
+
+    else if (value === "12th / Intermediate") {
+        boardField.classList.remove("hidden");
+        schoolLabel.textContent = "School / College Name";
+        schoolInput.placeholder = "ABC School / College";
+        statusField.classList.add("hidden");
+        startField.classList.add("hidden");
+    }
+
+    else if (value === "Diploma") {
+        instituteField.classList.remove("hidden");
+        universityField.classList.remove("hidden");
+        schoolLabel.textContent = "Diploma / Course Name";
+        schoolInput.placeholder = "Diploma in Computer Applications";
+        statusField.classList.remove("hidden");
+        startField.classList.remove("hidden");
+    }
+
+    else if (value === "Graduation" || value === "Post Graduation") {
+        instituteField.classList.remove("hidden");
+        universityField.classList.remove("hidden");
+        schoolLabel.textContent = "Course / Degree";
+        schoolInput.placeholder = "BCA / B.Tech / MBA";
+        statusField.classList.remove("hidden");
+        startField.classList.remove("hidden");
+        semesterBox.classList.remove("hidden");
+    }
+
+    else if (value === "Other") {
+        instituteField.classList.remove("hidden");
+        universityField.classList.remove("hidden");
+        customQualification.classList.remove("hidden");
+        schoolLabel.textContent = "Qualification Details";
+        schoolInput.placeholder = "Qualification details";
+        statusField.classList.remove("hidden");
+        startField.classList.remove("hidden");
+    }
+
+    updatePreview();
+}
+
+function toggleEducationYears(select) {
+
+    const item = select.closest(".dynamic-item");
+    const startField = item.querySelector(".edu-start-year").closest(".field");
+
+    if (select.value === "Completed" || select.value === "Pursuing") {
+        startField.classList.remove("hidden");
+    } else {
+        startField.classList.add("hidden");
+    }
+
+    updatePreview();
 }
 
 
-/* -----------------------------
+/* =========================
    PROJECTS
------------------------------ */
+========================= */
 
 function addProject() {
 
     const div = document.createElement("div");
-
-    div.className = "sub-card project-item";
+    div.className = "dynamic-item";
 
     div.innerHTML = `
-
-        <div class="flex items-center justify-between gap-2 mb-3">
-
-            <div class="text-xs font-extrabold">
-                Project
-            </div>
-
-            <button type="button"
-                    class="remove-btn remove-project">
+        <div class="dynamic-head">
+            <strong>Project</strong>
+            <button class="danger-btn" type="button" onclick="this.closest('.dynamic-item').remove(); updatePreview();">
                 Remove
             </button>
-
         </div>
 
-        <div class="space-y-3">
-
-            <div>
-                <label class="field-label">
-                    Project Name
-                </label>
-
-                <input class="field-input project-name"
-                       placeholder="ABC Project">
+        <div class="form-grid">
+            <div class="field full">
+                <label>Project Name</label>
+                <input class="project-name" type="text" placeholder="Project Name">
             </div>
 
-            <div>
-                <label class="field-label">
-                    Description
-                </label>
-
-                <textarea class="field-input project-description"
-                          placeholder="Describe the project, your role and the technologies used."></textarea>
+            <div class="field full">
+                <label>Project Description</label>
+                <textarea class="project-description" placeholder="Describe the project briefly."></textarea>
             </div>
-
         </div>
     `;
 
-    projectsContainer.appendChild(div);
-
-    div.querySelectorAll("input, textarea")
-        .forEach(element => {
-            element.addEventListener("input", updatePreview);
-        });
-
-    div.querySelector(".remove-project")
-        .addEventListener("click", () => {
-            div.remove();
-            updatePreview();
-        });
-
+    document.getElementById("projectsContainer").appendChild(div);
+    attachInputListeners(div);
     updatePreview();
 }
 
 
-/* -----------------------------
+/* =========================
    EXPERIENCE
------------------------------ */
+========================= */
 
 function addExperience() {
 
     const div = document.createElement("div");
-
-    div.className = "sub-card experience-item";
+    div.className = "dynamic-item";
 
     div.innerHTML = `
-
-        <div class="flex items-center justify-between gap-2 mb-3">
-
-            <div class="text-xs font-extrabold">
-                Experience / Activity
-            </div>
-
-            <button type="button"
-                    class="remove-btn remove-experience">
+        <div class="dynamic-head">
+            <strong>Experience / Activity</strong>
+            <button class="danger-btn" type="button" onclick="this.closest('.dynamic-item').remove(); updatePreview();">
                 Remove
             </button>
-
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="form-grid">
 
-            <div>
-                <label class="field-label">
-                    Type
-                </label>
-
-                <select class="field-input experience-type">
-
+            <div class="field">
+                <label>Type</label>
+                <select class="experience-type">
                     ${experienceTypes.map(type =>
                         `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`
                     ).join("")}
-
                 </select>
             </div>
 
-            <div>
-                <label class="field-label">
-                    Organization / Place
-                </label>
-
-                <input class="field-input experience-place"
-                       placeholder="ABC Organization">
+            <div class="field">
+                <label>Title / Role</label>
+                <input class="experience-title" type="text" placeholder="Role or Position">
             </div>
 
-            <div>
-                <label class="field-label">
-                    Role / Position
-                </label>
-
-                <input class="field-input experience-role"
-                       placeholder="Student Coordinator">
+            <div class="field">
+                <label>Organization / Institute</label>
+                <input class="experience-org" type="text" placeholder="Organization Name">
             </div>
 
-            <div>
-                <label class="field-label">
-                    Duration
-                </label>
-
-                <input class="field-input experience-duration"
-                       placeholder="2025 - 2026">
+            <div class="field">
+                <label>Duration</label>
+                <input class="experience-duration" type="text" placeholder="2025 - 2026">
             </div>
 
-        </div>
-
-        <div class="mt-3">
-
-            <label class="field-label">
-                Description
-            </label>
-
-            <textarea class="field-input experience-description"
-                      placeholder="Describe your work, responsibilities or achievements."></textarea>
+            <div class="field full">
+                <label>Description</label>
+                <textarea class="experience-description" placeholder="Describe your work, responsibility, activity or achievement."></textarea>
+            </div>
 
         </div>
     `;
 
-    experienceContainer.appendChild(div);
-
-    div.querySelectorAll("input, textarea, select")
-        .forEach(element => {
-            element.addEventListener("input", updatePreview);
-            element.addEventListener("change", updatePreview);
-        });
-
-    div.querySelector(".remove-experience")
-        .addEventListener("click", () => {
-            div.remove();
-            updatePreview();
-        });
-
+    document.getElementById("experienceContainer").appendChild(div);
+    attachInputListeners(div);
     updatePreview();
 }
 
 
-/* -----------------------------
+/* =========================
    CERTIFICATIONS
------------------------------ */
+========================= */
 
 function addCertification() {
 
     const div = document.createElement("div");
-
-    div.className = "sub-card certification-item";
+    div.className = "dynamic-item";
 
     div.innerHTML = `
-
-        <div class="flex items-center justify-between gap-2 mb-3">
-
-            <div class="text-xs font-extrabold">
-                Certification
-            </div>
-
-            <button type="button"
-                    class="remove-btn remove-certification">
+        <div class="dynamic-head">
+            <strong>Certification</strong>
+            <button class="danger-btn" type="button" onclick="this.closest('.dynamic-item').remove(); updatePreview();">
                 Remove
             </button>
-
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="form-grid">
 
-            <div>
-                <label class="field-label">
-                    Certification Name
-                </label>
-
-                <input class="field-input certification-name"
-                       placeholder="ABC Certification">
+            <div class="field">
+                <label>Certification Name</label>
+                <input class="cert-name" type="text" placeholder="Certification Name">
             </div>
 
-            <div>
-                <label class="field-label">
-                    Issuing Organization
-                </label>
-
-                <input class="field-input certification-issuer"
-                       placeholder="XYZ Organization">
+            <div class="field">
+                <label>Organization</label>
+                <input class="cert-org" type="text" placeholder="Organization Name">
             </div>
 
-            <div>
-                <label class="field-label">
-                    Year
-                </label>
-
-                <select class="field-input certification-year">
+            <div class="field">
+                <label>Year</label>
+                <select class="cert-year">
                     ${yearOptions()}
                 </select>
             </div>
@@ -2442,905 +1830,644 @@ function addCertification() {
         </div>
     `;
 
-    certificationsContainer.appendChild(div);
-
-    div.querySelectorAll("input, select")
-        .forEach(element => {
-            element.addEventListener("input", updatePreview);
-            element.addEventListener("change", updatePreview);
-        });
-
-    div.querySelector(".remove-certification")
-        .addEventListener("click", () => {
-            div.remove();
-            updatePreview();
-        });
-
+    document.getElementById("certificationContainer").appendChild(div);
+    attachInputListeners(div);
     updatePreview();
 }
 
 
-/* -----------------------------
+/* =========================
    SKILLS
------------------------------ */
+========================= */
 
 const selectedSkills = new Set();
 
-function renderSkillChips() {
+function initializeSkills() {
 
-    skillChips.innerHTML = "";
+    const list = document.getElementById("skillList");
+
+    list.innerHTML = "";
 
     skills.forEach(skill => {
 
         const button = document.createElement("button");
 
         button.type = "button";
-        button.className =
-            "chip" +
-            (selectedSkills.has(skill) ? " active" : "");
-
+        button.className = "chip-option";
         button.textContent = skill;
 
         button.addEventListener("click", () => {
 
             if (selectedSkills.has(skill)) {
                 selectedSkills.delete(skill);
+                button.classList.remove("active");
             } else {
                 selectedSkills.add(skill);
+                button.classList.add("active");
             }
 
-            renderSkillChips();
             updatePreview();
         });
 
-        skillChips.appendChild(button);
+        list.appendChild(button);
     });
 }
 
+function addCustomSkill() {
 
-document.getElementById("addSkillBtn")
-    .addEventListener("click", () => {
+    const input = document.getElementById("customSkill");
+    const value = input.value.trim();
 
-        const input =
-            document.getElementById("customSkill");
+    if (!value) return;
 
-        const value =
-            input.value.trim();
+    selectedSkills.add(value);
 
-        if (!value) return;
+    const button = document.createElement("button");
 
-        selectedSkills.add(value);
+    button.type = "button";
+    button.className = "chip-option active";
+    button.textContent = value;
 
-        input.value = "";
-
-        renderSkillChips();
+    button.addEventListener("click", () => {
+        selectedSkills.delete(value);
+        button.remove();
         updatePreview();
     });
 
+    document.getElementById("skillList").appendChild(button);
 
-document.getElementById("customSkill")
-    .addEventListener("keydown", event => {
+    input.value = "";
 
-        if (event.key === "Enter") {
-
-            event.preventDefault();
-
-            document.getElementById("addSkillBtn").click();
-        }
-    });
+    updatePreview();
+}
 
 
-/* -----------------------------
+/* =========================
    LANGUAGES
------------------------------ */
+========================= */
 
 const selectedLanguages = new Set();
 
-function renderLanguageChips() {
+function initializeLanguages() {
 
-    languageChips.innerHTML = "";
+    const list = document.getElementById("languageList");
+
+    list.innerHTML = "";
 
     languages.forEach(language => {
 
         const button = document.createElement("button");
 
         button.type = "button";
-        button.className =
-            "chip" +
-            (selectedLanguages.has(language) ? " active" : "");
-
+        button.className = "chip-option";
         button.textContent = language;
 
         button.addEventListener("click", () => {
 
             if (selectedLanguages.has(language)) {
                 selectedLanguages.delete(language);
+                button.classList.remove("active");
             } else {
                 selectedLanguages.add(language);
+                button.classList.add("active");
             }
 
-            renderLanguageChips();
             updatePreview();
         });
 
-        languageChips.appendChild(button);
+        list.appendChild(button);
     });
 }
 
+function addCustomLanguage() {
 
-document.getElementById("addLanguageBtn")
-    .addEventListener("click", () => {
+    const input = document.getElementById("customLanguage");
+    const value = input.value.trim();
 
-        const input =
-            document.getElementById("customLanguage");
+    if (!value) return;
 
-        const value =
-            input.value.trim();
+    selectedLanguages.add(value);
 
-        if (!value) return;
+    const button = document.createElement("button");
 
-        selectedLanguages.add(value);
+    button.type = "button";
+    button.className = "chip-option active";
+    button.textContent = value;
 
-        input.value = "";
-
-        renderLanguageChips();
+    button.addEventListener("click", () => {
+        selectedLanguages.delete(value);
+        button.remove();
         updatePreview();
     });
 
+    document.getElementById("languageList").appendChild(button);
 
-document.getElementById("customLanguage")
-    .addEventListener("keydown", event => {
+    input.value = "";
 
-        if (event.key === "Enter") {
-
-            event.preventDefault();
-
-            document.getElementById("addLanguageBtn").click();
-        }
-    });
+    updatePreview();
+}
 
 
-/* -----------------------------
+/* =========================
    PHOTO
------------------------------ */
+========================= */
 
-let profilePhotoData = "";
+document.getElementById("profilePhoto").addEventListener("change", function() {
 
-document.getElementById("profilePhoto")
-    .addEventListener("change", event => {
+    const file = this.files[0];
 
-        const file = event.target.files[0];
+    if (!file) return;
 
-        if (!file) return;
+    if (!file.type.startsWith("image/")) {
+        alert("Please select an image file.");
+        this.value = "";
+        return;
+    }
 
-        if (!file.type.startsWith("image/")) {
-            return;
-        }
+    const reader = new FileReader();
 
-        const reader = new FileReader();
+    reader.onload = function(event) {
 
-        reader.onload = function(e) {
+        document.getElementById("photoPreview").src = event.target.result;
+        document.getElementById("photoPreviewBox").style.display = "flex";
 
-            profilePhotoData = e.target.result;
+        const previewWrap = document.getElementById("previewPhotoWrap");
 
-            const previewPhoto =
-                document.getElementById("previewPhoto");
+        previewWrap.innerHTML = `
+            <img class="resume-photo" src="${event.target.result}" alt="Profile Photo">
+        `;
 
-            const smallPhoto =
-                document.getElementById("smallPhotoPreview");
+        updatePreview();
+    };
 
-            previewPhoto.src = profilePhotoData;
-            smallPhoto.src = profilePhotoData;
+    reader.readAsDataURL(file);
+});
 
-            previewPhoto.style.display = "block";
-            smallPhoto.style.display = "block";
 
-            document.getElementById("previewPhotoWrap")
-                .classList.remove("hidden");
+/* =========================
+   INPUT LISTENERS
+========================= */
 
-            updatePreview();
-        };
+function attachInputListeners(container) {
 
-        reader.readAsDataURL(file);
+    container.querySelectorAll("input, textarea, select").forEach(element => {
+
+        element.addEventListener("input", updatePreview);
+        element.addEventListener("change", updatePreview);
+
     });
+}
+
+document.querySelectorAll("input, textarea, select").forEach(element => {
+    element.addEventListener("input", updatePreview);
+    element.addEventListener("change", updatePreview);
+});
 
 
-/* -----------------------------
-   PREVIEW UPDATE
------------------------------ */
+/* =========================
+   PREVIEW HELPERS
+========================= */
+
+function showSection(id, show) {
+
+    const section = document.getElementById(id);
+
+    if (!section) return;
+
+    section.classList.toggle("hidden", !show);
+}
+
+function getCustomOrSelected(item, selectClass, customInputSelector) {
+
+    const select = item.querySelector(selectClass);
+
+    if (!select) return "";
+
+    if (select.value === "Other") {
+
+        const custom = item.querySelector(customInputSelector);
+
+        return custom ? custom.value.trim() : "";
+    }
+
+    return select.value;
+}
+
+
+/* =========================
+   UPDATE PREVIEW
+========================= */
 
 function updatePreview() {
 
-    const name =
-        valueOf("fullName") || "Your Name";
+    const name = document.getElementById("fullName").value.trim();
+    const title = document.getElementById("professionalTitle").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const city = document.getElementById("city").value.trim();
+    const district = districtSelect.value.trim();
+    const state = stateSelect.value.trim();
+    const pin = document.getElementById("pin").value.trim();
 
-    const title =
-        valueOf("professionalTitle") || "Professional Title";
+    document.getElementById("previewName").textContent =
+        name || "Your Name";
 
-    document.getElementById("previewName")
-        .textContent = name;
+    document.getElementById("previewTitle").textContent =
+        title || "Professional Title";
 
-    document.getElementById("previewTitle")
-        .textContent = title;
+    const contact = [];
 
+    if (email) contact.push(email);
+    if (phone) contact.push(phone);
 
-    /* CONTACT */
+    let location = [city, district, state, pin].filter(Boolean).join(", ");
 
-    const contactItems = [];
+    if (location) contact.push(location);
 
-    const email = valueOf("email");
-    const phone = valueOf("phone");
-    const city = valueOf("city");
-    const state = valueOf("state");
-    const district = valueOf("district");
-    const pin = valueOf("pinCode");
-
-    if (email) contactItems.push(email);
-    if (phone) contactItems.push(phone);
-
-    const locationParts = [];
-
-    if (city) locationParts.push(city);
-    if (district) locationParts.push(district);
-    if (state) locationParts.push(state);
-    if (pin) locationParts.push(pin);
-
-    if (locationParts.length) {
-        contactItems.push(locationParts.join(", "));
-    }
-
-    document.getElementById("previewContact")
-        .innerHTML = contactItems
-        .map(item => `<span>${escapeHtml(item)}</span>`)
-        .join("");
-
-
-    /* PHOTO */
-
-    const photoWrap =
-        document.getElementById("previewPhotoWrap");
-
-    const photo =
-        document.getElementById("previewPhoto");
-
-    if (profilePhotoData) {
-
-        photoWrap.classList.remove("hidden");
-        photo.style.display = "block";
-        photo.src = profilePhotoData;
-
-    } else {
-
-        photoWrap.classList.add("hidden");
-        photo.style.display = "none";
-        photo.removeAttribute("src");
-    }
+    document.getElementById("previewContact").innerHTML =
+        contact.length
+        ? contact.map(item => `<span>${escapeHtml(item)}</span>`).join("")
+        : "<span>Email</span><span>Phone</span><span>Location</span>";
 
 
     /* SUMMARY */
 
-    const summary =
-        valueOf("summary");
+    const summary = document.getElementById("summary").value.trim();
 
-    toggleSection(
-        "previewSummarySection",
-        Boolean(summary)
-    );
+    document.getElementById("previewSummary").textContent = summary;
 
-    document.getElementById("previewSummary")
-        .textContent = summary;
+    showSection("previewSummarySection", !!summary);
 
 
     /* EDUCATION */
 
-    renderEducationPreview();
+    const educationPreview = document.getElementById("previewEducation");
+
+    educationPreview.innerHTML = "";
+
+    const educationItems =
+        document.querySelectorAll("#educationContainer .dynamic-item");
+
+    educationItems.forEach(item => {
+
+        const qualification =
+            item.querySelector(".edu-qualification")?.value || "";
+
+        const customQualification =
+            item.querySelector(".edu-custom-name")?.value.trim() || "";
+
+        const finalQualification =
+            qualification === "Other"
+            ? customQualification
+            : qualification;
+
+        const school =
+            item.querySelector(".edu-school")?.value.trim() || "";
+
+        const score =
+            item.querySelector(".edu-score")?.value.trim() || "";
+
+        const year =
+            item.querySelector(".edu-year")?.value || "";
+
+        const status =
+            item.querySelector(".edu-status")?.value || "";
+
+        const start =
+            item.querySelector(".edu-start")?.value || "";
+
+        const boardField = item.querySelector(".edu-board-field");
+        const instituteField = item.querySelector(".edu-institute-field");
+        const universityField = item.querySelector(".edu-university-field");
+
+        let board = "";
+
+        if (boardField && !boardField.classList.contains("hidden")) {
+            board = getCustomOrSelected(
+                item,
+                ".edu-board-field select",
+                ".edu-board-field .custom-field input"
+            );
+        }
+
+        let institute = "";
+
+        if (instituteField && !instituteField.classList.contains("hidden")) {
+            institute = getCustomOrSelected(
+                item,
+                ".edu-institute-field select",
+                ".edu-institute-field .custom-field input"
+            );
+        }
+
+        let university = "";
+
+        if (universityField && !universityField.classList.contains("hidden")) {
+            university = getCustomOrSelected(
+                item,
+                ".edu-university-field select",
+                ".edu-university-field .custom-field input"
+            );
+        }
+
+        if (!finalQualification && !school && !institute && !university) {
+            return;
+        }
+
+        const entry = document.createElement("div");
+        entry.className = "education-entry";
+
+        let html = "";
+
+        if (school && qualification !== "Diploma" &&
+            qualification !== "Graduation" &&
+            qualification !== "Post Graduation" &&
+            qualification !== "Other") {
+
+            html += `<div class="education-main">${escapeHtml(school)}</div>`;
+        }
+
+        else if (finalQualification) {
+
+            html += `<div class="education-main">${escapeHtml(finalQualification)}</div>`;
+
+            if (school) {
+                html += `<div class="education-sub">${escapeHtml(school)}</div>`;
+            }
+        }
+
+        const meta = [];
+
+        if (board) meta.push(`Board: ${board}`);
+        if (institute) meta.push(`College / Institute: ${institute}`);
+        if (university) meta.push(`University: ${university}`);
+        if (status) meta.push(status);
+        if (start) meta.push(`Start: ${start}`);
+        if (year) meta.push(`Year: ${year}`);
+        if (score) meta.push(score);
+
+        if (meta.length) {
+            html += `<div class="education-sub">${meta.map(escapeHtml).join(" · ")}</div>`;
+        }
+
+        const semesterValues = [];
+
+        for (let i = 1; i <= 8; i++) {
+
+            const cgpa =
+                item.querySelector(`.sem${i}-cgpa`)?.value.trim() || "";
+
+            const sgpa =
+                item.querySelector(`.sem${i}-sgpa`)?.value.trim() || "";
+
+            if (cgpa || sgpa) {
+                semesterValues.push({
+                    semester: i,
+                    cgpa,
+                    sgpa
+                });
+            }
+        }
+
+        if (semesterValues.length) {
+
+            html += `<div class="semester-preview">`;
+
+            semesterValues.forEach(data => {
+
+                html += `
+                    <div class="sem-card">
+                        <strong>Semester ${data.semester}</strong>
+                        ${data.cgpa ? `CGPA: ${escapeHtml(data.cgpa)}` : ""}
+                        ${data.cgpa && data.sgpa ? " | " : ""}
+                        ${data.sgpa ? `SGPA / SGP: ${escapeHtml(data.sgpa)}` : ""}
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+        }
+
+        entry.innerHTML = html;
+
+        educationPreview.appendChild(entry);
+    });
+
+    showSection(
+        "previewEducationSection",
+        educationPreview.children.length > 0
+    );
 
 
     /* SKILLS */
 
-    const skillArray =
-        Array.from(selectedSkills);
+    const skillPreview = document.getElementById("previewSkills");
 
-    toggleSection(
+    skillPreview.innerHTML = "";
+
+    selectedSkills.forEach(skill => {
+
+        const chip = document.createElement("span");
+
+        chip.className = "preview-chip";
+        chip.textContent = skill;
+
+        skillPreview.appendChild(chip);
+    });
+
+    showSection(
         "previewSkillsSection",
-        skillArray.length > 0
+        selectedSkills.size > 0
     );
-
-    document.getElementById("previewSkills")
-        .innerHTML =
-        skillArray.map(skill =>
-            `<span class="resume-chip">${escapeHtml(skill)}</span>`
-        ).join("");
 
 
     /* PROJECTS */
 
-    renderProjectsPreview();
+    const projectPreview = document.getElementById("previewProjects");
+
+    projectPreview.innerHTML = "";
+
+    document.querySelectorAll("#projectsContainer .dynamic-item")
+        .forEach(item => {
+
+            const projectName =
+                item.querySelector(".project-name")?.value.trim() || "";
+
+            const description =
+                item.querySelector(".project-description")?.value.trim() || "";
+
+            if (!projectName && !description) return;
+
+            const div = document.createElement("div");
+            div.className = "project-entry";
+
+            div.innerHTML = `
+                ${projectName ? `<div class="entry-title">${escapeHtml(projectName)}</div>` : ""}
+                ${description ? `<div class="entry-description">${escapeHtml(description)}</div>` : ""}
+            `;
+
+            projectPreview.appendChild(div);
+        });
+
+    showSection(
+        "previewProjectsSection",
+        projectPreview.children.length > 0
+    );
 
 
     /* EXPERIENCE */
 
-    renderExperiencePreview();
+    const experiencePreview =
+        document.getElementById("previewExperience");
+
+    experiencePreview.innerHTML = "";
+
+    document.querySelectorAll("#experienceContainer .dynamic-item")
+        .forEach(item => {
+
+            const type =
+                item.querySelector(".experience-type")?.value || "";
+
+            const title =
+                item.querySelector(".experience-title")?.value.trim() || "";
+
+            const organization =
+                item.querySelector(".experience-org")?.value.trim() || "";
+
+            const duration =
+                item.querySelector(".experience-duration")?.value.trim() || "";
+
+            const description =
+                item.querySelector(".experience-description")?.value.trim() || "";
+
+            if (!title && !organization && !description) return;
+
+            const div = document.createElement("div");
+            div.className = "experience-entry";
+
+            const heading = title || type;
+
+            div.innerHTML = `
+                ${heading ? `<div class="entry-title">${escapeHtml(heading)}</div>` : ""}
+                ${(organization || duration)
+                    ? `<div class="entry-meta">${escapeHtml(organization)}${organization && duration ? " · " : ""}${escapeHtml(duration)}</div>`
+                    : ""}
+                ${description ? `<div class="entry-description">${escapeHtml(description)}</div>` : ""}
+            `;
+
+            experiencePreview.appendChild(div);
+        });
+
+    showSection(
+        "previewExperienceSection",
+        experiencePreview.children.length > 0
+    );
 
 
     /* CERTIFICATIONS */
 
-    renderCertificationPreview();
+    const certificationPreview =
+        document.getElementById("previewCertifications");
+
+    certificationPreview.innerHTML = "";
+
+    document.querySelectorAll("#certificationContainer .dynamic-item")
+        .forEach(item => {
+
+            const name =
+                item.querySelector(".cert-name")?.value.trim() || "";
+
+            const organization =
+                item.querySelector(".cert-org")?.value.trim() || "";
+
+            const year =
+                item.querySelector(".cert-year")?.value || "";
+
+            if (!name && !organization && !year) return;
+
+            const div = document.createElement("div");
+
+            div.className = "cert-entry";
+
+            div.innerHTML = `
+                ${name ? `<div class="entry-title">${escapeHtml(name)}</div>` : ""}
+                ${(organization || year)
+                    ? `<div class="entry-meta">${escapeHtml(organization)}${organization && year ? " · " : ""}${escapeHtml(year)}</div>`
+                    : ""}
+            `;
+
+            certificationPreview.appendChild(div);
+        });
+
+    showSection(
+        "previewCertificationsSection",
+        certificationPreview.children.length > 0
+    );
 
 
     /* LANGUAGES */
 
-    const languageArray =
-        Array.from(selectedLanguages);
+    const languagePreview =
+        document.getElementById("previewLanguages");
 
-    toggleSection(
+    languagePreview.innerHTML = "";
+
+    selectedLanguages.forEach(language => {
+
+        const chip = document.createElement("span");
+
+        chip.className = "preview-chip";
+        chip.textContent = language;
+
+        languagePreview.appendChild(chip);
+    });
+
+    showSection(
         "previewLanguagesSection",
-        languageArray.length > 0
+        selectedLanguages.size > 0
     );
-
-    document.getElementById("previewLanguages")
-        .innerHTML =
-        languageArray.map(language =>
-            `<span class="resume-chip">${escapeHtml(language)}</span>`
-        ).join("");
 
 
     /* LINKS */
 
-    renderLinksPreview();
-}
-
-
-/* -----------------------------
-   EDUCATION PREVIEW
------------------------------ */
-
-function renderEducationPreview() {
-
-    const items =
-        Array.from(
-            document.querySelectorAll(".education-item")
-        );
-
-    const preview =
-        document.getElementById("previewEducation");
-
-    preview.innerHTML = "";
-
-    let hasEducation = false;
-
-    items.forEach(item => {
-
-        const qualification =
-            valueFrom(item, ".education-qualification");
-
-        const name =
-            valueFrom(item, ".education-name");
-
-        const board =
-            valueFrom(item, ".education-board");
-
-        const year =
-            valueFrom(item, ".education-year");
-
-        const score =
-            valueFrom(item, ".education-score");
-
-        const status =
-            valueFrom(item, ".education-status");
-
-        const startYear =
-            valueFrom(item, ".education-start-year");
-
-        const completionYear =
-            valueFrom(item, ".education-completion-year");
-
-        const valid =
-            name ||
-            board ||
-            year ||
-            score ||
-            qualification;
-
-        if (!valid) return;
-
-        hasEducation = true;
-
-        let meta = [];
-
-        if (board) {
-            meta.push(
-                `${boardLabelForQualification(qualification)}: ${board}`
-            );
-        }
-
-        if (year) {
-            meta.push(
-                `Year: ${year}`
-            );
-        }
-
-        if (score) {
-            meta.push(score);
-        }
-
-        if (status) {
-            meta.push(status);
-        }
-
-        if (startYear) {
-            meta.push(`Start: ${startYear}`);
-        }
-
-        if (completionYear) {
-            meta.push(`Completion: ${completionYear}`);
-        }
-
-
-        let semesterHTML = "";
-
-        if (
-            qualification === "Graduation" ||
-            qualification === "Post Graduation"
-        ) {
-
-            const semesters = [];
-
-            item.querySelectorAll(".semester-box")
-                .forEach(box => {
-
-                    const number =
-                        box.querySelector(".semester-title")
-                            .textContent
-                            .replace("Semester", "")
-                            .trim();
-
-                    const cgpa =
-                        valueFrom(
-                            box,
-                            `.semester-cgpa[data-semester="${number}"]`
-                        );
-
-                    const sgpa =
-                        valueFrom(
-                            box,
-                            `.semester-sgpa[data-semester="${number}"]`
-                        );
-
-                    if (cgpa || sgpa) {
-
-                        semesters.push(`
-                            <div class="semester-box">
-                                <div class="semester-title">
-                                    Semester ${escapeHtml(number)}
-                                </div>
-
-                                <div class="semester-info">
-                                    ${cgpa ? `CGPA: ${escapeHtml(cgpa)}` : ""}
-                                    ${cgpa && sgpa ? " | " : ""}
-                                    ${sgpa ? `SGPA / SGP: ${escapeHtml(sgpa)}` : ""}
-                                </div>
-                            </div>
-                        `);
-                    }
-                });
-
-            if (semesters.length) {
-
-                semesterHTML = `
-                    <div class="semester-grid">
-                        ${semesters.join("")}
-                    </div>
-                `;
-            }
-        }
-
-
-        preview.innerHTML += `
-
-            <div class="resume-item">
-
-                <div class="resume-item-title">
-                    ${escapeHtml(name || qualification)}
-                </div>
-
-                ${
-                    qualification
-                        ? `<div class="resume-item-subtitle">
-                            ${escapeHtml(qualification)}
-                           </div>`
-                        : ""
-                }
-
-                ${
-                    meta.length
-                        ? `<div class="resume-item-meta">
-                            ${escapeHtml(meta.join(" • "))}
-                           </div>`
-                        : ""
-                }
-
-                ${semesterHTML}
-
-            </div>
-        `;
-    });
-
-    toggleSection(
-        "previewEducationSection",
-        hasEducation
-    );
-}
-
-
-function boardLabelForQualification(qualification) {
-
-    if (
-        qualification === "Graduation" ||
-        qualification === "Post Graduation"
-    ) {
-        return "University";
-    }
-
-    if (qualification === "Diploma") {
-        return "Board / University";
-    }
-
-    return "Board";
-}
-
-
-/* -----------------------------
-   PROJECT PREVIEW
------------------------------ */
-
-function renderProjectsPreview() {
-
-    const items =
-        Array.from(
-            document.querySelectorAll(".project-item")
-        );
-
-    const preview =
-        document.getElementById("previewProjects");
-
-    preview.innerHTML = "";
-
-    let hasProjects = false;
-
-    items.forEach(item => {
-
-        const name =
-            valueFrom(item, ".project-name");
-
-        const description =
-            valueFrom(item, ".project-description");
-
-        if (!name && !description) return;
-
-        hasProjects = true;
-
-        preview.innerHTML += `
-
-            <div class="resume-item">
-
-                ${
-                    name
-                        ? `<div class="resume-item-title">
-                            ${escapeHtml(name)}
-                           </div>`
-                        : ""
-                }
-
-                ${
-                    description
-                        ? `<div class="resume-text">
-                            ${escapeHtml(description)}
-                           </div>`
-                        : ""
-                }
-
-            </div>
-        `;
-    });
-
-    toggleSection(
-        "previewProjectsSection",
-        hasProjects
-    );
-}
-
-
-/* -----------------------------
-   EXPERIENCE PREVIEW
------------------------------ */
-
-function renderExperiencePreview() {
-
-    const items =
-        Array.from(
-            document.querySelectorAll(".experience-item")
-        );
-
-    const preview =
-        document.getElementById("previewExperience");
-
-    preview.innerHTML = "";
-
-    let hasExperience = false;
-
-    items.forEach(item => {
-
-        const type =
-            valueFrom(item, ".experience-type");
-
-        const place =
-            valueFrom(item, ".experience-place");
-
-        const role =
-            valueFrom(item, ".experience-role");
-
-        const duration =
-            valueFrom(item, ".experience-duration");
-
-        const description =
-            valueFrom(item, ".experience-description");
-
-        if (
-            !place &&
-            !role &&
-            !duration &&
-            !description
-        ) {
-            return;
-        }
-
-        hasExperience = true;
-
-        preview.innerHTML += `
-
-            <div class="resume-item">
-
-                <div class="resume-item-title">
-                    ${escapeHtml(role || type)}
-                </div>
-
-                ${
-                    place
-                        ? `<div class="resume-item-subtitle">
-                            ${escapeHtml(place)}
-                           </div>`
-                        : ""
-                }
-
-                ${
-                    duration
-                        ? `<div class="resume-item-meta">
-                            ${escapeHtml(duration)}
-                           </div>`
-                        : ""
-                }
-
-                ${
-                    description
-                        ? `<div class="resume-text">
-                            ${escapeHtml(description)}
-                           </div>`
-                        : ""
-                }
-
-            </div>
-        `;
-    });
-
-    toggleSection(
-        "previewExperienceSection",
-        hasExperience
-    );
-}
-
-
-/* -----------------------------
-   CERTIFICATION PREVIEW
------------------------------ */
-
-function renderCertificationPreview() {
-
-    const items =
-        Array.from(
-            document.querySelectorAll(".certification-item")
-        );
-
-    const preview =
-        document.getElementById("previewCertifications");
-
-    preview.innerHTML = "";
-
-    let hasCertifications = false;
-
-    items.forEach(item => {
-
-        const name =
-            valueFrom(item, ".certification-name");
-
-        const issuer =
-            valueFrom(item, ".certification-issuer");
-
-        const year =
-            valueFrom(item, ".certification-year");
-
-        if (!name && !issuer && !year) return;
-
-        hasCertifications = true;
-
-        const meta = [];
-
-        if (issuer) meta.push(issuer);
-        if (year) meta.push(year);
-
-        preview.innerHTML += `
-
-            <div class="resume-item">
-
-                <div class="resume-item-title">
-                    ${escapeHtml(name || "Certification")}
-                </div>
-
-                ${
-                    meta.length
-                        ? `<div class="resume-item-meta">
-                            ${escapeHtml(meta.join(" • "))}
-                           </div>`
-                        : ""
-                }
-
-            </div>
-        `;
-    });
-
-    toggleSection(
-        "previewCertificationsSection",
-        hasCertifications
-    );
-}
-
-
-/* -----------------------------
-   LINKS PREVIEW
------------------------------ */
-
-function renderLinksPreview() {
-
-    const links = [
-        {
-            label: "LinkedIn",
-            value: valueOf("linkedin")
-        },
-        {
-            label: "GitHub",
-            value: valueOf("github")
-        },
-        {
-            label: "Portfolio",
-            value: valueOf("portfolio")
-        },
-        {
-            label: "Other",
-            value: valueOf("otherLink")
-        }
-    ].filter(link => link.value);
-
-    const preview =
+    const linksPreview =
         document.getElementById("previewLinks");
 
-    preview.innerHTML =
-        links.map(link => `
-            <div>
-                <strong>${escapeHtml(link.label)}:</strong>
-                ${escapeHtml(link.value)}
-            </div>
-        `).join("");
+    linksPreview.innerHTML = "";
 
-    toggleSection(
+    const links = [
+        ["LinkedIn", document.getElementById("linkedin").value.trim()],
+        ["GitHub", document.getElementById("github").value.trim()],
+        ["Portfolio", document.getElementById("portfolio").value.trim()],
+        ["Other", document.getElementById("otherLink").value.trim()]
+    ];
+
+    links.forEach(([label, value]) => {
+
+        if (!value) return;
+
+        const div = document.createElement("div");
+
+        div.className = "link-entry";
+
+        div.innerHTML = `
+            <div class="link-label">${label}</div>
+            <div class="link-value">${escapeHtml(value)}</div>
+        `;
+
+        linksPreview.appendChild(div);
+    });
+
+    showSection(
         "previewLinksSection",
-        links.length > 0
+        linksPreview.children.length > 0
     );
 }
 
 
-/* -----------------------------
-   INPUT LISTENERS
------------------------------ */
-
-document.querySelectorAll(
-    "#fullName, #email, #phone, #city, #pinCode, #professionalTitle, #summary, #linkedin, #github, #portfolio, #otherLink"
-).forEach(input => {
-
-    input.addEventListener(
-        "input",
-        updatePreview
-    );
-
-    input.addEventListener(
-        "change",
-        updatePreview
-    );
-});
-
-
-/* -----------------------------
-   BUTTONS
------------------------------ */
-
-document.getElementById("addEducationBtn")
-    .addEventListener("click", addEducation);
-
-document.getElementById("addProjectBtn")
-    .addEventListener("click", addProject);
-
-document.getElementById("addExperienceBtn")
-    .addEventListener("click", addExperience);
-
-document.getElementById("addCertificationBtn")
-    .addEventListener("click", addCertification);
-
-
-document.getElementById("printBtn")
-    .addEventListener("click", () => {
-        window.print();
-    });
-
-
-document.getElementById("resetBtn")
-    .addEventListener("click", () => {
-
-        const confirmed =
-            confirm("Reset all resume data?");
-
-        if (!confirmed) return;
-
-        location.reload();
-    });
-
-
-/* -----------------------------
-   HELPERS
------------------------------ */
-
-function valueOf(id) {
-
-    const element =
-        document.getElementById(id);
-
-    return element
-        ? element.value.trim()
-        : "";
-}
-
-
-function valueFrom(parent, selector) {
-
-    const element =
-        parent.querySelector(selector);
-
-    return element
-        ? element.value.trim()
-        : "";
-}
-
-
-function toggleSection(id, show) {
-
-    const section =
-        document.getElementById(id);
-
-    if (show) {
-        section.classList.remove("hidden");
-    } else {
-        section.classList.add("hidden");
-    }
-}
-
+/* =========================
+   ESCAPE HTML
+========================= */
 
 function escapeHtml(value) {
 
@@ -3353,15 +2480,57 @@ function escapeHtml(value) {
 }
 
 
-/* -----------------------------
-   INITIAL SETUP
------------------------------ */
+/* =========================
+   RESET
+========================= */
 
-renderSkillChips();
-renderLanguageChips();
+function resetResume() {
 
+    if (!confirm("Reset all resume information?")) {
+        return;
+    }
+
+    document.querySelectorAll("input, textarea, select")
+        .forEach(element => {
+            if (element.id !== "state" && element.id !== "district") {
+                element.value = "";
+            }
+        });
+
+    selectedSkills.clear();
+    selectedLanguages.clear();
+
+    document.getElementById("educationContainer").innerHTML = "";
+    document.getElementById("projectsContainer").innerHTML = "";
+    document.getElementById("experienceContainer").innerHTML = "";
+    document.getElementById("certificationContainer").innerHTML = "";
+
+    document.getElementById("profilePhoto").value = "";
+    document.getElementById("photoPreview").src = "";
+    document.getElementById("photoPreviewBox").style.display = "none";
+    document.getElementById("previewPhotoWrap").innerHTML = "";
+
+    districtSelect.innerHTML =
+        '<option value="">Select District</option>';
+
+    districtSelect.disabled = true;
+
+    initializeSkills();
+    initializeLanguages();
+
+    addEducation();
+
+    updatePreview();
+}
+
+
+/* =========================
+   START
+========================= */
+
+initializeSkills();
+initializeLanguages();
 addEducation();
-
 updatePreview();
 
 </script>
