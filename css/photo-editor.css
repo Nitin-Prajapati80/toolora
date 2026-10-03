@@ -2,13 +2,14 @@
     box-sizing: border-box;
 }
 
-html {
-    scroll-behavior: smooth;
+html,
+body {
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    margin: 0;
-    background: #f5f6f8;
+    background: #f4f5f7;
     color: #111827;
     font-family: Arial, Helvetica, sans-serif;
 }
@@ -26,8 +27,8 @@ body {
 
 .header-inner {
     width: min(1400px, calc(100% - 32px));
-    margin: 0 auto;
-    min-height: 68px;
+    min-height: 64px;
+    margin: auto;
 
     display: flex;
     align-items: center;
@@ -37,15 +38,14 @@ body {
 .toolora-logo {
     color: #111827;
     text-decoration: none;
-    font-size: 24px;
+    font-size: 23px;
     font-weight: 800;
-    letter-spacing: -0.5px;
 }
 
 .back-home {
-    color: #374151;
+    color: #4b5563;
     text-decoration: none;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
 }
 
@@ -55,81 +55,304 @@ body {
 
 
 /* =========================
-   MAIN CONTAINER
+   MAIN
 ========================= */
 
 .editor-container {
     width: min(1400px, calc(100% - 32px));
-    margin: 0 auto;
-    padding: 34px 0 50px;
+    margin: auto;
+    padding: 25px 0 40px;
 }
 
-
-/* =========================
-   HEADING
-========================= */
-
 .editor-heading {
-    margin-bottom: 24px;
+    margin-bottom: 18px;
 }
 
 .editor-heading h1 {
-    margin: 0 0 7px;
-    font-size: 28px;
+    margin: 0 0 5px;
+
+    font-size: 25px;
     line-height: 1.2;
     font-weight: 800;
-    letter-spacing: -0.5px;
 }
 
 .editor-heading p {
     margin: 0;
+
     color: #6b7280;
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 13px;
 }
 
 
 /* =========================
-   MAIN EDITOR LAYOUT
+   EDITOR WORKSPACE
 ========================= */
 
-.editor-layout {
+.editor-workspace {
     display: grid;
-    grid-template-columns: 370px minmax(0, 1fr);
-    gap: 24px;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) 360px;
+
+    gap: 18px;
+
+    align-items: stretch;
 }
 
 
 /* =========================
-   CONTROL PANEL
+   PREVIEW PANEL
+========================= */
+
+.preview-panel {
+    min-width: 0;
+
+    height: calc(100vh - 155px);
+    min-height: 600px;
+
+    background: #ffffff;
+
+    border: 1px solid #e3e6eb;
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-header {
+    min-height: 65px;
+    padding: 13px 17px;
+
+    border-bottom: 1px solid #edf0f3;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    flex-shrink: 0;
+}
+
+.preview-header h2 {
+    margin: 0 0 3px;
+
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.preview-header p {
+    margin: 0;
+
+    color: #9ca3af;
+    font-size: 10px;
+}
+
+
+/* =========================
+   ZOOM
+========================= */
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.zoom-controls button {
+    width: 28px;
+    height: 28px;
+
+    border: 1px solid #d8dce2;
+    border-radius: 6px;
+
+    background: #ffffff;
+    color: #374151;
+
+    font-size: 17px;
+
+    cursor: pointer;
+}
+
+.zoom-controls button:hover {
+    border-color: #111827;
+}
+
+.zoom-controls span {
+    min-width: 40px;
+
+    text-align: center;
+
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+
+/* =========================
+   CANVAS
+========================= */
+
+.canvas-wrapper {
+    position: relative;
+
+    flex: 1;
+
+    min-height: 0;
+
+    padding: 20px;
+
+    overflow: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: #e9ebee;
+
+    background-image:
+        linear-gradient(45deg, #dfe2e5 25%, transparent 25%),
+        linear-gradient(-45deg, #dfe2e5 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #dfe2e5 75%),
+        linear-gradient(-45deg, transparent 75%, #dfe2e5 75%);
+
+    background-size: 20px 20px;
+
+    background-position:
+        0 0,
+        0 10px,
+        10px -10px,
+        -10px 0;
+}
+
+#photoCanvas {
+    display: block;
+
+    max-width: none;
+    max-height: none;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.18);
+
+    transform-origin: center center;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================
+   EMPTY PREVIEW
+========================= */
+
+.empty-preview {
+    width: 100%;
+    max-width: 300px;
+
+    text-align: center;
+}
+
+.empty-icon {
+    width: 58px;
+    height: 58px;
+
+    margin: 0 auto 13px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #9ca3af;
+
+    font-size: 30px;
+}
+
+.empty-preview h3 {
+    margin: 0 0 6px;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    color: #374151;
+}
+
+.empty-preview p {
+    margin: 0 0 15px;
+
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+.empty-upload-btn {
+    display: inline-flex;
+
+    min-height: 36px;
+    padding: 0 17px;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 7px;
+
+    background: #111827;
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   PREVIEW FOOTER
+========================= */
+
+.preview-footer {
+    min-height: 38px;
+
+    padding: 8px 14px;
+
+    border-top: 1px solid #edf0f3;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    color: #9ca3af;
+
+    font-size: 9px;
+
+    flex-shrink: 0;
+}
+
+#imageStatus {
+    color: #4b5563;
+    font-weight: 600;
+}
+
+
+/* =========================
+   EDITOR PANEL
 ========================= */
 
 .editor-panel {
+    height: calc(100vh - 155px);
+    min-height: 600px;
+
     background: #ffffff;
-    border: 1px solid #e5e7eb;
+
+    border: 1px solid #e3e6eb;
     border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.04);
-}
 
-.control-section {
-    padding-bottom: 20px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eef0f3;
-}
+    padding: 15px;
 
-.control-section:last-child {
-    padding-bottom: 0;
-    margin-bottom: 0;
-    border-bottom: none;
-}
+    overflow-y: auto;
 
-.control-section h2 {
-    margin: 0 0 14px;
-    color: #111827;
-    font-size: 14px;
-    font-weight: 750;
+    box-shadow:
+        0 2px 8px rgba(17, 24, 39, 0.04);
 }
 
 
@@ -137,106 +360,145 @@ body {
    UPLOAD
 ========================= */
 
-.upload-box {
-    min-height: 116px;
-    padding: 20px;
+.tool-section {
+    margin-bottom: 14px;
+}
 
-    border: 1.5px dashed #cfd4dc;
-    border-radius: 10px;
+.upload-box {
+    min-height: 76px;
+
+    padding: 12px;
+
+    border: 1.5px dashed #d0d5dc;
+    border-radius: 9px;
+
     background: #fafafa;
 
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-
-    cursor: pointer;
-    text-align: center;
-
-    transition:
-        border-color 0.2s ease,
-        background 0.2s ease;
-}
-
-.upload-box:hover {
-    border-color: #111827;
-    background: #f8f8f8;
-}
-
-.upload-icon {
-    width: 32px;
-    height: 32px;
-    margin-bottom: 8px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 1px solid #d1d5db;
-    border-radius: 50%;
-
-    color: #374151;
-    font-size: 21px;
-    line-height: 1;
-}
-
-.upload-box strong {
-    font-size: 13px;
-    color: #111827;
-}
-
-.upload-box span {
-    margin-top: 5px;
-    color: #9ca3af;
-    font-size: 11px;
-}
-
-
-/* =========================
-   BUTTONS
-========================= */
-
-.button-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.button-grid button,
-.action-grid button,
-.filter-grid button {
-    min-height: 36px;
-    padding: 8px 10px;
-
-    border: 1px solid #d9dde3;
-    border-radius: 7px;
-
-    background: #ffffff;
-    color: #374151;
-
-    font-size: 11px;
-    font-weight: 600;
+    gap: 9px;
 
     cursor: pointer;
 
     transition:
         background 0.2s ease,
-        border-color 0.2s ease,
-        color 0.2s ease;
+        border-color 0.2s ease;
 }
 
-.button-grid button:hover,
-.action-grid button:hover,
-.filter-grid button:hover {
+.upload-box:hover {
+    background: #f7f7f7;
     border-color: #111827;
-    background: #f8f8f8;
+}
+
+.upload-icon {
+    width: 29px;
+    height: 29px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #6b7280;
+
+    font-size: 19px;
+}
+
+.upload-box strong {
+    font-size: 12px;
     color: #111827;
 }
 
-.button-grid button:active,
-.action-grid button:active,
-.filter-grid button:active {
-    transform: translateY(1px);
+.upload-box span {
+    color: #9ca3af;
+    font-size: 9px;
+}
+
+
+/* =========================
+   TOOL NAVIGATION
+========================= */
+
+.tool-navigation {
+    position: sticky;
+    top: -15px;
+
+    z-index: 5;
+
+    margin: 0 -15px 15px;
+    padding: 10px 15px;
+
+    background: rgba(255, 255, 255, 0.97);
+
+    border-bottom: 1px solid #edf0f3;
+
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+
+    gap: 5px;
+}
+
+.tool-tab {
+    min-height: 34px;
+
+    border: 1px solid #e0e3e7;
+    border-radius: 6px;
+
+    background: #ffffff;
+
+    color: #6b7280;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.tool-tab:hover {
+    border-color: #bfc4cb;
+    color: #111827;
+}
+
+.tool-tab.active {
+    background: #111827;
+    border-color: #111827;
+    color: #ffffff;
+}
+
+
+/* =========================
+   TOOL CONTENT
+========================= */
+
+.tool-content {
+    display: none;
+}
+
+.tool-content.active {
+    display: block;
+}
+
+.tool-title {
+    margin-bottom: 20px;
+}
+
+.tool-title h2 {
+    margin: 0 0 4px;
+
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.tool-title p {
+    margin: 0;
+
+    color: #9ca3af;
+
+    font-size: 10px;
+    line-height: 1.5;
 }
 
 
@@ -245,11 +507,7 @@ body {
 ========================= */
 
 .range-control {
-    margin-bottom: 15px;
-}
-
-.range-control:last-child {
-    margin-bottom: 0;
+    margin-bottom: 18px;
 }
 
 .range-header {
@@ -262,20 +520,23 @@ body {
 
 .range-header label {
     color: #374151;
-    font-size: 12px;
-    font-weight: 600;
+
+    font-size: 11px;
+    font-weight: 650;
 }
 
-.range-header span,
-.quality-value {
+.range-header span {
     color: #6b7280;
-    font-size: 11px;
+
+    font-size: 10px;
     font-weight: 600;
 }
 
 input[type="range"] {
     width: 100%;
+
     height: 4px;
+
     margin: 0;
 
     accent-color: #111827;
@@ -290,13 +551,72 @@ input[type="range"] {
 
 .filter-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 7px;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 8px;
 }
 
-.filter-grid button {
-    min-height: 34px;
+.filter-button {
+    min-height: 40px;
+
+    border: 1px solid #dfe3e8;
+    border-radius: 7px;
+
+    background: #ffffff;
+    color: #374151;
+
     font-size: 10px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.filter-button:hover {
+    border-color: #111827;
+}
+
+.filter-button.active {
+    background: #111827;
+    border-color: #111827;
+    color: #ffffff;
+}
+
+
+/* =========================
+   TRANSFORM
+========================= */
+
+.transform-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 8px;
+
+    margin-bottom: 12px;
+}
+
+.transform-grid button {
+    min-height: 42px;
+
+    border: 1px solid #dfe3e8;
+    border-radius: 7px;
+
+    background: #ffffff;
+    color: #374151;
+
+    font-size: 10px;
+    font-weight: 650;
+
+    cursor: pointer;
+}
+
+.transform-grid button:hover {
+    border-color: #111827;
+    color: #111827;
 }
 
 
@@ -306,56 +626,67 @@ input[type="range"] {
 
 .size-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+
+    grid-template-columns:
+        1fr 1fr;
+
     gap: 9px;
-    margin-bottom: 11px;
+
+    margin-bottom: 12px;
 }
 
 .size-grid label,
-.export-section > label {
+.tool-content > label {
     display: block;
+
     margin-bottom: 6px;
 
     color: #4b5563;
-    font-size: 11px;
-    font-weight: 600;
+
+    font-size: 10px;
+    font-weight: 650;
 }
 
 .size-grid input,
-.export-section select {
+.tool-content select {
     width: 100%;
-    height: 36px;
 
-    padding: 0 10px;
+    height: 37px;
 
-    border: 1px solid #d7dbe1;
+    padding: 0 9px;
+
+    border: 1px solid #d8dce2;
     border-radius: 7px;
 
+    outline: none;
+
     background: #ffffff;
+
     color: #111827;
 
-    outline: none;
-    font-size: 12px;
-}
-
-.size-grid input::placeholder {
-    color: #b5bac2;
+    font-size: 11px;
 }
 
 .size-grid input:focus,
-.export-section select:focus {
+.tool-content select:focus {
     border-color: #111827;
+}
+
+.size-grid input::placeholder {
+    color: #b7bcc4;
 }
 
 .checkbox-control {
     display: flex;
     align-items: center;
-    gap: 8px;
 
-    margin-bottom: 12px;
+    gap: 7px;
+
+    margin-bottom: 13px;
 
     color: #4b5563;
-    font-size: 11px;
+
+    font-size: 10px;
 
     cursor: pointer;
 }
@@ -363,40 +694,56 @@ input[type="range"] {
 .checkbox-control input {
     width: 14px;
     height: 14px;
+
     margin: 0;
 
     accent-color: #111827;
 }
 
-.primary-small-btn {
-    width: 100%;
-    min-height: 36px;
 
-    border: 1px solid #111827;
+/* =========================
+   GENERAL BUTTONS
+========================= */
+
+.primary-btn,
+.reset-tool-btn,
+.download-btn {
+    width: 100%;
+
+    min-height: 39px;
+
     border-radius: 7px;
 
-    background: #111827;
-    color: #ffffff;
-
-    font-size: 11px;
-    font-weight: 650;
+    font-size: 10px;
+    font-weight: 700;
 
     cursor: pointer;
 }
 
-.primary-small-btn:hover {
-    background: #252a31;
+.primary-btn {
+    border: 1px solid #111827;
+
+    background: #111827;
+    color: #ffffff;
 }
 
+.primary-btn:hover,
+.download-btn:hover {
+    background: #272c33;
+}
 
-/* =========================
-   ACTION BUTTONS
-========================= */
+.reset-tool-btn {
+    margin-top: 8px;
 
-.action-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 7px;
+    border: 1px solid #e0e3e7;
+
+    background: #ffffff;
+    color: #4b5563;
+}
+
+.reset-tool-btn:hover {
+    border-color: #111827;
+    color: #111827;
 }
 
 
@@ -404,238 +751,56 @@ input[type="range"] {
    EXPORT
 ========================= */
 
-.export-section select {
-    margin-bottom: 14px;
-}
-
-.export-section input[type="range"] {
-    margin-bottom: 6px;
-}
-
-.quality-value {
-    margin-bottom: 14px;
-    text-align: right;
+.export-quality {
+    margin-top: 18px;
 }
 
 .download-btn {
-    width: 100%;
-    min-height: 42px;
+    margin-top: 4px;
 
     border: none;
-    border-radius: 8px;
 
     background: #111827;
     color: #ffffff;
-
-    font-size: 12px;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    transition:
-        background 0.2s ease,
-        transform 0.2s ease;
-}
-
-.download-btn:hover {
-    background: #252a31;
-}
-
-.download-btn:active {
-    transform: translateY(1px);
 }
 
 
 /* =========================
-   PREVIEW PANEL
+   HISTORY
 ========================= */
 
-.preview-panel {
-    min-width: 0;
+.history-controls {
+    margin-top: 17px;
+    padding-top: 14px;
 
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
+    border-top: 1px solid #edf0f3;
 
-    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.04);
+    display: grid;
 
-    overflow: hidden;
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 6px;
 }
 
-.preview-header {
-    min-height: 78px;
-    padding: 18px 20px;
+.history-controls button {
+    min-height: 33px;
 
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    border-bottom: 1px solid #eef0f3;
-}
-
-.preview-header h2 {
-    margin: 0 0 4px;
-
-    color: #111827;
-    font-size: 15px;
-    font-weight: 750;
-}
-
-.preview-header p {
-    margin: 0;
-
-    color: #9ca3af;
-    font-size: 11px;
-}
-
-
-/* =========================
-   ZOOM
-========================= */
-
-.zoom-controls {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-
-.zoom-controls button {
-    width: 28px;
-    height: 28px;
-
-    border: 1px solid #d9dde3;
+    border: 1px solid #dfe3e8;
     border-radius: 6px;
 
     background: #ffffff;
-    color: #374151;
+    color: #4b5563;
 
-    font-size: 17px;
-    line-height: 1;
+    font-size: 9px;
+    font-weight: 650;
 
     cursor: pointer;
 }
 
-.zoom-controls button:hover {
+.history-controls button:hover {
     border-color: #111827;
     color: #111827;
-}
-
-.zoom-controls span {
-    min-width: 42px;
-
-    color: #6b7280;
-    font-size: 10px;
-    font-weight: 600;
-
-    text-align: center;
-}
-
-
-/* =========================
-   CANVAS AREA
-========================= */
-
-.canvas-wrapper {
-    min-height: 620px;
-    padding: 35px;
-
-    background:
-        linear-gradient(45deg, #eeeeee 25%, transparent 25%),
-        linear-gradient(-45deg, #eeeeee 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #eeeeee 75%),
-        linear-gradient(-45deg, transparent 75%, #eeeeee 75%);
-
-    background-size: 22px 22px;
-    background-position: 0 0, 0 11px, 11px -11px, -11px 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    overflow: auto;
-}
-
-.empty-preview {
-    padding: 35px 20px;
-
-    text-align: center;
-}
-
-.empty-icon {
-    width: 54px;
-    height: 54px;
-    margin: 0 auto 15px;
-
-    border: 1px solid #d1d5db;
-    border-radius: 50%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    color: #9ca3af;
-    font-size: 30px;
-}
-
-.empty-preview h3 {
-    margin: 0 0 7px;
-
-    color: #374151;
-    font-size: 14px;
-    font-weight: 700;
-}
-
-.empty-preview p {
-    margin: 0;
-
-    color: #9ca3af;
-    font-size: 11px;
-}
-
-
-/* =========================
-   CANVAS
-========================= */
-
-#photoCanvas {
-    display: block;
-
-    max-width: none;
-    height: auto;
-
-    background: #ffffff;
-
-    box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.16);
-
-    transform-origin: center center;
-
-    transition: transform 0.15s ease;
-}
-
-
-/* =========================
-   PREVIEW FOOTER
-========================= */
-
-.preview-footer {
-    min-height: 43px;
-    padding: 11px 18px;
-
-    border-top: 1px solid #eef0f3;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-
-    color: #9ca3af;
-    font-size: 10px;
-}
-
-#imageStatus {
-    color: #4b5563;
-    font-weight: 600;
 }
 
 
@@ -644,7 +809,7 @@ input[type="range"] {
 ========================= */
 
 .toolora-footer {
-    padding: 22px 16px;
+    padding: 20px 15px;
 
     border-top: 1px solid #e5e7eb;
 
@@ -657,7 +822,8 @@ input[type="range"] {
     margin: 0;
 
     color: #9ca3af;
-    font-size: 11px;
+
+    font-size: 10px;
 }
 
 
@@ -667,19 +833,17 @@ input[type="range"] {
 
 @media (max-width: 1050px) {
 
-    .editor-layout {
-        grid-template-columns: 330px minmax(0, 1fr);
-        gap: 18px;
+    .editor-workspace {
+        grid-template-columns:
+            minmax(0, 1fr) 320px;
     }
 
+    .preview-panel,
     .editor-panel {
-        padding: 17px;
+        height: calc(100vh - 150px);
+        min-height: 560px;
     }
 
-    .canvas-wrapper {
-        min-height: 570px;
-        padding: 25px;
-    }
 }
 
 
@@ -691,55 +855,86 @@ input[type="range"] {
 
     .header-inner,
     .editor-container {
-        width: min(100% - 24px, 700px);
-    }
-
-    .header-inner {
-        min-height: 60px;
-    }
-
-    .toolora-logo {
-        font-size: 21px;
-    }
-
-    .back-home {
-        font-size: 12px;
+        width: calc(100% - 20px);
     }
 
     .editor-container {
-        padding-top: 24px;
-        padding-bottom: 35px;
+        padding-top: 20px;
     }
 
     .editor-heading h1 {
-        font-size: 23px;
+        font-size: 21px;
     }
 
-    .editor-layout {
-        grid-template-columns: 1fr;
+    .editor-heading p {
+        font-size: 11px;
     }
 
-    .editor-panel {
-        order: 2;
+    .editor-workspace {
+        display: flex;
+        flex-direction: column;
+
+        gap: 10px;
     }
+
+    /*
+       Photo stays at the top.
+       Tool controls stay directly below it.
+    */
 
     .preview-panel {
+        width: 100%;
+
+        height: 58vh;
+        min-height: 390px;
+
         order: 1;
     }
 
+    .editor-panel {
+        width: 100%;
+
+        height: auto;
+        min-height: auto;
+
+        max-height: none;
+
+        order: 2;
+
+        overflow: visible;
+
+        padding: 12px;
+    }
+
+    .tool-navigation {
+        position: sticky;
+        top: 0;
+
+        margin:
+            0 -12px 13px;
+
+        padding:
+            9px 12px;
+    }
+
+    .tool-tab {
+        min-height: 36px;
+
+        font-size: 9px;
+    }
+
     .canvas-wrapper {
-        min-height: 430px;
-        padding: 20px;
+        padding: 14px;
     }
 
     .preview-header {
-        padding: 15px;
+        padding: 11px 13px;
     }
 
-    .preview-header p {
-        max-width: 220px;
-        line-height: 1.5;
+    .preview-footer {
+        padding: 7px 11px;
     }
+
 }
 
 
@@ -749,65 +944,74 @@ input[type="range"] {
 
 @media (max-width: 480px) {
 
-    .header-inner,
+    .header-inner {
+        min-height: 56px;
+    }
+
+    .toolora-logo {
+        font-size: 20px;
+    }
+
+    .back-home {
+        font-size: 11px;
+    }
+
     .editor-container {
-        width: calc(100% - 18px);
+        width: calc(100% - 12px);
     }
 
     .editor-heading {
-        margin-bottom: 18px;
+        margin-bottom: 13px;
     }
 
     .editor-heading h1 {
-        font-size: 21px;
-    }
-
-    .editor-heading p {
-        font-size: 12px;
-    }
-
-    .editor-panel {
-        padding: 15px;
-        border-radius: 11px;
+        font-size: 19px;
     }
 
     .preview-panel {
-        border-radius: 11px;
+        height: 55vh;
+        min-height: 350px;
+
+        border-radius: 10px;
     }
 
-    .preview-header {
-        min-height: 70px;
-        padding: 13px;
+    .editor-panel {
+        border-radius: 10px;
     }
 
-    .zoom-controls {
-        gap: 4px;
+    .tool-navigation {
+        grid-template-columns:
+            repeat(5, minmax(0, 1fr));
+
+        gap: 3px;
+    }
+
+    .tool-tab {
+        padding: 0 2px;
+
+        font-size: 8px;
+    }
+
+    .preview-header h2 {
+        font-size: 12px;
+    }
+
+    .preview-header p {
+        font-size: 9px;
     }
 
     .zoom-controls button {
-        width: 26px;
-        height: 26px;
+        width: 25px;
+        height: 25px;
     }
 
-    .canvas-wrapper {
-        min-height: 350px;
-        padding: 14px;
+    .zoom-controls span {
+        min-width: 35px;
     }
 
-    .button-grid {
-        grid-template-columns: 1fr 1fr;
+    .filter-grid,
+    .transform-grid {
+        gap: 6px;
     }
 
-    .filter-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .action-grid {
-        grid-template-columns: 1fr 1fr 1fr;
-    }
-
-    .preview-footer {
-        padding: 9px 12px;
-        font-size: 9px;
-    }
 }
