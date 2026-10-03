@@ -1,1 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Professional Photo Editor - Toolora</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="css/photo-editor.css">
+</head>
+
+<body>
+
+<header class="toolora-header">
+    <div class="header-inner">
+
+        <a href="index.html" class="toolora-logo">
+            Toolora
+        </a>
+
+        <a href="index.html" class="back-home">
+            Back to Home
+        </a>
+
+    </div>
+</header>
+
+
+<main class="editor-container">
+
+    <!-- Page Heading -->
+    <section class="editor-heading">
+
+        <div>
+            <h1>Professional Photo Editor</h1>
+
+            <p>
+                Edit, enhance, resize and export your photos directly in your browser.
+            </p>
+        </div>
+
+    </section>
+
+
+    <!-- Main Editor -->
+    <section class="editor-layout">
+
+
+        <!-- Left Control Panel -->
+        <aside class="editor-panel">
+
+            <!-- Upload -->
+            <div class="control-section">
+
+                <h2>Upload Photo</h2>
+
+                <label for="photoInput" class="upload-box">
+
+                    <div class="upload-icon">
+                        +
+                    </div>
+
+                    <strong>Upload Photo</strong>
+
+                    <span>
+                        JPG, PNG or WebP
+                    </span>
+
+                </label>
+
+                <input
+                    type="file"
+                    id="photoInput"
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                >
+
+            </div>
+
+
+            <!-- Image Controls -->
+            <div class="control-section">
+
+                <h2>Image Controls</h2>
+
+                <div class="button-grid">
+
+                    <button type="button" id="cropBtn">
+                        Crop
+                    </button>
+
+                    <button type="button" id="rotateLeftBtn">
+                        Rotate Left
+                    </button>
+
+                    <button type="button" id="rotateRightBtn">
+                        Rotate Right
+                    </button>
+
+                    <button type="button" id="flipHorizontalBtn">
+                        Flip Horizontal
+                    </button>
+
+                    <button type="button" id="flipVerticalBtn">
+                        Flip Vertical
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Adjustments -->
+            <div class="control-section">
+
+                <h2>Adjustments</h2>
+
+
+                <div class="range-control">
+
+                    <div class="range-header">
+                        <label for="brightness">
+                            Brightness
+                        </label>
+
+                        <span id="brightnessValue">
+                            100%
+                        </span>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="brightness"
+                        min="0"
+                        max="200"
+                        value="100"
+                    >
+
+                </div>
+
+
+                <div class="range-control">
+
+                    <div class="range-header">
+                        <label for="contrast">
+                            Contrast
+                        </label>
+
+                        <span id="contrastValue">
+                            100%
+                        </span>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="contrast"
+                        min="0"
+                        max="200"
+                        value="100"
+                    >
+
+                </div>
+
+
+                <div class="range-control">
+
+                    <div class="range-header">
+                        <label for="saturation">
+                            Saturation
+                        </label>
+
+                        <span id="saturationValue">
+                            100%
+                        </span>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="saturation"
+                        min="0"
+                        max="200"
+                        value="100"
+                    >
+
+                </div>
+
+
+                <div class="range-control">
+
+                    <div class="range-header">
+                        <label for="blur">
+                            Blur
+                        </label>
+
+                        <span id="blurValue">
+                            0px
+                        </span>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="blur"
+                        min="0"
+                        max="20"
+                        value="0"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- Filters -->
+            <div class="control-section">
+
+                <h2>Filters</h2>
+
+                <div class="filter-grid">
+
+                    <button type="button" data-filter="none">
+                        Original
+                    </button>
+
+                    <button type="button" data-filter="grayscale">
+                        Grayscale
+                    </button>
+
+                    <button type="button" data-filter="sepia">
+                        Sepia
+                    </button>
+
+                    <button type="button" data-filter="vintage">
+                        Vintage
+                    </button>
+
+                    <button type="button" data-filter="warm">
+                        Warm
+                    </button>
+
+                    <button type="button" data-filter="cool">
+                        Cool
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Canvas Size -->
+            <div class="control-section">
+
+                <h2>Resize</h2>
+
+                <div class="size-grid">
+
+                    <div>
+                        <label for="imageWidth">
+                            Width
+                        </label>
+
+                        <input
+                            type="number"
+                            id="imageWidth"
+                            min="1"
+                            placeholder="Width"
+                        >
+                    </div>
+
+
+                    <div>
+                        <label for="imageHeight">
+                            Height
+                        </label>
+
+                        <input
+                            type="number"
+                            id="imageHeight"
+                            min="1"
+                            placeholder="Height"
+                        >
+                    </div>
+
+                </div>
+
+
+                <label class="checkbox-control">
+
+                    <input
+                        type="checkbox"
+                        id="lockRatio"
+                        checked
+                    >
+
+                    <span>
+                        Lock aspect ratio
+                    </span>
+
+                </label>
+
+
+                <button
+                    type="button"
+                    id="applyResizeBtn"
+                    class="primary-small-btn"
+                >
+                    Apply Resize
+                </button>
+
+            </div>
+
+
+            <!-- Actions -->
+            <div class="control-section">
+
+                <h2>Actions</h2>
+
+                <div class="action-grid">
+
+                    <button
+                        type="button"
+                        id="undoBtn"
+                    >
+                        Undo
+                    </button>
+
+                    <button
+                        type="button"
+                        id="redoBtn"
+                    >
+                        Redo
+                    </button>
+
+                    <button
+                        type="button"
+                        id="resetBtn"
+                    >
+                        Reset
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Export -->
+            <div class="control-section export-section">
+
+                <h2>Export</h2>
+
+                <label for="exportFormat">
+                    Format
+                </label>
+
+                <select id="exportFormat">
+
+                    <option value="image/jpeg">
+                        JPG
+                    </option>
+
+                    <option value="image/png">
+                        PNG
+                    </option>
+
+                    <option value="image/webp">
+                        WebP
+                    </option>
+
+                </select>
+
+
+                <label for="exportQuality">
+                    Quality
+                </label>
+
+                <input
+                    type="range"
+                    id="exportQuality"
+                    min="10"
+                    max="100"
+                    value="90"
+                >
+
+                <div class="quality-value">
+                    <span id="qualityValue">
+                        90%
+                    </span>
+                </div>
+
+
+                <button
+                    type="button"
+                    id="downloadBtn"
+                    class="download-btn"
+                >
+                    Download Edited Photo
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- Right Preview Area -->
+        <section class="preview-panel">
+
+            <div class="preview-header">
+
+                <div>
+
+                    <h2>
+                        Preview
+                    </h2>
+
+                    <p>
+                        Your edited photo will appear here.
+                    </p>
+
+                </div>
+
+                <div class="zoom-controls">
+
+                    <button
+                        type="button"
+                        id="zoomOutBtn"
+                    >
+                        −
+                    </button>
+
+                    <span id="zoomValue">
+                        100%
+                    </span>
+
+                    <button
+                        type="button"
+                        id="zoomInBtn"
+                    >
+                        +
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="canvas-wrapper"
+                id="canvasWrapper"
+            >
+
+                <div
+                    class="empty-preview"
+                    id="emptyPreview"
+                >
+
+                    <div class="empty-icon">
+                        +
+                    </div>
+
+                    <h3>
+                        No Photo Selected
+                    </h3>
+
+                    <p>
+                        Upload a photo to start editing.
+                    </p>
+
+                </div>
+
+
+                <canvas
+                    id="photoCanvas"
+                    hidden
+                ></canvas>
+
+            </div>
+
+
+            <div class="preview-footer">
+
+                <span id="imageInfo">
+                    No image loaded
+                </span>
+
+                <span id="imageStatus">
+                    Ready
+                </span>
+
+            </div>
+
+        </section>
+
+    </section>
+
+</main>
+
+
+<footer class="toolora-footer">
+
+    <p>
+        © 2026 Toolora. All rights reserved.
+    </p>
+
+</footer>
+
+
+<script src="js/photo-editor.js"></script>
+
+</body>
+</html>
