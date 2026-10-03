@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Professional Resume Maker | Toolora</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      background: #f3f4f6;
+    }
+
+    .resume-page {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      margin: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+
+    .resume-section-title {
+      border-bottom: 2px solid #111827;
+      padding-bottom: 5px;
+      margin-bottom: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .skill-chip {
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .skill-chip.selected {
+      background: #111827;
+      color: white;
+      border-color: #111827;
+    }
+
+    .language-chip {
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .language-chip.selected {
+      background: #111827;
+      color: white;
+      border-color: #111827;
+    }
+
+    .dynamic-row {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .preview-photo {
+      width: 110px;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+    }
+
+    #resumePreview {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .resume-page {
+        box-shadow: none;
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0;
+      }
+
+      #resumePreview {
+        display: block !important;
+      }
+
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .resume-page {
+        width: 100%;
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+
+<body class="text-gray-800">
+
+  <!-- Header -->
+  <header class="no-print bg-white border-b sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+
+      <a href="index.html"
+         class="text-2xl font-bold text-gray-900">
+        Toolora
+      </a>
+
+      <a href="index.html"
+         class="text-sm font-medium text-gray-600 hover:text-black">
+        Back to Home
+      </a>
+
+    </div>
+  </header>
+
+
+  <!-- Main -->
+  <main class="no-print max-w-7xl mx-auto px-4 py-8">
+
+    <div class="mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900">
+        Professional Resume Maker
+      </h1>
+
+      <p class="text-gray-600 mt-2">
+        Create a professional resume step by step.
+        Fill only the information you want to include.
+      </p>
+    </div>
+
+
+    <div class="grid lg:grid-cols-2 gap-8">
+
+
+      <!-- ========================= -->
+      <!-- LEFT: FORM -->
+      <!-- ========================= -->
+
+      <section class="space-y-6">
+
+
+        <!-- Basic Information -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <h2 class="text-xl font-bold mb-1">
+            1. Basic Information
+          </h2>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Enter the basic information that should appear at the top of your resume.
+          </p>
+
+
+          <div class="grid md:grid-cols-2 gap-4">
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-semibold mb-1">
+                Full Name *
+              </label>
+
+              <input
+                id="fullName"
+                type="text"
+                placeholder="ABC XYZ"
+                class="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black">
+            </div>
+
+
+            <div>
+              <label class="block text-sm font-semibold mb-1">
+                Mobile Number *
+              </label>
+
+              <input
+                id="phone"
+                type="tel"
+                placeholder="+91 9876543210"
+                class="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black">
+            </div>
+
+
+            <div>
+              <label class="block text-sm font-semibold mb-1">
+                Email *
+              </label>
+
+              <input
+                id="email"
+                type="email"
+                placeholder="abc@example.com"
+                class="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black">
+            </div>
+
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-semibold mb-1">
+                City / State
+              </label>
+
+              <input
+                id="location"
+                type="text"
+                placeholder="City, State"
+                class="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black">
+            </div>
+
+          </div>
+
+
+          <!-- Profile Photo -->
+
+          <div class="mt-5">
+
+            <label class="block text-sm font-semibold mb-2">
+              Profile Photo
+            </label>
+
+            <input
+              id="photoInput"
+              type="file"
+              accept="image/*"
+              class="w-full border rounded-lg px-4 py-3">
+
+            <p class="text-xs text-gray-500 mt-2">
+              Optional. Use a clear professional photo.
+            </p>
+
+            <div id="photoPreviewContainer" class="mt-3 hidden">
+              <img
+                id="photoPreview"
+                class="preview-photo"
+                alt="Profile Photo Preview">
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- Professional Summary -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <h2 class="text-xl font-bold mb-1">
+            2. Professional Summary
+          </h2>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Optional. Write a short professional introduction.
+          </p>
+
+          <textarea
+            id="summary"
+            rows="5"
+            placeholder="Example: Motivated student with an interest in technology, programming, and problem solving."
+            class="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-black"></textarea>
+
+        </div>
+
+
+
+        <!-- Education -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <div class="flex items-center justify-between mb-1">
+
+            <h2 class="text-xl font-bold">
+              3. Education
+            </h2>
+
+            <button
+              onclick="addEducation()"
+              class="bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold">
+              + Add Education
+            </button>
+
+          </div>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Add your education one record at a time.
+          </p>
+
+          <div id="educationContainer"></div>
+
+        </div>
+
+
+
+        <!-- Skills -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <h2 class="text-xl font-bold mb-1">
+            4. Skills
+          </h2>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Select skills or add your own skill.
+          </p>
+
+
+          <div class="flex flex-wrap gap-2 mb-5">
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'C Programming')">
+              C Programming
+            </button>
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'C++')">
+              C++
+            </button>
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'Python')">
+              Python
+            </button>
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'Java')">
+              Java
+            </button>
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'HTML')">
+              HTML
+            </button>
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'CSS')">
+              CSS
+            </button>
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'JavaScript')">
+              JavaScript
+            </button>
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'MS Office')">
+              MS Office
+            </button>
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'Problem Solving')">
+              Problem Solving
+            </button>
+
+            <button class="skill-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleSkill(this, 'Logical Thinking')">
+              Logical Thinking
+            </button>
+
+          </div>
+
+
+          <div class="flex gap-2">
+
+            <input
+              id="customSkill"
+              type="text"
+              placeholder="Type another skill"
+              class="flex-1 border rounded-lg px-4 py-3">
+
+            <button
+              onclick="addCustomSkill()"
+              class="bg-gray-900 text-white px-5 rounded-lg">
+              Add
+            </button>
+
+          </div>
+
+
+          <div id="selectedSkills"
+               class="flex flex-wrap gap-2 mt-4">
+          </div>
+
+        </div>
+
+
+
+        <!-- Projects -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <div class="flex items-center justify-between mb-1">
+
+            <h2 class="text-xl font-bold">
+              5. Projects
+            </h2>
+
+            <button
+              onclick="addProject()"
+              class="bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold">
+              + Add Project
+            </button>
+
+          </div>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Optional. Add projects that demonstrate your skills.
+          </p>
+
+          <div id="projectContainer"></div>
+
+        </div>
+
+
+
+        <!-- Experience -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <div class="flex items-center justify-between mb-1">
+
+            <h2 class="text-xl font-bold">
+              6. Experience
+            </h2>
+
+            <button
+              onclick="addExperience()"
+              class="bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold">
+              + Add Experience
+            </button>
+
+          </div>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Optional. If you are a fresher, you can skip this section.
+          </p>
+
+          <div id="experienceContainer"></div>
+
+        </div>
+
+
+
+        <!-- Certifications -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <div class="flex items-center justify-between mb-1">
+
+            <h2 class="text-xl font-bold">
+              7. Certifications
+            </h2>
+
+            <button
+              onclick="addCertification()"
+              class="bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold">
+              + Add Certification
+            </button>
+
+          </div>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Optional. Add certificates, courses, or training.
+          </p>
+
+          <div id="certificationContainer"></div>
+
+        </div>
+
+
+
+        <!-- Languages -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <h2 class="text-xl font-bold mb-1">
+            8. Languages
+          </h2>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Select languages or add your own.
+          </p>
+
+
+          <div class="flex flex-wrap gap-2 mb-5">
+
+            <button class="language-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleLanguage(this, 'English')">
+              English
+            </button>
+
+            <button class="language-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleLanguage(this, 'Hindi')">
+              Hindi
+            </button>
+
+            <button class="language-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleLanguage(this, 'French')">
+              French
+            </button>
+
+            <button class="language-chip border rounded-full px-4 py-2 text-sm"
+                    onclick="toggleLanguage(this, 'Spanish')">
+              Spanish
+            </button>
+
+          </div>
+
+
+          <div class="flex gap-2">
+
+            <input
+              id="customLanguage"
+              type="text"
+              placeholder="Type another language"
+              class="flex-1 border rounded-lg px-4 py-3">
+
+            <button
+              onclick="addCustomLanguage()"
+              class="bg-gray-900 text-white px-5 rounded-lg">
+              Add
+            </button>
+
+          </div>
+
+
+          <div id="selectedLanguages"
+               class="flex flex-wrap gap-2 mt-4">
+          </div>
+
+        </div>
+
+
+
+        <!-- Professional Links -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <h2 class="text-xl font-bold mb-1">
+            9. Professional Links
+          </h2>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Optional. Add your professional online profiles.
+          </p>
+
+
+          <div class="space-y-4">
+
+            <div>
+              <label class="block text-sm font-semibold mb-1">
+                LinkedIn
+              </label>
+
+              <input
+                id="linkedin"
+                type="url"
+                placeholder="https://linkedin.com/in/abcxyz"
+                class="w-full border rounded-lg px-4 py-3">
+            </div>
+
+
+            <div>
+              <label class="block text-sm font-semibold mb-1">
+                GitHub
+              </label>
+
+              <input
+                id="github"
+                type="url"
+                placeholder="https://github.com/abcxyz"
+                class="w-full border rounded-lg px-4 py-3">
+            </div>
+
+
+            <div>
+              <label class="block text-sm font-semibold mb-1">
+                Portfolio
+              </label>
+
+              <input
+                id="portfolio"
+                type="url"
+                placeholder="https://example.com"
+                class="w-full border rounded-lg px-4 py-3">
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- Generate Buttons -->
+        <div class="bg-white rounded-2xl shadow-sm border p-6">
+
+          <div class="grid sm:grid-cols-2 gap-3">
+
+            <button
+              onclick="updatePreview()"
+              class="bg-black text-white py-3 rounded-lg font-semibold">
+              Update Resume
+            </button>
+
+            <button
+              onclick="printResume()"
+              class="border border-black py-3 rounded-lg font-semibold hover:bg-gray-100">
+              Save / Print PDF
+            </button>
+
+          </div>
+
+          <p class="text-xs text-gray-500 text-center mt-3">
+            Choose "Save as PDF" in the browser print window to create your PDF.
+          </p>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- ========================= -->
+      <!-- RIGHT: LIVE PREVIEW -->
+      <!-- ========================= -->
+
+      <section>
+
+        <div class="sticky top-24">
+
+          <div class="no-print flex items-center justify-between mb-3">
+
+            <div>
+              <h2 class="text-xl font-bold">
+                Live Resume Preview
+              </h2>
+
+              <p class="text-sm text-gray-500">
+                Your resume updates from the information you enter.
+              </p>
+            </div>
+
+          </div>
+
+
+          <div id="resumePreview"
+               class="resume-page p-[18mm]">
+
+            <!-- Resume Header -->
+
+            <div class="flex justify-between gap-6 border-b-2 border-gray-900 pb-5">
+
+              <div class="flex-1">
+
+                <h1 id="previewName"
+                    class="text-3xl font-bold uppercase">
+                  ABC XYZ
+                </h1>
+
+                <p id="previewLocation"
+                   class="text-sm text-gray-600 mt-2">
+                  City, State
+                </p>
+
+                <div class="text-sm text-gray-600 mt-2 space-y-1">
+
+                  <div id="previewPhone">
+                    +91 9876543210
+                  </div>
+
+                  <div id="previewEmail">
+                    abc@example.com
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <div id="previewPhotoBox"
+                   class="hidden">
+
+                <img
+                  id="previewProfilePhoto"
+                  class="w-24 h-24 object-cover rounded-lg border"
+                  alt="Profile">
+
+              </div>
+
+            </div>
+
+
+
+            <!-- Summary -->
+
+            <div id="previewSummarySection"
+                 class="mt-6 hidden">
+
+              <h3 class="resume-section-title">
+                Professional Summary
+              </h3>
+
+              <p id="previewSummary"
+                 class="text-sm leading-6 text-gray-700">
+              </p>
+
+            </div>
+
+
+
+            <!-- Education -->
+
+            <div id="previewEducationSection"
+                 class="mt-6">
+
+              <h3 class="resume-section-title">
+                Education
+              </h3>
+
+              <div id="previewEducation"></div>
+
+            </div>
+
+
+
+            <!-- Skills -->
+
+            <div id="previewSkillsSection"
+                 class="mt-6 hidden">
+
+              <h3 class="resume-section-title">
+                Skills
+              </h3>
+
+              <div id="previewSkills"
+                   class="text-sm leading-6">
+              </div>
+
+            </div>
+
+
+
+            <!-- Projects -->
+
+            <div id="previewProjectsSection"
+                 class="mt-6 hidden">
+
+              <h3 class="resume-section-title">
+                Projects
+              </h3>
+
+              <div id="previewProjects"></div>
+
+            </div>
+
+
+
+            <!-- Experience -->
+
+            <div id="previewExperienceSection"
+                 class="mt-6 hidden">
+
+              <h3 class="resume-section-title">
+                Experience
+              </h3>
+
+              <div id="previewExperience"></div>
+
+            </div>
+
+
+
+            <!-- Certifications -->
+
+            <div id="previewCertificationSection"
+                 class="mt-6 hidden">
+
+              <h3 class="resume-section-title">
+                Certifications
+              </h3>
+
+              <div id="previewCertifications"></div>
+
+            </div>
+
+
+
+            <!-- Languages -->
+
+            <div id="previewLanguagesSection"
+                 class="mt-6 hidden">
+
+              <h3 class="resume-section-title">
+                Languages
+              </h3>
+
+              <div id="previewLanguages"
+                   class="text-sm">
+              </div>
+
+            </div>
+
+
+
+            <!-- Links -->
+
+            <div id="previewLinksSection"
+                 class="mt-6 hidden">
+
+              <h3 class="resume-section-title">
+                Professional Links
+              </h3>
+
+              <div id="previewLinks"
+                   class="text-sm space-y-1">
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+
+
+<script>
+
+  /* =========================
+     DATA
+  ========================= */
+
+  let selectedSkills = [];
+  let selectedLanguages = [];
+
+
+
+  /* =========================
+     HELPER
+  ========================= */
+
+  function escapeHtml(value) {
+
+    if (!value) return "";
+
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+
+
+  /* =========================
+     EDUCATION
+  ========================= */
+
+  function addEducation() {
+
+    const container =
+      document.getElementById("educationContainer");
+
+    const row =
+      document.createElement("div");
+
+    row.className = "dynamic-row education-row";
+
+    row.innerHTML = `
+
+      <div class="grid md:grid-cols-2 gap-4">
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Qualification *
+          </label>
+
+          <select class="education-qualification w-full border rounded-lg px-4 py-3">
+
+            <option value="">Select Qualification</option>
+            <option>10th</option>
+            <option>12th</option>
+            <option>Diploma</option>
+            <option>Graduation</option>
+            <option>Post Graduation</option>
+            <option>Other</option>
+
+          </select>
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            School / College *
+          </label>
+
+          <input
+            type="text"
+            class="education-school w-full border rounded-lg px-4 py-3"
+            placeholder="ABC School / College">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Board / University
+          </label>
+
+          <input
+            type="text"
+            class="education-board w-full border rounded-lg px-4 py-3"
+            placeholder="XYZ Board / University">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Year of Completion
+          </label>
+
+          <input
+            type="text"
+            class="education-year w-full border rounded-lg px-4 py-3"
+            placeholder="2026">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Percentage / CGPA
+          </label>
+
+          <input
+            type="text"
+            class="education-score w-full border rounded-lg px-4 py-3"
+            placeholder="85% or 8.5 CGPA">
+        </div>
+
+      </div>
+
+
+      <button
+        onclick="this.closest('.education-row').remove(); updatePreview();"
+        class="mt-4 text-red-600 text-sm font-semibold">
+        Remove Education
+      </button>
+    `;
+
+    container.appendChild(row);
+  }
+
+
+
+  /* =========================
+     SKILLS
+  ========================= */
+
+  function toggleSkill(button, skill) {
+
+    button.classList.toggle("selected");
+
+    if (selectedSkills.includes(skill)) {
+
+      selectedSkills =
+        selectedSkills.filter(item => item !== skill);
+
+    } else {
+
+      selectedSkills.push(skill);
+
+    }
+
+    renderSelectedSkills();
+    updatePreview();
+  }
+
+
+  function addCustomSkill() {
+
+    const input =
+      document.getElementById("customSkill");
+
+    const value =
+      input.value.trim();
+
+    if (!value) return;
+
+    if (!selectedSkills.includes(value)) {
+
+      selectedSkills.push(value);
+
+    }
+
+    input.value = "";
+
+    renderSelectedSkills();
+    updatePreview();
+  }
+
+
+  function renderSelectedSkills() {
+
+    const container =
+      document.getElementById("selectedSkills");
+
+    container.innerHTML = "";
+
+    selectedSkills.forEach(skill => {
+
+      const span =
+        document.createElement("span");
+
+      span.className =
+        "bg-gray-100 border px-3 py-1 rounded-full text-sm";
+
+      span.textContent = skill;
+
+      container.appendChild(span);
+
+    });
+
+  }
+
+
+
+  /* =========================
+     LANGUAGES
+  ========================= */
+
+  function toggleLanguage(button, language) {
+
+    button.classList.toggle("selected");
+
+    if (selectedLanguages.includes(language)) {
+
+      selectedLanguages =
+        selectedLanguages.filter(item => item !== language);
+
+    } else {
+
+      selectedLanguages.push(language);
+
+    }
+
+    renderSelectedLanguages();
+    updatePreview();
+  }
+
+
+  function addCustomLanguage() {
+
+    const input =
+      document.getElementById("customLanguage");
+
+    const value =
+      input.value.trim();
+
+    if (!value) return;
+
+    if (!selectedLanguages.includes(value)) {
+
+      selectedLanguages.push(value);
+
+    }
+
+    input.value = "";
+
+    renderSelectedLanguages();
+    updatePreview();
+  }
+
+
+  function renderSelectedLanguages() {
+
+    const container =
+      document.getElementById("selectedLanguages");
+
+    container.innerHTML = "";
+
+    selectedLanguages.forEach(language => {
+
+      const span =
+        document.createElement("span");
+
+      span.className =
+        "bg-gray-100 border px-3 py-1 rounded-full text-sm";
+
+      span.textContent = language;
+
+      container.appendChild(span);
+
+    });
+
+  }
+
+
+
+  /* =========================
+     PROJECTS
+  ========================= */
+
+  function addProject() {
+
+    const container =
+      document.getElementById("projectContainer");
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "dynamic-row project-row";
+
+    row.innerHTML = `
+
+      <div class="space-y-4">
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Project Name
+          </label>
+
+          <input
+            type="text"
+            class="project-name w-full border rounded-lg px-4 py-3"
+            placeholder="ABC Project">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Project Description
+          </label>
+
+          <textarea
+            rows="4"
+            class="project-description w-full border rounded-lg px-4 py-3"
+            placeholder="Describe what you created, what technologies you used, and what you achieved."></textarea>
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Project Link
+          </label>
+
+          <input
+            type="url"
+            class="project-link w-full border rounded-lg px-4 py-3"
+            placeholder="https://example.com">
+        </div>
+
+      </div>
+
+
+      <button
+        onclick="this.closest('.project-row').remove(); updatePreview();"
+        class="mt-4 text-red-600 text-sm font-semibold">
+        Remove Project
+      </button>
+    `;
+
+    container.appendChild(row);
+  }
+
+
+
+  /* =========================
+     EXPERIENCE
+  ========================= */
+
+  function addExperience() {
+
+    const container =
+      document.getElementById("experienceContainer");
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "dynamic-row experience-row";
+
+    row.innerHTML = `
+
+      <div class="grid md:grid-cols-2 gap-4">
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Job Title
+          </label>
+
+          <input
+            type="text"
+            class="experience-title w-full border rounded-lg px-4 py-3"
+            placeholder="Software Intern">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Company
+          </label>
+
+          <input
+            type="text"
+            class="experience-company w-full border rounded-lg px-4 py-3"
+            placeholder="ABC Company">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Start Date
+          </label>
+
+          <input
+            type="text"
+            class="experience-start w-full border rounded-lg px-4 py-3"
+            placeholder="January 2026">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            End Date
+          </label>
+
+          <input
+            type="text"
+            class="experience-end w-full border rounded-lg px-4 py-3"
+            placeholder="June 2026">
+        </div>
+
+
+        <div class="md:col-span-2">
+
+          <label class="block text-sm font-semibold mb-1">
+            Responsibilities
+          </label>
+
+          <textarea
+            rows="4"
+            class="experience-description w-full border rounded-lg px-4 py-3"
+            placeholder="Describe your responsibilities and achievements."></textarea>
+
+        </div>
+
+      </div>
+
+
+      <button
+        onclick="this.closest('.experience-row').remove(); updatePreview();"
+        class="mt-4 text-red-600 text-sm font-semibold">
+        Remove Experience
+      </button>
+    `;
+
+    container.appendChild(row);
+  }
+
+
+
+  /* =========================
+     CERTIFICATIONS
+  ========================= */
+
+  function addCertification() {
+
+    const container =
+      document.getElementById("certificationContainer");
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "dynamic-row certification-row";
+
+    row.innerHTML = `
+
+      <div class="grid md:grid-cols-2 gap-4">
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Certificate Name
+          </label>
+
+          <input
+            type="text"
+            class="certification-name w-full border rounded-lg px-4 py-3"
+            placeholder="Python Programming Certificate">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Issuing Organization
+          </label>
+
+          <input
+            type="text"
+            class="certification-organization w-full border rounded-lg px-4 py-3"
+            placeholder="XYZ Institute">
+        </div>
+
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            Year
+          </label>
+
+          <input
+            type="text"
+            class="certification-year w-full border rounded-lg px-4 py-3"
+            placeholder="2026">
+        </div>
+
+      </div>
+
+
+      <button
+        onclick="this.closest('.certification-row').remove(); updatePreview();"
+        class="mt-4 text-red-600 text-sm font-semibold">
+        Remove Certification
+      </button>
+    `;
+
+    container.appendChild(row);
+  }
+
+
+
+  /* =========================
+     PHOTO
+  ========================= */
+
+  document
+    .getElementById("photoInput")
+    .addEventListener("change", function(event) {
+
+      const file =
+        event.target.files[0];
+
+      if (!file) return;
+
+      const reader =
+        new FileReader();
+
+      reader.onload = function(e) {
+
+        document
+          .getElementById("photoPreview")
+          .src = e.target.result;
+
+        document
+          .getElementById("photoPreviewContainer")
+          .classList.remove("hidden");
+
+        document
+          .getElementById("previewProfilePhoto")
+          .src = e.target.result;
+
+        document
+          .getElementById("previewPhotoBox")
+          .classList.remove("hidden");
+
+      };
+
+      reader.readAsDataURL(file);
+
+    });
+
+
+
+  /* =========================
+     UPDATE PREVIEW
+  ========================= */
+
+  function updatePreview() {
+
+    const name =
+      document.getElementById("fullName").value.trim();
+
+    const phone =
+      document.getElementById("phone").value.trim();
+
+    const email =
+      document.getElementById("email").value.trim();
+
+    const location =
+      document.getElementById("location").value.trim();
+
+    const summary =
+      document.getElementById("summary").value.trim();
+
+
+    document.getElementById("previewName").textContent =
+      name || "ABC XYZ";
+
+    document.getElementById("previewPhone").textContent =
+      phone || "+91 9876543210";
+
+    document.getElementById("previewEmail").textContent =
+      email || "abc@example.com";
+
+    document.getElementById("previewLocation").textContent =
+      location || "City, State";
+
+
+
+    /* Summary */
+
+    const summarySection =
+      document.getElementById("previewSummarySection");
+
+    if (summary) {
+
+      summarySection.classList.remove("hidden");
+
+      document.getElementById("previewSummary").textContent =
+        summary;
+
+    } else {
+
+      summarySection.classList.add("hidden");
+
+    }
+
+
+
+    /* Education */
+
+    const educationRows =
+      document.querySelectorAll(".education-row");
+
+    const educationPreview =
+      document.getElementById("previewEducation");
+
+    educationPreview.innerHTML = "";
+
+    educationRows.forEach(row => {
+
+      const qualification =
+        row.querySelector(".education-qualification").value;
+
+      const school =
+        row.querySelector(".education-school").value.trim();
+
+      const board =
+        row.querySelector(".education-board").value.trim();
+
+      const year =
+        row.querySelector(".education-year").value.trim();
+
+      const score =
+        row.querySelector(".education-score").value.trim();
+
+
+      if (!qualification && !school) return;
+
+
+      const item =
+        document.createElement("div");
+
+      item.className =
+        "mb-4";
+
+
+      let html = "";
+
+      html += `
+        <div class="font-bold text-sm">
+          ${escapeHtml(qualification || "Qualification")}
+        </div>
+      `;
+
+
+      if (school) {
+
+        html += `
+          <div class="font-semibold text-sm">
+            ${escapeHtml(school)}
+          </div>
+        `;
+
+      }
+
+
+      if (board || year || score) {
+
+        html += `
+          <div class="text-sm text-gray-600">
+            ${escapeHtml(board)}
+            ${board && year ? " | " : ""}
+            ${escapeHtml(year)}
+            ${(board || year) && score ? " | " : ""}
+            ${escapeHtml(score)}
+          </div>
+        `;
+
+      }
+
+
+      item.innerHTML = html;
+
+      educationPreview.appendChild(item);
+
+    });
+
+
+
+    /* Skills */
+
+    const skillsSection =
+      document.getElementById("previewSkillsSection");
+
+    if (selectedSkills.length > 0) {
+
+      skillsSection.classList.remove("hidden");
+
+      document.getElementById("previewSkills").innerHTML =
+        selectedSkills
+          .map(skill =>
+            `<span class="inline-block mr-4 mb-2">
+              ${escapeHtml(skill)}
+            </span>`
+          )
+          .join("");
+
+    } else {
+
+      skillsSection.classList.add("hidden");
+
+    }
+
+
+
+    /* Projects */
+
+    const projectRows =
+      document.querySelectorAll(".project-row");
+
+    const projectPreview =
+      document.getElementById("previewProjects");
+
+    projectPreview.innerHTML = "";
+
+    let hasProjects = false;
+
+
+    projectRows.forEach(row => {
+
+      const projectName =
+        row.querySelector(".project-name").value.trim();
+
+      const description =
+        row.querySelector(".project-description").value.trim();
+
+      const link =
+        row.querySelector(".project-link").value.trim();
+
+
+      if (!projectName && !description && !link) return;
+
+      hasProjects = true;
+
+
+      const item =
+        document.createElement("div");
+
+      item.className =
+        "mb-4";
+
+
+      item.innerHTML = `
+
+        <div class="font-bold text-sm">
+          ${escapeHtml(projectName || "Project")}
+        </div>
+
+        <div class="text-sm leading-6 text-gray-700 mt-1">
+          ${escapeHtml(description)}
+        </div>
+
+        ${
+          link
+            ? `<div class="text-sm text-gray-600 mt-1">${escapeHtml(link)}</div>`
+            : ""
+        }
+
+      `;
+
+      projectPreview.appendChild(item);
+
+    });
+
+
+    document
+      .getElementById("previewProjectsSection")
+      .classList.toggle("hidden", !hasProjects);
+
+
+
+    /* Experience */
+
+    const experienceRows =
+      document.querySelectorAll(".experience-row");
+
+    const experiencePreview =
+      document.getElementById("previewExperience");
+
+    experiencePreview.innerHTML = "";
+
+    let hasExperience = false;
+
+
+    experienceRows.forEach(row => {
+
+      const title =
+        row.querySelector(".experience-title").value.trim();
+
+      const company =
+        row.querySelector(".experience-company").value.trim();
+
+      const start =
+        row.querySelector(".experience-start").value.trim();
+
+      const end =
+        row.querySelector(".experience-end").value.trim();
+
+      const description =
+        row.querySelector(".experience-description").value.trim();
+
+
+      if (!title && !company && !description) return;
+
+      hasExperience = true;
+
+
+      const item =
+        document.createElement("div");
+
+      item.className =
+        "mb-4";
+
+
+      item.innerHTML = `
+
+        <div class="font-bold text-sm">
+          ${escapeHtml(title || "Position")}
+        </div>
+
+        <div class="font-semibold text-sm">
+          ${escapeHtml(company)}
+        </div>
+
+        <div class="text-sm text-gray-600">
+          ${escapeHtml(start)}
+          ${start && end ? " - " : ""}
+          ${escapeHtml(end)}
+        </div>
+
+        <div class="text-sm leading-6 text-gray-700 mt-1">
+          ${escapeHtml(description)}
+        </div>
+
+      `;
+
+      experiencePreview.appendChild(item);
+
+    });
+
+
+    document
+      .getElementById("previewExperienceSection")
+      .classList.toggle("hidden", !hasExperience);
+
+
+
+    /* Certifications */
+
+    const certificationRows =
+      document.querySelectorAll(".certification-row");
+
+    const certificationPreview =
+      document.getElementById("previewCertifications");
+
+    certificationPreview.innerHTML = "";
+
+    let hasCertifications = false;
+
+
+    certificationRows.forEach(row => {
+
+      const name =
+        row.querySelector(".certification-name").value.trim();
+
+      const organization =
+        row.querySelector(".certification-organization").value.trim();
+
+      const year =
+        row.querySelector(".certification-year").value.trim();
+
+
+      if (!name && !organization) return;
+
+      hasCertifications = true;
+
+
+      const item =
+        document.createElement("div");
+
+      item.className =
+        "mb-3";
+
+
+      item.innerHTML = `
+
+        <div class="font-bold text-sm">
+          ${escapeHtml(name || "Certification")}
+        </div>
+
+        <div class="text-sm text-gray-600">
+          ${escapeHtml(organization)}
+          ${organization && year ? " | " : ""}
+          ${escapeHtml(year)}
+        </div>
+
+      `;
+
+      certificationPreview.appendChild(item);
+
+    });
+
+
+    document
+      .getElementById("previewCertificationSection")
+      .classList.toggle("hidden", !hasCertifications);
+
+
+
+    /* Languages */
+
+    const languagesSection =
+      document.getElementById("previewLanguagesSection");
+
+
+    if (selectedLanguages.length > 0) {
+
+      languagesSection.classList.remove("hidden");
+
+      document.getElementById("previewLanguages").innerHTML =
+        selectedLanguages
+          .map(language =>
+            `<span class="inline-block mr-5 mb-2">
+              ${escapeHtml(language)}
+            </span>`
+          )
+          .join("");
+
+    } else {
+
+      languagesSection.classList.add("hidden");
+
+    }
+
+
+
+    /* Professional Links */
+
+    const linkedin =
+      document.getElementById("linkedin").value.trim();
+
+    const github =
+      document.getElementById("github").value.trim();
+
+    const portfolio =
+      document.getElementById("portfolio").value.trim();
+
+
+    const links = [];
+
+
+    if (linkedin) {
+
+      links.push(`
+        <div>
+          <strong>LinkedIn:</strong>
+          ${escapeHtml(linkedin)}
+        </div>
+      `);
+
+    }
+
+
+    if (github) {
+
+      links.push(`
+        <div>
+          <strong>GitHub:</strong>
+          ${escapeHtml(github)}
+        </div>
+      `);
+
+    }
+
+
+    if (portfolio) {
+
+      links.push(`
+        <div>
+          <strong>Portfolio:</strong>
+          ${escapeHtml(portfolio)}
+        </div>
+      `);
+
+    }
+
+
+    document.getElementById("previewLinks").innerHTML =
+      links.join("");
+
+
+    document
+      .getElementById("previewLinksSection")
+      .classList.toggle("hidden", links.length === 0);
+
+  }
+
+
+
+  /* =========================
+     PRINT / PDF
+  ========================= */
+
+  function printResume() {
+
+    updatePreview();
+
+    setTimeout(() => {
+
+      window.print();
+
+    }, 300);
+
+  }
+
+
+
+  /* =========================
+     INPUT LISTENERS
+  ========================= */
+
+  document
+    .querySelectorAll("input, textarea, select")
+    .forEach(element => {
+
+      element.addEventListener("input", updatePreview);
+
+      element.addEventListener("change", updatePreview);
+
+    });
+
+
+
+  /* =========================
+     INITIAL EDUCATION
+  ========================= */
+
+  addEducation();
+
+  updatePreview();
+
+</script>
+
+</body>
+</html>
