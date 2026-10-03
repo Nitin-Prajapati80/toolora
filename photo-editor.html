@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,39 +31,138 @@
 
 <main class="editor-container">
 
-    <!-- Page Heading -->
     <section class="editor-heading">
 
         <div>
             <h1>Professional Photo Editor</h1>
 
             <p>
-                Edit, enhance, resize and export your photos directly in your browser.
+                Edit and enhance your photos with simple professional tools.
             </p>
         </div>
 
     </section>
 
 
-    <!-- Main Editor -->
-    <section class="editor-layout">
+    <section class="editor-workspace">
 
 
-        <!-- Left Control Panel -->
+        <!-- =========================
+             PHOTO WORKSPACE
+        ========================== -->
+
+        <section class="preview-panel">
+
+            <div class="preview-header">
+
+                <div>
+                    <h2>Photo Preview</h2>
+
+                    <p id="activeToolText">
+                        Upload a photo to begin editing.
+                    </p>
+                </div>
+
+                <div class="zoom-controls">
+
+                    <button
+                        type="button"
+                        id="zoomOutBtn"
+                        aria-label="Zoom out">
+                        −
+                    </button>
+
+                    <span id="zoomValue">
+                        100%
+                    </span>
+
+                    <button
+                        type="button"
+                        id="zoomInBtn"
+                        aria-label="Zoom in">
+                        +
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="canvas-wrapper"
+                id="canvasWrapper">
+
+                <div
+                    class="empty-preview"
+                    id="emptyPreview">
+
+                    <div class="empty-icon">
+                        +
+                    </div>
+
+                    <h3>
+                        No Photo Selected
+                    </h3>
+
+                    <p>
+                        Upload a photo to start editing.
+                    </p>
+
+                    <label
+                        for="photoInput"
+                        class="empty-upload-btn">
+                        Upload Photo
+                    </label>
+
+                </div>
+
+
+                <canvas
+                    id="photoCanvas"
+                    hidden>
+                </canvas>
+
+            </div>
+
+
+            <div class="preview-footer">
+
+                <span id="imageInfo">
+                    No image loaded
+                </span>
+
+                <span id="imageStatus">
+                    Ready
+                </span>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================
+             TOOL PANEL
+        ========================== -->
+
         <aside class="editor-panel">
 
+
             <!-- Upload -->
-            <div class="control-section">
 
-                <h2>Upload Photo</h2>
+            <div class="tool-section upload-section">
 
-                <label for="photoInput" class="upload-box">
+                <label
+                    for="photoInput"
+                    class="upload-box">
 
                     <div class="upload-icon">
                         +
                     </div>
 
-                    <strong>Upload Photo</strong>
+                    <strong>
+                        Upload Photo
+                    </strong>
 
                     <span>
                         JPG, PNG or WebP
@@ -74,53 +174,85 @@
                     type="file"
                     id="photoInput"
                     accept="image/jpeg,image/png,image/webp"
-                    hidden
-                >
+                    hidden>
 
             </div>
 
 
-            <!-- Image Controls -->
-            <div class="control-section">
 
-                <h2>Image Controls</h2>
+            <!-- Tool Navigation -->
 
-                <div class="button-grid">
+            <div class="tool-navigation">
 
-                    <button type="button" id="cropBtn">
-                        Crop
-                    </button>
+                <button
+                    type="button"
+                    class="tool-tab active"
+                    data-tool="adjust">
 
-                    <button type="button" id="rotateLeftBtn">
-                        Rotate Left
-                    </button>
+                    Adjust
+                </button>
 
-                    <button type="button" id="rotateRightBtn">
-                        Rotate Right
-                    </button>
+                <button
+                    type="button"
+                    class="tool-tab"
+                    data-tool="filters">
 
-                    <button type="button" id="flipHorizontalBtn">
-                        Flip Horizontal
-                    </button>
+                    Filters
+                </button>
 
-                    <button type="button" id="flipVerticalBtn">
-                        Flip Vertical
-                    </button>
+                <button
+                    type="button"
+                    class="tool-tab"
+                    data-tool="transform">
+
+                    Transform
+                </button>
+
+                <button
+                    type="button"
+                    class="tool-tab"
+                    data-tool="resize">
+
+                    Resize
+                </button>
+
+                <button
+                    type="button"
+                    class="tool-tab"
+                    data-tool="export">
+
+                    Export
+                </button>
+
+            </div>
+
+
+
+            <!-- =========================
+                 ADJUST TOOL
+            ========================== -->
+
+            <div
+                class="tool-content active"
+                data-content="adjust">
+
+                <div class="tool-title">
+
+                    <h2>
+                        Adjust
+                    </h2>
+
+                    <p>
+                        See every adjustment instantly on your photo.
+                    </p>
 
                 </div>
-
-            </div>
-
-
-            <!-- Adjustments -->
-            <div class="control-section">
-
-                <h2>Adjustments</h2>
 
 
                 <div class="range-control">
 
                     <div class="range-header">
+
                         <label for="brightness">
                             Brightness
                         </label>
@@ -128,6 +260,7 @@
                         <span id="brightnessValue">
                             100%
                         </span>
+
                     </div>
 
                     <input
@@ -135,8 +268,7 @@
                         id="brightness"
                         min="0"
                         max="200"
-                        value="100"
-                    >
+                        value="100">
 
                 </div>
 
@@ -144,6 +276,7 @@
                 <div class="range-control">
 
                     <div class="range-header">
+
                         <label for="contrast">
                             Contrast
                         </label>
@@ -151,6 +284,7 @@
                         <span id="contrastValue">
                             100%
                         </span>
+
                     </div>
 
                     <input
@@ -158,8 +292,7 @@
                         id="contrast"
                         min="0"
                         max="200"
-                        value="100"
-                    >
+                        value="100">
 
                 </div>
 
@@ -167,6 +300,7 @@
                 <div class="range-control">
 
                     <div class="range-header">
+
                         <label for="saturation">
                             Saturation
                         </label>
@@ -174,6 +308,7 @@
                         <span id="saturationValue">
                             100%
                         </span>
+
                     </div>
 
                     <input
@@ -181,8 +316,7 @@
                         id="saturation"
                         min="0"
                         max="200"
-                        value="100"
-                    >
+                        value="100">
 
                 </div>
 
@@ -190,6 +324,7 @@
                 <div class="range-control">
 
                     <div class="range-header">
+
                         <label for="blur">
                             Blur
                         </label>
@@ -197,6 +332,7 @@
                         <span id="blurValue">
                             0px
                         </span>
+
                     </div>
 
                     <input
@@ -204,43 +340,99 @@
                         id="blur"
                         min="0"
                         max="20"
-                        value="0"
-                    >
+                        value="0">
 
                 </div>
+
+
+                <button
+                    type="button"
+                    class="reset-tool-btn"
+                    id="resetAdjustBtn">
+
+                    Reset Adjustments
+
+                </button>
 
             </div>
 
 
-            <!-- Filters -->
-            <div class="control-section">
 
-                <h2>Filters</h2>
+            <!-- =========================
+                 FILTER TOOL
+            ========================== -->
+
+            <div
+                class="tool-content"
+                data-content="filters">
+
+                <div class="tool-title">
+
+                    <h2>
+                        Filters
+                    </h2>
+
+                    <p>
+                        Select a filter and see the result immediately.
+                    </p>
+
+                </div>
+
 
                 <div class="filter-grid">
 
-                    <button type="button" data-filter="none">
+                    <button
+                        type="button"
+                        class="filter-button"
+                        data-filter="none">
+
                         Original
+
                     </button>
 
-                    <button type="button" data-filter="grayscale">
+                    <button
+                        type="button"
+                        class="filter-button"
+                        data-filter="grayscale">
+
                         Grayscale
+
                     </button>
 
-                    <button type="button" data-filter="sepia">
+                    <button
+                        type="button"
+                        class="filter-button"
+                        data-filter="sepia">
+
                         Sepia
+
                     </button>
 
-                    <button type="button" data-filter="vintage">
+                    <button
+                        type="button"
+                        class="filter-button"
+                        data-filter="vintage">
+
                         Vintage
+
                     </button>
 
-                    <button type="button" data-filter="warm">
+                    <button
+                        type="button"
+                        class="filter-button"
+                        data-filter="warm">
+
                         Warm
+
                     </button>
 
-                    <button type="button" data-filter="cool">
+                    <button
+                        type="button"
+                        class="filter-button"
+                        data-filter="cool">
+
                         Cool
+
                     </button>
 
                 </div>
@@ -248,14 +440,104 @@
             </div>
 
 
-            <!-- Canvas Size -->
-            <div class="control-section">
 
-                <h2>Resize</h2>
+            <!-- =========================
+                 TRANSFORM TOOL
+            ========================== -->
+
+            <div
+                class="tool-content"
+                data-content="transform">
+
+                <div class="tool-title">
+
+                    <h2>
+                        Transform
+                    </h2>
+
+                    <p>
+                        Rotate or flip your photo while viewing the result.
+                    </p>
+
+                </div>
+
+
+                <div class="transform-grid">
+
+                    <button
+                        type="button"
+                        id="rotateLeftBtn">
+
+                        Rotate Left
+
+                    </button>
+
+                    <button
+                        type="button"
+                        id="rotateRightBtn">
+
+                        Rotate Right
+
+                    </button>
+
+                    <button
+                        type="button"
+                        id="flipHorizontalBtn">
+
+                        Flip Horizontal
+
+                    </button>
+
+                    <button
+                        type="button"
+                        id="flipVerticalBtn">
+
+                        Flip Vertical
+
+                    </button>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="reset-tool-btn"
+                    id="resetTransformBtn">
+
+                    Reset Transform
+
+                </button>
+
+            </div>
+
+
+
+            <!-- =========================
+                 RESIZE TOOL
+            ========================== -->
+
+            <div
+                class="tool-content"
+                data-content="resize">
+
+                <div class="tool-title">
+
+                    <h2>
+                        Resize
+
+                    </h2>
+
+                    <p>
+                        Change image dimensions while preserving the aspect ratio.
+                    </p>
+
+                </div>
+
 
                 <div class="size-grid">
 
                     <div>
+
                         <label for="imageWidth">
                             Width
                         </label>
@@ -264,12 +546,13 @@
                             type="number"
                             id="imageWidth"
                             min="1"
-                            placeholder="Width"
-                        >
+                            placeholder="Width">
+
                     </div>
 
 
                     <div>
+
                         <label for="imageHeight">
                             Height
                         </label>
@@ -278,8 +561,8 @@
                             type="number"
                             id="imageHeight"
                             min="1"
-                            placeholder="Height"
-                        >
+                            placeholder="Height">
+
                     </div>
 
                 </div>
@@ -290,8 +573,7 @@
                     <input
                         type="checkbox"
                         id="lockRatio"
-                        checked
-                    >
+                        checked>
 
                     <span>
                         Lock aspect ratio
@@ -302,52 +584,37 @@
 
                 <button
                     type="button"
-                    id="applyResizeBtn"
-                    class="primary-small-btn"
-                >
+                    class="primary-btn"
+                    id="applyResizeBtn">
+
                     Apply Resize
+
                 </button>
 
             </div>
 
 
-            <!-- Actions -->
-            <div class="control-section">
 
-                <h2>Actions</h2>
+            <!-- =========================
+                 EXPORT TOOL
+            ========================== -->
 
-                <div class="action-grid">
+            <div
+                class="tool-content"
+                data-content="export">
 
-                    <button
-                        type="button"
-                        id="undoBtn"
-                    >
-                        Undo
-                    </button>
+                <div class="tool-title">
 
-                    <button
-                        type="button"
-                        id="redoBtn"
-                    >
-                        Redo
-                    </button>
+                    <h2>
+                        Export
+                    </h2>
 
-                    <button
-                        type="button"
-                        id="resetBtn"
-                    >
-                        Reset
-                    </button>
+                    <p>
+                        Choose the format and download your edited photo.
+                    </p>
 
                 </div>
 
-            </div>
-
-
-            <!-- Export -->
-            <div class="control-section export-section">
-
-                <h2>Export</h2>
 
                 <label for="exportFormat">
                     Format
@@ -370,126 +637,74 @@
                 </select>
 
 
-                <label for="exportQuality">
-                    Quality
-                </label>
+                <div class="range-control export-quality">
 
-                <input
-                    type="range"
-                    id="exportQuality"
-                    min="10"
-                    max="100"
-                    value="90"
-                >
+                    <div class="range-header">
 
-                <div class="quality-value">
-                    <span id="qualityValue">
-                        90%
-                    </span>
+                        <label for="exportQuality">
+                            Quality
+                        </label>
+
+                        <span id="qualityValue">
+                            90%
+                        </span>
+
+                    </div>
+
+                    <input
+                        type="range"
+                        id="exportQuality"
+                        min="10"
+                        max="100"
+                        value="90">
+
                 </div>
 
 
                 <button
                     type="button"
-                    id="downloadBtn"
                     class="download-btn"
-                >
+                    id="downloadBtn">
+
                     Download Edited Photo
+
+                </button>
+
+            </div>
+
+
+
+            <!-- History -->
+
+            <div class="history-controls">
+
+                <button
+                    type="button"
+                    id="undoBtn">
+
+                    Undo
+
+                </button>
+
+                <button
+                    type="button"
+                    id="redoBtn">
+
+                    Redo
+
+                </button>
+
+                <button
+                    type="button"
+                    id="resetBtn">
+
+                    Reset All
+
                 </button>
 
             </div>
 
         </aside>
-
-
-        <!-- Right Preview Area -->
-        <section class="preview-panel">
-
-            <div class="preview-header">
-
-                <div>
-
-                    <h2>
-                        Preview
-                    </h2>
-
-                    <p>
-                        Your edited photo will appear here.
-                    </p>
-
-                </div>
-
-                <div class="zoom-controls">
-
-                    <button
-                        type="button"
-                        id="zoomOutBtn"
-                    >
-                        −
-                    </button>
-
-                    <span id="zoomValue">
-                        100%
-                    </span>
-
-                    <button
-                        type="button"
-                        id="zoomInBtn"
-                    >
-                        +
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div
-                class="canvas-wrapper"
-                id="canvasWrapper"
-            >
-
-                <div
-                    class="empty-preview"
-                    id="emptyPreview"
-                >
-
-                    <div class="empty-icon">
-                        +
-                    </div>
-
-                    <h3>
-                        No Photo Selected
-                    </h3>
-
-                    <p>
-                        Upload a photo to start editing.
-                    </p>
-
-                </div>
-
-
-                <canvas
-                    id="photoCanvas"
-                    hidden
-                ></canvas>
-
-            </div>
-
-
-            <div class="preview-footer">
-
-                <span id="imageInfo">
-                    No image loaded
-                </span>
-
-                <span id="imageStatus">
-                    Ready
-                </span>
-
-            </div>
-
-        </section>
 
     </section>
 
@@ -508,4 +723,5 @@
 <script src="js/photo-editor.js"></script>
 
 </body>
+
 </html>
