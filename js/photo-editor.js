@@ -1,184 +1,194 @@
-"use strict";
+/* =========================================================
+   TOOLORA - PROFESSIONAL PHOTO EDITOR
+   ========================================================= */
 
+const photoInput = document.getElementById("photoInput");
+const photoCanvas = document.getElementById("photoCanvas");
+const canvasWrapper = document.getElementById("canvasWrapper");
+const emptyPreview = document.getElementById("emptyPreview");
 
-/* =========================
-   ELEMENT HELPERS
-========================= */
+const ctx = photoCanvas.getContext("2d");
 
-const $ = (id) => document.getElementById(id);
+const activeToolText = document.getElementById("activeToolText");
+const imageInfo = document.getElementById("imageInfo");
+const imageStatus = document.getElementById("imageStatus");
 
+const zoomOutBtn = document.getElementById("zoomOutBtn");
+const zoomInBtn = document.getElementById("zoomInBtn");
+const zoomValue = document.getElementById("zoomValue");
 
-/* =========================
-   DOM ELEMENTS
-========================= */
+const brightness = document.getElementById("brightness");
+const contrast = document.getElementById("contrast");
+const saturation = document.getElementById("saturation");
+const blur = document.getElementById("blur");
 
-const photoInput = $("photoInput");
-const photoCanvas = $("photoCanvas");
-const canvasWrapper = $("canvasWrapper");
-const emptyPreview = $("emptyPreview");
+const brightnessValue = document.getElementById("brightnessValue");
+const contrastValue = document.getElementById("contrastValue");
+const saturationValue = document.getElementById("saturationValue");
+const blurValue = document.getElementById("blurValue");
 
-const brightness = $("brightness");
-const contrast = $("contrast");
-const saturation = $("saturation");
-const blur = $("blur");
+const resetAdjustBtn = document.getElementById("resetAdjustBtn");
 
-const brightnessValue = $("brightnessValue");
-const contrastValue = $("contrastValue");
-const saturationValue = $("saturationValue");
-const blurValue = $("blurValue");
+const rotateLeftBtn = document.getElementById("rotateLeftBtn");
+const rotateRightBtn = document.getElementById("rotateRightBtn");
+const flipHorizontalBtn = document.getElementById("flipHorizontalBtn");
+const flipVerticalBtn = document.getElementById("flipVerticalBtn");
+const resetTransformBtn = document.getElementById("resetTransformBtn");
 
-const imageWidth = $("imageWidth");
-const imageHeight = $("imageHeight");
-const lockRatio = $("lockRatio");
+const imageWidth = document.getElementById("imageWidth");
+const imageHeight = document.getElementById("imageHeight");
+const lockRatio = document.getElementById("lockRatio");
+const applyResizeBtn = document.getElementById("applyResizeBtn");
 
-const exportFormat = $("exportFormat");
-const exportQuality = $("exportQuality");
-const qualityValue = $("qualityValue");
+const exportFormat = document.getElementById("exportFormat");
+const exportQuality = document.getElementById("exportQuality");
+const qualityValue = document.getElementById("qualityValue");
+const downloadBtn = document.getElementById("downloadBtn");
 
-const zoomValue = $("zoomValue");
+const undoBtn = document.getElementById("undoBtn");
+const redoBtn = document.getElementById("redoBtn");
+const resetBtn = document.getElementById("resetBtn");
 
-const imageInfo = $("imageInfo");
-const imageStatus = $("imageStatus");
-
-
-/* =========================
-   CANVAS
-========================= */
-
-const ctx = photoCanvas.getContext("2d", {
-    willReadFrequently: true
-});
-
-
-/* =========================
-   APPLICATION STATE
-========================= */
+const toolTabs = document.querySelectorAll(".tool-tab");
+const toolContents = document.querySelectorAll(".tool-content");
+const filterButtons = document.querySelectorAll(".filter-button");
 
 let originalImage = null;
 
-let originalWidth = 0;
-let originalHeight = 0;
-
-let currentRotation = 0;
-let flipX = 1;
-let flipY = 1;
-
-let zoom = 1;
-
-let selectedFilter = "none";
+let state = {
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    blur: 0,
+    filter: "none",
+    rotation: 0,
+    flipX: 1,
+    flipY: 1,
+    zoom: 100,
+    width: 0,
+    height: 0
+};
 
 let history = [];
 let historyIndex = -1;
 
-let isImageLoaded = false;
 
+/* =========================================================
+   TOOL SWITCHING
+   ========================================================= */
 
-/* =========================
-   DEFAULT SETTINGS
-========================= */
+function activateTool(toolName) {
 
-function getDefaultSettings() {
+    toolTabs.forEach(tab => {
+        tab.classList.toggle(
+            "active",
+            tab.dataset.tool === toolName
+        );
+    });
 
-    return {
-        brightness: 100,
-        contrast: 100,
-        saturation: 100,
-        blur: 0,
-        rotation: 0,
-        flipX: 1,
-        flipY: 1,
-        filter: "none"
+    toolContents.forEach(content => {
+        content.classList.toggle(
+            "active",
+            content.dataset.content === toolName
+        );
+    });
+
+    const toolNames = {
+        adjust: "Adjustments",
+        filters: "Filters",
+        transform: "Transform",
+        resize: "Resize",
+        export: "Export"
     };
+
+    if (activeToolText) {
+        activeToolText.textContent =
+            originalImage
+                ? `${toolNames[toolName]}`
+                : "Upload a photo to begin editing.";
+    }
 }
 
+toolTabs.forEach(tab => {
 
-/* =========================
-   CURRENT SETTINGS
-========================= */
+    tab.addEventListener("click", () => {
 
-function getCurrentSettings() {
+        activateTool(tab.dataset.tool);
 
-    return {
-        brightness: Number(brightness.value),
-        contrast: Number(contrast.value),
-        saturation: Number(saturation.value),
-        blur: Number(blur.value),
-        rotation: currentRotation,
-        flipX: flipX,
-        flipY: flipY,
-        filter: selectedFilter
-    };
-}
+    });
+
+});
 
 
-/* =========================
+/* =========================================================
    IMAGE UPLOAD
-========================= */
+   ========================================================= */
 
-photoInput.addEventListener("change", function () {
+photoInput.addEventListener("change", event => {
 
-    const file = this.files[0];
+    const file = event.target.files[0];
 
     if (!file) {
         return;
     }
 
     if (!file.type.startsWith("image/")) {
-
         alert("Please select a valid image file.");
-
-        this.value = "";
-
         return;
     }
 
     const reader = new FileReader();
 
-    reader.onload = function (event) {
+    reader.onload = event => {
 
-        const image = new Image();
+        const img = new Image();
 
-        image.onload = function () {
+        img.onload = () => {
 
-            originalImage = image;
+            originalImage = img;
 
-            originalWidth = image.naturalWidth;
-            originalHeight = image.naturalHeight;
+            state = {
+                brightness: 100,
+                contrast: 100,
+                saturation: 100,
+                blur: 0,
+                filter: "none",
+                rotation: 0,
+                flipX: 1,
+                flipY: 1,
+                zoom: 100,
+                width: img.naturalWidth,
+                height: img.naturalHeight
+            };
 
-            isImageLoaded = true;
+            history = [];
+            historyIndex = -1;
 
-            resetEditorControls();
+            imageWidth.value = img.naturalWidth;
+            imageHeight.value = img.naturalHeight;
 
-            imageWidth.value = originalWidth;
-            imageHeight.value = originalHeight;
+            updateControls();
 
-            emptyPreview.style.display = "none";
+            emptyPreview.hidden = true;
             photoCanvas.hidden = false;
 
-            zoom = 1;
+            imageInfo.textContent =
+                `${img.naturalWidth} × ${img.naturalHeight}px`;
 
-            updateZoom();
+            imageStatus.textContent = "Ready";
 
-            renderImage();
+            zoomValue.textContent = "100%";
 
-            clearHistory();
+            activateTool("adjust");
 
             saveHistory();
 
-            imageInfo.textContent =
-                `${originalWidth} × ${originalHeight}px`;
-
-            imageStatus.textContent = "Photo loaded";
+            render();
 
         };
 
-        image.onerror = function () {
+        img.src = event.target.result;
 
-            alert("Unable to load this image.");
-
-        };
-
-        image.src = event.target.result;
     };
 
     reader.readAsDataURL(file);
@@ -186,252 +196,27 @@ photoInput.addEventListener("change", function () {
 });
 
 
-/* =========================
-   RESET EDITOR CONTROLS
-========================= */
-
-function resetEditorControls() {
-
-    brightness.value = 100;
-    contrast.value = 100;
-    saturation.value = 100;
-    blur.value = 0;
-
-    currentRotation = 0;
-
-    flipX = 1;
-    flipY = 1;
-
-    selectedFilter = "none";
-
-    updateControlValues();
-
-}
-
-
-/* =========================
-   CONTROL VALUES
-========================= */
-
-function updateControlValues() {
-
-    brightnessValue.textContent =
-        `${brightness.value}%`;
-
-    contrastValue.textContent =
-        `${contrast.value}%`;
-
-    saturationValue.textContent =
-        `${saturation.value}%`;
-
-    blurValue.textContent =
-        `${blur.value}px`;
-
-    qualityValue.textContent =
-        `${exportQuality.value}%`;
-}
-
-
-/* =========================
-   REAL-TIME ADJUSTMENTS
-========================= */
-
-brightness.addEventListener("input", function () {
-
-    updateControlValues();
-
-    renderImage();
-
-});
-
-
-contrast.addEventListener("input", function () {
-
-    updateControlValues();
-
-    renderImage();
-
-});
-
-
-saturation.addEventListener("input", function () {
-
-    updateControlValues();
-
-    renderImage();
-
-});
-
-
-blur.addEventListener("input", function () {
-
-    updateControlValues();
-
-    renderImage();
-
-});
-
-
-/* =========================
-   FILTER BUTTONS
-========================= */
-
-document.querySelectorAll("[data-filter]").forEach(button => {
-
-    button.addEventListener("click", function () {
-
-        if (!isImageLoaded) {
-
-            alert("Please upload a photo first.");
-
-            return;
-        }
-
-        selectedFilter =
-            this.dataset.filter;
-
-        renderImage();
-
-        saveHistory();
-
-        imageStatus.textContent =
-            `${this.textContent} filter applied`;
-
-    });
-
-});
-
-
-/* =========================
-   ROTATE LEFT
-========================= */
-
-$("rotateLeftBtn").addEventListener("click", function () {
-
-    if (!isImageLoaded) {
-
-        alert("Please upload a photo first.");
-
-        return;
-    }
-
-    currentRotation =
-        (currentRotation - 90 + 360) % 360;
-
-    renderImage();
-
-    saveHistory();
-
-    imageStatus.textContent =
-        "Rotated left";
-
-});
-
-
-/* =========================
-   ROTATE RIGHT
-========================= */
-
-$("rotateRightBtn").addEventListener("click", function () {
-
-    if (!isImageLoaded) {
-
-        alert("Please upload a photo first.");
-
-        return;
-    }
-
-    currentRotation =
-        (currentRotation + 90) % 360;
-
-    renderImage();
-
-    saveHistory();
-
-    imageStatus.textContent =
-        "Rotated right";
-
-});
-
-
-/* =========================
-   FLIP HORIZONTAL
-========================= */
-
-$("flipHorizontalBtn").addEventListener("click", function () {
-
-    if (!isImageLoaded) {
-
-        alert("Please upload a photo first.");
-
-        return;
-    }
-
-    flipX *= -1;
-
-    renderImage();
-
-    saveHistory();
-
-    imageStatus.textContent =
-        "Flipped horizontally";
-
-});
-
-
-/* =========================
-   FLIP VERTICAL
-========================= */
-
-$("flipVerticalBtn").addEventListener("click", function () {
-
-    if (!isImageLoaded) {
-
-        alert("Please upload a photo first.");
-
-        return;
-    }
-
-    flipY *= -1;
-
-    renderImage();
-
-    saveHistory();
-
-    imageStatus.textContent =
-        "Flipped vertically";
-
-});
-
-
-/* =========================
+/* =========================================================
    RENDER IMAGE
-========================= */
+   ========================================================= */
 
-function renderImage() {
+function render() {
 
-    if (!originalImage || !isImageLoaded) {
+    if (!originalImage) {
         return;
     }
 
-    const sourceWidth =
-        Number(imageWidth.value) || originalWidth;
+    const width = state.width;
+    const height = state.height;
 
-    const sourceHeight =
-        Number(imageHeight.value) || originalHeight;
-
-    const rotation =
-        currentRotation % 360;
+    const angle =
+        ((state.rotation % 360) + 360) % 360;
 
     const rotated =
-        rotation === 90 ||
-        rotation === 270;
+        angle === 90 || angle === 270;
 
-    const canvasWidth =
-        rotated ? sourceHeight : sourceWidth;
-
-    const canvasHeight =
-        rotated ? sourceWidth : sourceHeight;
+    const canvasWidth = rotated ? height : width;
+    const canvasHeight = rotated ? width : height;
 
     photoCanvas.width = canvasWidth;
     photoCanvas.height = canvasHeight;
@@ -439,8 +224,8 @@ function renderImage() {
     ctx.clearRect(
         0,
         0,
-        canvasWidth,
-        canvasHeight
+        photoCanvas.width,
+        photoCanvas.height
     );
 
     ctx.save();
@@ -451,124 +236,328 @@ function renderImage() {
     );
 
     ctx.rotate(
-        rotation * Math.PI / 180
+        state.rotation * Math.PI / 180
     );
 
     ctx.scale(
-        flipX,
-        flipY
+        state.flipX,
+        state.flipY
     );
 
-    ctx.filter =
-        createCanvasFilter();
+    ctx.filter = buildFilter();
 
     ctx.drawImage(
         originalImage,
-        -sourceWidth / 2,
-        -sourceHeight / 2,
-        sourceWidth,
-        sourceHeight
+        -width / 2,
+        -height / 2,
+        width,
+        height
     );
 
     ctx.restore();
 
-    ctx.filter = "none";
+    applyZoom();
 
-    updateImageInfo();
+    imageInfo.textContent =
+        `${canvasWidth} × ${canvasHeight}px`;
 
+    imageStatus.textContent = "Edited";
 }
 
 
-/* =========================
-   CANVAS FILTER
-========================= */
+/* =========================================================
+   FILTER BUILD
+   ========================================================= */
 
-function createCanvasFilter() {
+function buildFilter() {
 
-    let filterString =
-        `brightness(${brightness.value}%) ` +
-        `contrast(${contrast.value}%) ` +
-        `saturate(${saturation.value}%) ` +
-        `blur(${blur.value}px)`;
+    let filters = [];
 
-    switch (selectedFilter) {
+    filters.push(
+        `brightness(${state.brightness}%)`
+    );
 
-        case "grayscale":
+    filters.push(
+        `contrast(${state.contrast}%)`
+    );
 
-            filterString +=
-                " grayscale(100%)";
+    filters.push(
+        `saturate(${state.saturation}%)`
+    );
 
-            break;
+    if (state.blur > 0) {
 
-
-        case "sepia":
-
-            filterString +=
-                " sepia(100%)";
-
-            break;
-
-
-        case "vintage":
-
-            filterString +=
-                " sepia(35%) saturate(80%) contrast(110%)";
-
-            break;
-
-
-        case "warm":
-
-            filterString +=
-                " sepia(20%) saturate(125%)";
-
-            break;
-
-
-        case "cool":
-
-            filterString +=
-                " saturate(90%) contrast(105%)";
-
-            break;
+        filters.push(
+            `blur(${state.blur}px)`
+        );
 
     }
 
-    return filterString;
+    switch (state.filter) {
+
+        case "grayscale":
+            filters.push("grayscale(100%)");
+            break;
+
+        case "sepia":
+            filters.push("sepia(100%)");
+            break;
+
+        case "vintage":
+            filters.push(
+                "sepia(35%) contrast(110%) saturate(80%)"
+            );
+            break;
+
+        case "warm":
+            filters.push(
+                "sepia(20%) saturate(125%)"
+            );
+            break;
+
+        case "cool":
+            filters.push(
+                "saturate(90%) hue-rotate(10deg)"
+            );
+            break;
+
+        default:
+            break;
+    }
+
+    return filters.join(" ");
 }
 
 
-/* =========================
-   IMAGE INFORMATION
-========================= */
+/* =========================================================
+   ZOOM
+   ========================================================= */
 
-function updateImageInfo() {
+function applyZoom() {
 
-    imageInfo.textContent =
-        `${photoCanvas.width} × ${photoCanvas.height}px`;
+    const zoom =
+        state.zoom / 100;
 
+    photoCanvas.style.width =
+        `${photoCanvas.width * zoom}px`;
+
+    photoCanvas.style.height =
+        `${photoCanvas.height * zoom}px`;
 }
 
 
-/* =========================
+zoomInBtn.addEventListener("click", () => {
+
+    if (!originalImage) {
+        return;
+    }
+
+    state.zoom = Math.min(
+        state.zoom + 10,
+        200
+    );
+
+    zoomValue.textContent =
+        `${state.zoom}%`;
+
+    applyZoom();
+
+});
+
+
+zoomOutBtn.addEventListener("click", () => {
+
+    if (!originalImage) {
+        return;
+    }
+
+    state.zoom = Math.max(
+        state.zoom - 10,
+        25
+    );
+
+    zoomValue.textContent =
+        `${state.zoom}%`;
+
+    applyZoom();
+
+});
+
+
+/* =========================================================
+   ADJUSTMENTS
+   ========================================================= */
+
+brightness.addEventListener("input", () => {
+
+    state.brightness =
+        Number(brightness.value);
+
+    brightnessValue.textContent =
+        `${state.brightness}%`;
+
+    render();
+
+});
+
+
+contrast.addEventListener("input", () => {
+
+    state.contrast =
+        Number(contrast.value);
+
+    contrastValue.textContent =
+        `${state.contrast}%`;
+
+    render();
+
+});
+
+
+saturation.addEventListener("input", () => {
+
+    state.saturation =
+        Number(saturation.value);
+
+    saturationValue.textContent =
+        `${state.saturation}%`;
+
+    render();
+
+});
+
+
+blur.addEventListener("input", () => {
+
+    state.blur =
+        Number(blur.value);
+
+    blurValue.textContent =
+        `${state.blur}px`;
+
+    render();
+
+});
+
+
+/* =========================================================
+   RESET ADJUSTMENTS
+   ========================================================= */
+
+resetAdjustBtn.addEventListener("click", () => {
+
+    state.brightness = 100;
+    state.contrast = 100;
+    state.saturation = 100;
+    state.blur = 0;
+
+    updateControls();
+    saveHistory();
+    render();
+
+});
+
+
+/* =========================================================
+   FILTERS
+   ========================================================= */
+
+filterButtons.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        state.filter =
+            button.dataset.filter;
+
+        filterButtons.forEach(item => {
+            item.classList.remove("active");
+        });
+
+        button.classList.add("active");
+
+        saveHistory();
+        render();
+
+    });
+
+});
+
+
+/* =========================================================
+   TRANSFORM
+   ========================================================= */
+
+rotateLeftBtn.addEventListener("click", () => {
+
+    state.rotation -= 90;
+
+    saveHistory();
+    render();
+
+});
+
+
+rotateRightBtn.addEventListener("click", () => {
+
+    state.rotation += 90;
+
+    saveHistory();
+    render();
+
+});
+
+
+flipHorizontalBtn.addEventListener("click", () => {
+
+    state.flipX *= -1;
+
+    saveHistory();
+    render();
+
+});
+
+
+flipVerticalBtn.addEventListener("click", () => {
+
+    state.flipY *= -1;
+
+    saveHistory();
+    render();
+
+});
+
+
+resetTransformBtn.addEventListener("click", () => {
+
+    state.rotation = 0;
+    state.flipX = 1;
+    state.flipY = 1;
+
+    saveHistory();
+    render();
+
+});
+
+
+/* =========================================================
    RESIZE
-========================= */
+   ========================================================= */
 
-imageWidth.addEventListener("input", function () {
+imageWidth.addEventListener("input", () => {
 
-    if (!lockRatio.checked || !originalImage) {
+    if (!originalImage || !lockRatio.checked) {
         return;
     }
 
     const width =
-        Number(this.value);
+        Number(imageWidth.value);
 
-    if (!width || width <= 0) {
+    if (!width) {
         return;
     }
 
     const ratio =
-        originalHeight / originalWidth;
+        state.height / state.width;
 
     imageHeight.value =
         Math.round(width * ratio);
@@ -576,21 +565,21 @@ imageWidth.addEventListener("input", function () {
 });
 
 
-imageHeight.addEventListener("input", function () {
+imageHeight.addEventListener("input", () => {
 
-    if (!lockRatio.checked || !originalImage) {
+    if (!originalImage || !lockRatio.checked) {
         return;
     }
 
     const height =
-        Number(this.value);
+        Number(imageHeight.value);
 
-    if (!height || height <= 0) {
+    if (!height) {
         return;
     }
 
     const ratio =
-        originalWidth / originalHeight;
+        state.width / state.height;
 
     imageWidth.value =
         Math.round(height * ratio);
@@ -598,12 +587,10 @@ imageHeight.addEventListener("input", function () {
 });
 
 
-$("applyResizeBtn").addEventListener("click", function () {
+applyResizeBtn.addEventListener("click", () => {
 
-    if (!isImageLoaded) {
-
+    if (!originalImage) {
         alert("Please upload a photo first.");
-
         return;
     }
 
@@ -616,105 +603,270 @@ $("applyResizeBtn").addEventListener("click", function () {
     if (
         !width ||
         !height ||
-        width <= 0 ||
-        height <= 0
+        width < 1 ||
+        height < 1
     ) {
-
-        alert("Please enter valid width and height.");
-
+        alert("Please enter valid image dimensions.");
         return;
     }
 
-    if (
-        width > 10000 ||
-        height > 10000
-    ) {
-
-        alert(
-            "For browser performance, maximum size is 10000 × 10000 pixels."
-        );
-
-        return;
-    }
-
-    renderImage();
+    state.width = width;
+    state.height = height;
 
     saveHistory();
-
-    imageStatus.textContent =
-        "Image resized";
+    render();
 
 });
 
 
-/* =========================
-   ZOOM
-========================= */
+/* =========================================================
+   EXPORT
+   ========================================================= */
 
-$("zoomInBtn").addEventListener("click", function () {
+exportQuality.addEventListener("input", () => {
 
-    zoom += 0.1;
+    qualityValue.textContent =
+        `${exportQuality.value}%`;
 
-    if (zoom > 3) {
-        zoom = 3;
+});
+
+
+downloadBtn.addEventListener("click", () => {
+
+    if (!originalImage) {
+        alert("Please upload a photo first.");
+        return;
     }
 
-    updateZoom();
+    const format =
+        exportFormat.value;
+
+    const quality =
+        Number(exportQuality.value) / 100;
+
+    const exportCanvas =
+        document.createElement("canvas");
+
+    const exportContext =
+        exportCanvas.getContext("2d");
+
+    exportCanvas.width =
+        photoCanvas.width;
+
+    exportCanvas.height =
+        photoCanvas.height;
+
+    exportContext.drawImage(
+        photoCanvas,
+        0,
+        0
+    );
+
+    exportCanvas.toBlob(blob => {
+
+        if (!blob) {
+            alert("Unable to export the image.");
+            return;
+        }
+
+        const url =
+            URL.createObjectURL(blob);
+
+        const link =
+            document.createElement("a");
+
+        const extension =
+            format === "image/png"
+                ? "png"
+                : format === "image/webp"
+                    ? "webp"
+                    : "jpg";
+
+        link.href = url;
+
+        link.download =
+            `toolora-edited-photo.${extension}`;
+
+        document.body.appendChild(link);
+
+        link.click();
+
+        link.remove();
+
+        URL.revokeObjectURL(url);
+
+        imageStatus.textContent =
+            "Downloaded";
+
+    }, format, quality);
 
 });
 
 
-$("zoomOutBtn").addEventListener("click", function () {
+/* =========================================================
+   HISTORY
+   ========================================================= */
 
-    zoom -= 0.1;
-
-    if (zoom < 0.2) {
-        zoom = 0.2;
-    }
-
-    updateZoom();
-
-});
-
-
-function updateZoom() {
-
-    photoCanvas.style.transform =
-        `scale(${zoom})`;
-
-    zoomValue.textContent =
-        `${Math.round(zoom * 100)}%`;
-
-}
-
-
-/* =========================
-   UNDO / REDO
-========================= */
-
-function createHistoryState() {
+function cloneState() {
 
     return {
-        brightness: Number(brightness.value),
-        contrast: Number(contrast.value),
-        saturation: Number(saturation.value),
-        blur: Number(blur.value),
-
-        width: Number(imageWidth.value),
-        height: Number(imageHeight.value),
-
-        rotation: currentRotation,
-
-        flipX: flipX,
-        flipY: flipY,
-
-        filter: selectedFilter
+        brightness: state.brightness,
+        contrast: state.contrast,
+        saturation: state.saturation,
+        blur: state.blur,
+        filter: state.filter,
+        rotation: state.rotation,
+        flipX: state.flipX,
+        flipY: state.flipY,
+        zoom: state.zoom,
+        width: state.width,
+        height: state.height
     };
 
 }
 
 
-function applyHistoryState(state) {
+function saveHistory() {
+
+    if (!originalImage) {
+        return;
+    }
+
+    history =
+        history.slice(
+            0,
+            historyIndex + 1
+        );
+
+    history.push(
+        cloneState()
+    );
+
+    historyIndex =
+        history.length - 1;
+
+    if (history.length > 30) {
+
+        history.shift();
+
+        historyIndex--;
+
+    }
+
+}
+
+
+function restoreHistory(index) {
+
+    if (
+        index < 0 ||
+        index >= history.length
+    ) {
+        return;
+    }
+
+    state = {
+        ...history[index]
+    };
+
+    updateControls();
+
+    render();
+
+    historyIndex = index;
+
+}
+
+
+/* =========================================================
+   UNDO
+   ========================================================= */
+
+undoBtn.addEventListener("click", () => {
+
+    if (!originalImage) {
+        return;
+    }
+
+    if (historyIndex <= 0) {
+        return;
+    }
+
+    restoreHistory(
+        historyIndex - 1
+    );
+
+});
+
+
+/* =========================================================
+   REDO
+   ========================================================= */
+
+redoBtn.addEventListener("click", () => {
+
+    if (!originalImage) {
+        return;
+    }
+
+    if (
+        historyIndex >=
+        history.length - 1
+    ) {
+        return;
+    }
+
+    restoreHistory(
+        historyIndex + 1
+    );
+
+});
+
+
+/* =========================================================
+   RESET ALL
+   ========================================================= */
+
+resetBtn.addEventListener("click", () => {
+
+    if (!originalImage) {
+        return;
+    }
+
+    state = {
+        brightness: 100,
+        contrast: 100,
+        saturation: 100,
+        blur: 0,
+        filter: "none",
+        rotation: 0,
+        flipX: 1,
+        flipY: 1,
+        zoom: 100,
+        width: originalImage.naturalWidth,
+        height: originalImage.naturalHeight
+    };
+
+    history = [];
+
+    historyIndex = -1;
+
+    updateControls();
+
+    saveHistory();
+
+    render();
+
+    activateTool("adjust");
+
+});
+
+
+/* =========================================================
+   UPDATE UI CONTROLS
+   ========================================================= */
+
+function updateControls() {
 
     brightness.value =
         state.brightness;
@@ -728,353 +880,45 @@ function applyHistoryState(state) {
     blur.value =
         state.blur;
 
+    brightnessValue.textContent =
+        `${state.brightness}%`;
+
+    contrastValue.textContent =
+        `${state.contrast}%`;
+
+    saturationValue.textContent =
+        `${state.saturation}%`;
+
+    blurValue.textContent =
+        `${state.blur}px`;
+
     imageWidth.value =
         state.width;
 
     imageHeight.value =
         state.height;
 
-    currentRotation =
-        state.rotation;
+    zoomValue.textContent =
+        `${state.zoom}%`;
 
-    flipX =
-        state.flipX;
+    filterButtons.forEach(button => {
 
-    flipY =
-        state.flipY;
-
-    selectedFilter =
-        state.filter;
-
-    updateControlValues();
-
-    renderImage();
-
-}
-
-
-function saveHistory() {
-
-    if (!isImageLoaded) {
-        return;
-    }
-
-    const state =
-        createHistoryState();
-
-    history =
-        history.slice(
-            0,
-            historyIndex + 1
+        button.classList.toggle(
+            "active",
+            button.dataset.filter === state.filter
         );
 
-    history.push(state);
-
-    if (history.length > 30) {
-        history.shift();
-    }
-
-    historyIndex =
-        history.length - 1;
-
-}
-
-
-function clearHistory() {
-
-    history = [];
-
-    historyIndex = -1;
-
-}
-
-
-$("undoBtn").addEventListener("click", function () {
-
-    if (
-        !isImageLoaded ||
-        historyIndex <= 0
-    ) {
-
-        imageStatus.textContent =
-            "Nothing to undo";
-
-        return;
-    }
-
-    historyIndex--;
-
-    applyHistoryState(
-        history[historyIndex]
-    );
-
-    imageStatus.textContent =
-        "Undo applied";
-
-});
-
-
-$("redoBtn").addEventListener("click", function () {
-
-    if (
-        !isImageLoaded ||
-        historyIndex >= history.length - 1
-    ) {
-
-        imageStatus.textContent =
-            "Nothing to redo";
-
-        return;
-    }
-
-    historyIndex++;
-
-    applyHistoryState(
-        history[historyIndex]
-    );
-
-    imageStatus.textContent =
-        "Redo applied";
-
-});
-
-
-/* =========================
-   RESET
-========================= */
-
-$("resetBtn").addEventListener("click", function () {
-
-    if (!isImageLoaded) {
-
-        return;
-    }
-
-    resetEditorControls();
-
-    imageWidth.value =
-        originalWidth;
-
-    imageHeight.value =
-        originalHeight;
-
-    zoom = 1;
-
-    updateZoom();
-
-    renderImage();
-
-    clearHistory();
-
-    saveHistory();
-
-    imageStatus.textContent =
-        "Editor reset";
-
-});
-
-
-/* =========================
-   EXPORT QUALITY
-========================= */
-
-exportQuality.addEventListener("input", function () {
+    });
 
     qualityValue.textContent =
-        `${this.value}%`;
+        `${exportQuality.value}%`;
 
-});
+}
 
 
-/* =========================
-   DOWNLOAD
-========================= */
+/* =========================================================
+   INITIAL STATE
+   ========================================================= */
 
-$("downloadBtn").addEventListener("click", function () {
-
-    if (!isImageLoaded) {
-
-        alert("Please upload a photo first.");
-
-        return;
-    }
-
-    renderImage();
-
-    const format =
-        exportFormat.value;
-
-    const quality =
-        Number(exportQuality.value) / 100;
-
-    let extension = "jpg";
-
-    if (format === "image/png") {
-        extension = "png";
-    }
-
-    if (format === "image/webp") {
-        extension = "webp";
-    }
-
-    const safeName =
-        "toolora-edited-photo";
-
-    photoCanvas.toBlob(
-        function (blob) {
-
-            if (!blob) {
-
-                alert(
-                    "Unable to export the photo. Please try again."
-                );
-
-                return;
-            }
-
-            const url =
-                URL.createObjectURL(blob);
-
-            const link =
-                document.createElement("a");
-
-            link.href = url;
-
-            link.download =
-                `${safeName}.${extension}`;
-
-            document.body.appendChild(link);
-
-            link.click();
-
-            link.remove();
-
-            setTimeout(function () {
-
-                URL.revokeObjectURL(url);
-
-            }, 1000);
-
-            imageStatus.textContent =
-                "Photo downloaded";
-
-        },
-        format,
-        quality
-    );
-
-});
-
-
-/* =========================
-   CROP
-========================= */
-
-$("cropBtn").addEventListener("click", function () {
-
-    if (!isImageLoaded) {
-
-        alert("Please upload a photo first.");
-
-        return;
-    }
-
-    const cropWidth =
-        Math.round(photoCanvas.width * 0.8);
-
-    const cropHeight =
-        Math.round(photoCanvas.height * 0.8);
-
-    if (
-        cropWidth <= 0 ||
-        cropHeight <= 0
-    ) {
-        return;
-    }
-
-    const cropCanvas =
-        document.createElement("canvas");
-
-    cropCanvas.width =
-        cropWidth;
-
-    cropCanvas.height =
-        cropHeight;
-
-    const cropCtx =
-        cropCanvas.getContext("2d");
-
-    const startX =
-        Math.round(
-            (photoCanvas.width - cropWidth) / 2
-        );
-
-    const startY =
-        Math.round(
-            (photoCanvas.height - cropHeight) / 2
-        );
-
-    cropCtx.drawImage(
-        photoCanvas,
-
-        startX,
-        startY,
-        cropWidth,
-        cropHeight,
-
-        0,
-        0,
-        cropWidth,
-        cropHeight
-    );
-
-    const croppedImage =
-        new Image();
-
-    croppedImage.onload = function () {
-
-        originalImage =
-            croppedImage;
-
-        originalWidth =
-            cropWidth;
-
-        originalHeight =
-            cropHeight;
-
-        currentRotation = 0;
-
-        flipX = 1;
-        flipY = 1;
-
-        imageWidth.value =
-            cropWidth;
-
-        imageHeight.value =
-            cropHeight;
-
-        renderImage();
-
-        saveHistory();
-
-        imageStatus.textContent =
-            "Photo cropped";
-
-    };
-
-    croppedImage.src =
-        cropCanvas.toDataURL("image/png");
-
-});
-
-
-/* =========================
-   INITIALIZE
-========================= */
-
-updateControlValues();
-
-updateZoom();
-
-imageStatus.textContent =
-    "Ready";
+activateTool("adjust");
+updateControls();
