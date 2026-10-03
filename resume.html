@@ -16,540 +16,216 @@ input::placeholder,textarea::placeholder{color:#b8b8b8;opacity:1;font-weight:400
 select{color:#555;}
 select:valid{color:#111;}
 
-.topbar{
-    height:58px;
-    background:#fff;
-    border-bottom:1px solid #ddd;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 18px;
-}
-.logo{
-    font-family:"Trebuchet MS",Arial,sans-serif;
-    font-weight:900;
-    font-size:20px;
-}
-.back-link{
-    color:#555;
-    text-decoration:none;
-    font-size:13px;
-}
+.topbar{height:58px;background:#fff;border-bottom:1px solid #ddd;display:flex;align-items:center;justify-content:space-between;padding:0 18px;}
+.logo{font-family:"Trebuchet MS",Arial,sans-serif;font-weight:900;font-size:20px;}
+.back-link{color:#555;text-decoration:none;font-size:13px;}
 
-.page{
-    max-width:1180px;
-    margin:0 auto;
-    padding:24px 16px 40px;
-}
-.builder-grid{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-    gap:20px;
-}
-.panel{
-    background:#fff;
-    border:1px solid #e6e6e6;
-    border-radius:12px;
-    padding:16px;
-}
-.panel-title{
-    font-size:18px;
-    font-weight:800;
-    margin:0 0 5px;
-}
-.panel-subtitle{
-    font-size:12px;
-    color:#777;
-    margin:0 0 18px;
-}
-.section{
-    border:1px solid #e5e5e5;
-    border-radius:10px;
-    padding:13px;
-    margin-bottom:12px;
-}
-.section-title{
-    font-size:14px;
-    font-weight:800;
-    margin-bottom:12px;
-}
-.field{
-    margin-bottom:10px;
-}
-.field label{
-    display:block;
-    font-size:11px;
-    font-weight:700;
-    color:#555;
-    margin-bottom:5px;
-}
-.field input,
-.field select,
-.field textarea{
-    width:100%;
-    border:1px solid #ddd;
-    border-radius:7px;
-    padding:9px 10px;
-    outline:none;
-    background:#fff;
-    font-size:12px;
-    color:#222;
-}
-.field input:focus,
-.field select:focus,
-.field textarea:focus{
-    border-color:#777;
-}
-.field textarea{
-    min-height:80px;
-    resize:vertical;
-}
+.page{max-width:1180px;margin:0 auto;padding:24px 16px 40px;}
+.builder-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;}
+.panel{background:#fff;border:1px solid #e6e6e6;border-radius:12px;padding:16px;}
+.panel-title{font-size:18px;font-weight:800;margin:0 0 5px;}
+.panel-subtitle{font-size:12px;color:#777;margin:0 0 18px;}
 
-.grid-2{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:9px;
+.section{border:1px solid #e5e5e5;border-radius:10px;padding:13px;margin-bottom:12px;}
+.section-title{font-size:14px;font-weight:800;margin-bottom:12px;}
+.field{margin-bottom:10px;}
+.field label{display:block;font-size:11px;font-weight:700;color:#555;margin-bottom:5px;}
+.field input,.field select,.field textarea{
+width:100%;border:1px solid #ddd;border-radius:7px;padding:9px 10px;
+outline:none;background:#fff;font-size:12px;color:#222;
 }
-.grid-3{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:9px;
-}
-.grid-4{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:8px;
-}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#777;}
+.field textarea{min-height:80px;resize:vertical;}
 
-.add-btn{
-    border:0;
-    background:#111;
-    color:#fff;
-    border-radius:7px;
-    padding:8px 12px;
-    font-size:11px;
-    cursor:pointer;
-}
-.remove-btn{
-    border:0;
-    background:#ffe7e7;
-    color:#b00000;
-    border-radius:6px;
-    padding:5px 9px;
-    font-size:10px;
-    cursor:pointer;
-}
-.small-btn{
-    border:1px solid #ddd;
-    background:#fff;
-    color:#333;
-    border-radius:6px;
-    padding:6px 9px;
-    font-size:10px;
-    cursor:pointer;
-}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
 
-.dynamic-item{
-    border:1px solid #e3e3e3;
-    border-radius:9px;
-    padding:11px;
-    margin-bottom:10px;
-    background:#fff;
-}
-.dynamic-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:10px;
-}
-.dynamic-head strong{
-    font-size:11px;
-}
+.add-btn{border:0;background:#111;color:#fff;border-radius:7px;padding:8px 12px;font-size:11px;cursor:pointer;}
+.remove-btn{border:0;background:#ffe7e7;color:#b00000;border-radius:6px;padding:5px 9px;font-size:10px;cursor:pointer;}
+.small-btn{border:1px solid #ddd;background:#fff;color:#333;border-radius:6px;padding:6px 9px;font-size:10px;cursor:pointer;}
 
-.chips{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-}
-.chip{
-    border:1px solid #ddd;
-    background:#fff;
-    border-radius:5px;
-    padding:6px 8px;
-    font-size:10px;
-    cursor:pointer;
-}
-.chip.active{
-    background:#111;
-    color:#fff;
-    border-color:#111;
-}
+.dynamic-item{border:1px solid #e3e3e3;border-radius:9px;padding:11px;margin-bottom:10px;background:#fff;}
+.dynamic-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.dynamic-head strong{font-size:11px;}
 
-.photo-box{
-    border:1px dashed #ccc;
-    border-radius:8px;
-    padding:12px;
-    text-align:center;
-}
-.photo-box input{
-    font-size:11px;
-}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{border:1px solid #ddd;background:#fff;border-radius:5px;padding:6px 8px;font-size:10px;cursor:pointer;}
+.chip.active{background:#111;color:#fff;border-color:#111;}
+
+.photo-box{border:1px dashed #ccc;border-radius:8px;padding:12px;text-align:center;}
+.photo-box input{font-size:11px;}
 .photo-preview{
-    width:90px;
-    height:110px;
-    margin:10px auto 0;
-    display:none;
-    border:1px solid #ddd;
-    padding:3px;
-    object-fit:contain;
-    background:#fff;
+width:90px;height:110px;margin:10px auto 0;display:none;
+border:1px solid #ddd;padding:3px;object-fit:contain;background:#fff;
 }
 
-.actions{
-    display:flex;
-    gap:8px;
-    margin-top:14px;
-}
-.primary-btn{
-    flex:1;
-    background:#111;
-    color:#fff;
-    border:0;
-    border-radius:8px;
-    padding:10px;
-    cursor:pointer;
-    font-size:12px;
-}
-.secondary-btn{
-    flex:1;
-    background:#eee;
-    color:#111;
-    border:0;
-    border-radius:8px;
-    padding:10px;
-    cursor:pointer;
-    font-size:12px;
-}
+.actions{display:flex;gap:8px;margin-top:14px;}
+.primary-btn{flex:1;background:#111;color:#fff;border:0;border-radius:8px;padding:10px;cursor:pointer;font-size:12px;}
+.secondary-btn{flex:1;background:#eee;color:#111;border:0;border-radius:8px;padding:10px;cursor:pointer;font-size:12px;}
 
-.pdf-wrap{
-    position:relative;
-    flex:1;
-}
-.pdf-main{
-    width:100%;
-    background:#111;
-    color:#fff;
-    border:0;
-    border-radius:8px;
-    padding:10px;
-    font-size:12px;
-    cursor:pointer;
-}
+.pdf-wrap{position:relative;flex:1;}
+.pdf-main{width:100%;background:#111;color:#fff;border:0;border-radius:8px;padding:10px;font-size:12px;cursor:pointer;}
 .pdf-menu{
-    position:absolute;
-    left:0;
-    right:0;
-    bottom:calc(100% + 6px);
-    background:#fff;
-    border:1px solid #ddd;
-    border-radius:8px;
-    box-shadow:0 8px 25px rgba(0,0,0,.12);
-    overflow:hidden;
-    display:none;
-    z-index:20;
+position:absolute;left:0;right:0;bottom:calc(100% + 6px);
+background:#fff;border:1px solid #ddd;border-radius:8px;
+box-shadow:0 8px 25px rgba(0,0,0,.12);
+overflow:hidden;display:none;z-index:20;
 }
 .pdf-menu button{
-    width:100%;
-    border:0;
-    background:#fff;
-    padding:11px;
-    text-align:left;
-    font-size:12px;
-    cursor:pointer;
+width:100%;border:0;background:#fff;padding:11px;text-align:left;
+font-size:12px;cursor:pointer;
 }
-.pdf-menu button:hover{
-    background:#f4f4f4;
-}
+.pdf-menu button:hover{background:#f4f4f4;}
 
-.preview-area{
-    position:sticky;
-    top:15px;
-}
-.preview-label{
-    font-size:14px;
-    font-weight:800;
-    margin-bottom:7px;
-}
-.preview-note{
-    font-size:11px;
-    color:#777;
-    margin-bottom:10px;
-}
-.preview-scroll{
-    width:100%;
-    overflow-x:auto;
-    padding-bottom:5px;
-}
+.preview-area{position:sticky;top:15px;}
+.preview-label{font-size:14px;font-weight:800;margin-bottom:7px;}
+.preview-note{font-size:11px;color:#777;margin-bottom:10px;}
+.preview-scroll{width:100%;overflow-x:auto;padding-bottom:5px;}
 
 .resume-page{
-    width:100%;
-    max-width:794px;
-    margin:0 auto;
-    background:#fff;
-    border-radius:10px;
-    padding:34px 38px;
-    min-height:900px;
-    box-shadow:0 5px 25px rgba(0,0,0,.08);
-    color:#111;
+width:100%;max-width:794px;margin:0 auto;background:#fff;
+border-radius:10px;padding:34px 38px;min-height:900px;
+box-shadow:0 5px 25px rgba(0,0,0,.08);color:#111;
 }
+
 .resume-header{
-    display:flex;
-    justify-content:space-between;
-    gap:20px;
-    padding-bottom:15px;
-    border-bottom:1px solid #111;
+display:flex;justify-content:space-between;gap:20px;
+padding-bottom:15px;border-bottom:1px solid #111;
 }
-.resume-header-info{
-    min-width:0;
-    flex:1;
-}
-.resume-name{
-    font-size:28px;
-    font-weight:900;
-    margin:0 0 5px;
-    word-break:break-word;
-}
-.resume-title{
-    font-size:13px;
-    color:#444;
-    margin-bottom:12px;
-}
-.contact-line{
-    font-size:10px;
-    color:#333;
-    line-height:1.7;
-}
+
+.resume-header-info{min-width:0;flex:1;}
+.resume-name{font-size:28px;font-weight:900;margin:0 0 5px;word-break:break-word;}
+.resume-title{font-size:13px;color:#444;margin-bottom:12px;}
+.contact-line{font-size:10px;color:#333;line-height:1.7;}
 
 .resume-photo-wrap{
-    width:90px;
-    min-width:90px;
-    height:110px;
-    display:none;
-    justify-content:center;
-    align-items:center;
+width:90px;min-width:90px;height:110px;
+display:none;justify-content:center;align-items:center;
 }
+
 .resume-photo{
-    max-width:90px;
-    max-height:110px;
-    width:auto;
-    height:auto;
-    object-fit:contain;
-    display:none;
+max-width:90px;max-height:110px;width:auto;height:auto;
+object-fit:contain;display:none;
 }
 
-.resume-section{
-    margin-top:18px;
-}
+.resume-section{margin-top:18px;}
 .resume-section-title{
-    font-size:13px;
-    font-weight:900;
-    letter-spacing:.5px;
-    text-transform:uppercase;
-    padding-bottom:6px;
-    border-bottom:1px solid #888;
-    margin-bottom:10px;
+font-size:13px;font-weight:900;letter-spacing:.5px;
+text-transform:uppercase;padding-bottom:6px;
+border-bottom:1px solid #888;margin-bottom:10px;
 }
-.resume-text{
-    font-size:10px;
-    line-height:1.65;
-    color:#222;
-    white-space:pre-wrap;
+.resume-text{font-size:10px;line-height:1.65;color:#222;white-space:pre-wrap;}
+.edu-block,.project-block,.exp-block,.cert-block{margin-bottom:12px;}
+.resume-item-title{font-size:11px;font-weight:900;margin-bottom:3px;}
+.resume-meta{font-size:9px;color:#444;line-height:1.6;}
+.resume-skills{display:flex;flex-wrap:wrap;gap:5px;}
+.resume-skill{border:1px solid #bbb;border-radius:4px;padding:4px 7px;font-size:9px;}
+.resume-links{display:grid;gap:9px;}
+.resume-link-item strong{font-size:10px;display:block;}
+.resume-link-item span{font-size:9px;color:#444;word-break:break-all;}
+
+.semester-box{
+border:1px solid #ddd;border-radius:7px;padding:9px;margin-top:8px;
+}
+.semester-title{font-size:10px;font-weight:800;margin-bottom:4px;}
+.empty-message{color:#999;font-size:10px;}
+.hidden{display:none!important;}
+.status-note{font-size:10px;color:#777;margin-top:5px;}
+
+.edu-other-board{margin-top:8px;}
+
+.resume-page.pdf-mode{
+width:210mm!important;
+max-width:none!important;
+min-height:297mm!important;
+margin:0!important;
+padding:14mm!important;
+border-radius:0!important;
+box-shadow:none!important;
 }
 
+.resume-section,
 .edu-block,
 .project-block,
 .exp-block,
-.cert-block{
-    margin-bottom:12px;
-    break-inside:avoid;
-    page-break-inside:avoid;
-}
-.resume-item-title{
-    font-size:11px;
-    font-weight:900;
-    margin-bottom:3px;
-}
-.resume-meta{
-    font-size:9px;
-    color:#444;
-    line-height:1.6;
-}
-.resume-skills{
-    display:flex;
-    flex-wrap:wrap;
-    gap:5px;
-}
-.resume-skill{
-    border:1px solid #bbb;
-    border-radius:4px;
-    padding:4px 7px;
-    font-size:9px;
-}
-.resume-links{
-    display:grid;
-    gap:9px;
-}
-.resume-link-item strong{
-    font-size:10px;
-    display:block;
-}
-.resume-link-item span{
-    font-size:9px;
-    color:#444;
-    word-break:break-all;
-}
-
+.cert-block,
 .semester-box{
-    border:1px solid #ddd;
-    border-radius:7px;
-    padding:9px;
-    margin-top:8px;
-    break-inside:avoid;
-    page-break-inside:avoid;
-}
-.semester-title{
-    font-size:10px;
-    font-weight:800;
-    margin-bottom:4px;
-}
-
-.empty-message{
-    color:#999;
-    font-size:10px;
-}
-.hidden{
-    display:none!important;
-}
-.status-note{
-    font-size:10px;
-    color:#777;
-    margin-top:5px;
-}
-.board-other{
-    display:none;
-    margin-top:8px;
-}
-
-.pdf-mode{
-    width:210mm!important;
-    min-height:297mm!important;
-    padding:14mm!important;
-    border-radius:0!important;
-    box-shadow:none!important;
+break-inside:avoid;
+page-break-inside:avoid;
 }
 
 @media(max-width:850px){
-    .builder-grid{
-        grid-template-columns:1fr;
-    }
-    .preview-area{
-        position:static;
-    }
+.builder-grid{grid-template-columns:1fr;}
+.preview-area{position:static;}
 }
 
 @media(max-width:600px){
-    .topbar{
-        padding:0 12px;
-        height:54px;
-    }
-    .page{
-        padding:12px 10px 30px;
-    }
-    .panel{
-        padding:12px;
-    }
-    .grid-2,
-    .grid-3,
-    .grid-4{
-        grid-template-columns:1fr;
-    }
-    .resume-page{
-        padding:22px 17px;
-        min-height:auto;
-        box-shadow:none;
-        border:1px solid #eee;
-    }
-    .resume-name{
-        font-size:23px;
-    }
-    .resume-photo-wrap{
-        width:76px;
-        min-width:76px;
-        height:94px;
-    }
-    .resume-photo{
-        max-width:76px;
-        max-height:94px;
-    }
-    .resume-header{
-        gap:10px;
-    }
-    .actions{
-        flex-direction:column;
-    }
+.topbar{padding:0 12px;height:54px;}
+.page{padding:12px 10px 30px;}
+.panel{padding:12px;}
+.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+.resume-page{
+padding:22px 17px;
+min-height:auto;
+box-shadow:none;
+border:1px solid #eee;
+}
+.resume-name{font-size:23px;}
+.resume-photo-wrap{width:76px;min-width:76px;height:94px;}
+.resume-photo{max-width:76px;max-height:94px;}
+.resume-header{gap:10px;}
+.actions{flex-direction:column;}
 }
 
 @media print{
-    body{
-        background:#fff;
-    }
+body{background:#fff;}
 
-    .topbar,
-    .builder-grid > .panel:not(.preview-area),
-    .preview-label,
-    .preview-note,
-    .actions{
-        display:none!important;
-    }
+.topbar,
+.builder-grid > .panel:not(.preview-area),
+.preview-label,
+.preview-note,
+.actions{
+display:none!important;
+}
 
-    .page{
-        padding:0;
-        margin:0;
-        max-width:none;
-    }
+.page{
+padding:0;
+margin:0;
+max-width:none;
+}
 
-    .builder-grid{
-        display:block;
-    }
+.builder-grid{
+display:block;
+}
 
-    .preview-area{
-        display:block!important;
-        position:static!important;
-        background:transparent!important;
-        border:0!important;
-        padding:0!important;
-    }
+.preview-area{
+display:block!important;
+position:static!important;
+border:0!important;
+padding:0!important;
+margin:0!important;
+}
 
-    .preview-scroll{
-        overflow:visible;
-        padding:0;
-    }
+.preview-scroll{
+overflow:visible;
+padding:0;
+}
 
-    .resume-page{
-        width:210mm;
-        max-width:none;
-        min-height:297mm;
-        margin:0;
-        padding:14mm;
-        border:0;
-        border-radius:0;
-        box-shadow:none;
-    }
+.resume-page{
+width:210mm;
+max-width:none;
+min-height:297mm;
+margin:0;
+padding:14mm;
+border:0;
+border-radius:0;
+box-shadow:none;
+}
 
-    @page{
-        size:A4;
-        margin:0;
-    }
+@page{
+size:A4;
+margin:0;
 }
 </style>
 </head>
@@ -558,37 +234,35 @@ select:valid{color:#111;}
 
 <header class="topbar">
     <div class="logo">Toolora</div>
-    <a href="index.html" class="back-link">Back to Home</a>
+    <a class="back-link" href="index.html">Back to Home</a>
 </header>
 
 <main class="page">
 
 <div class="builder-grid">
 
-<div class="panel">
+<section class="panel">
 
 <h1 class="panel-title">Professional Resume Maker</h1>
 <p class="panel-subtitle">
-Create a clean, professional resume with live preview.
+Create a clean professional resume with a live preview.
 </p>
 
 <!-- PERSONAL INFORMATION -->
 <div class="section">
 
-<div class="section-title">
-1. Personal Information
-</div>
+<div class="section-title">Personal Information</div>
 
 <div class="grid-2">
 
 <div class="field">
 <label>Full Name</label>
-<input id="fullName" placeholder="ABC XYZ">
+<input id="fullName" type="text" placeholder="ABC XYZ">
 </div>
 
 <div class="field">
 <label>Professional Title</label>
-<input id="jobTitle" placeholder="Software Developer">
+<input id="professionalTitle" type="text" placeholder="Software Developer">
 </div>
 
 </div>
@@ -601,38 +275,41 @@ Create a clean, professional resume with live preview.
 </div>
 
 <div class="field">
-
 <label>Mobile Number</label>
 
-<div style="display:grid;grid-template-columns:1fr 1.35fr;gap:7px;">
+<div style="display:grid;grid-template-columns:1fr 1.35fr;gap:6px;">
 
-<select id="countryCode"></select>
+<select id="countryCode" required></select>
 
 <input
 id="phone"
 type="tel"
 inputmode="numeric"
-placeholder="9876543210">
+placeholder="9876543210"
+>
 
+</div>
 </div>
 
 </div>
 
-</div>
-
-<div class="grid-4">
+<div class="grid-2">
 
 <div class="field">
 <label>City</label>
-<input id="city" placeholder="ABC City">
+<input id="city" type="text" placeholder="XYZ City">
 </div>
 
 <div class="field">
 <label>State</label>
-<select id="state">
-<option value="">Select State</option>
+<select id="state" required>
+<option value="">Select State / UT</option>
 </select>
 </div>
+
+</div>
+
+<div class="grid-2">
 
 <div class="field">
 <label>District</label>
@@ -643,7 +320,13 @@ placeholder="9876543210">
 
 <div class="field">
 <label>PIN Code</label>
-<input id="pin" inputmode="numeric" placeholder="000000">
+<input
+id="pinCode"
+type="text"
+inputmode="numeric"
+maxlength="6"
+placeholder="208001"
+>
 </div>
 
 </div>
@@ -657,260 +340,235 @@ placeholder="9876543210">
 <input
 id="profilePhoto"
 type="file"
-accept="image/*">
+accept="image/*"
+>
 
 <img
 id="photoPreview"
 class="photo-preview"
-alt="Profile preview">
+alt="Profile preview"
+>
 
 </div>
 
 <div class="status-note">
-The original aspect ratio will be preserved.
+The original aspect ratio is preserved.
 </div>
 
 </div>
 
 </div>
-
 
 <!-- SUMMARY -->
 <div class="section">
 
-<div class="section-title">
-2. Professional Summary
-</div>
+<div class="section-title">Professional Summary</div>
 
 <div class="field">
 
-<label>Summary</label>
-
 <textarea
 id="summary"
-placeholder="Write a short professional summary about your background, strengths, and career direction."></textarea>
+placeholder="Write a short professional summary about your background, strengths and career direction."
+></textarea>
 
 </div>
 
 </div>
-
 
 <!-- EDUCATION -->
 <div class="section">
 
-<div class="section-title">
-3. Education
-</div>
+<div class="section-title">Education</div>
 
-<div id="educationList"></div>
+<div id="educationContainer"></div>
 
 <button
-type="button"
 class="add-btn"
-id="addEducationBtn">
-+ Add Education
+type="button"
+id="addEducationBtn"
+>
+Add Education
 </button>
 
 </div>
 
-
 <!-- SKILLS -->
 <div class="section">
 
-<div class="section-title">
-4. Skills
-</div>
+<div class="section-title">Skills</div>
 
 <div class="field">
 
-<label>Select Skills</label>
+<label>Common Skills</label>
 
-<div
-class="chips"
-id="skillChips">
-</div>
+<div class="chips" id="skillChips"></div>
 
 </div>
-
-<div class="grid-2">
 
 <div class="field">
 
 <label>Custom Skill</label>
 
+<div style="display:flex;gap:7px;">
+
 <input
 id="customSkill"
-placeholder="Example: Video Editing">
-
-</div>
-
-<div
-class="field"
-style="display:flex;align-items:end;">
+type="text"
+placeholder="Python"
+>
 
 <button
-type="button"
 class="small-btn"
-id="addCustomSkill">
-Add Skill
+type="button"
+id="addCustomSkill"
+>
+Add
 </button>
 
 </div>
 
 </div>
 
-</div>
+<div id="selectedSkills" class="chips"></div>
 
+</div>
 
 <!-- PROJECTS -->
 <div class="section">
 
-<div class="section-title">
-5. Projects
-</div>
+<div class="section-title">Projects</div>
 
-<div id="projectList"></div>
+<div id="projectContainer"></div>
 
 <button
-type="button"
 class="add-btn"
-id="addProjectBtn">
-+ Add Project
+type="button"
+id="addProjectBtn"
+>
+Add Project
 </button>
 
 </div>
-
 
 <!-- EXPERIENCE -->
 <div class="section">
 
-<div class="section-title">
-6. Experience & Activities
-</div>
+<div class="section-title">Experience & Activities</div>
 
-<div id="experienceList"></div>
+<div id="experienceContainer"></div>
 
 <button
-type="button"
 class="add-btn"
-id="addExperienceBtn">
-+ Add Experience
+type="button"
+id="addExperienceBtn"
+>
+Add Experience
 </button>
 
 </div>
-
 
 <!-- CERTIFICATIONS -->
 <div class="section">
 
-<div class="section-title">
-7. Certifications
-</div>
+<div class="section-title">Certifications</div>
 
-<div id="certificationList"></div>
+<div id="certificationContainer"></div>
 
 <button
-type="button"
 class="add-btn"
-id="addCertificationBtn">
-+ Add Certification
+type="button"
+id="addCertificationBtn"
+>
+Add Certification
 </button>
 
 </div>
 
-
 <!-- LANGUAGES -->
 <div class="section">
 
-<div class="section-title">
-8. Languages
-</div>
+<div class="section-title">Languages</div>
 
 <div class="field">
 
-<label>Select Languages</label>
+<label>Common Languages</label>
 
-<div
-class="chips"
-id="languageChips">
-</div>
+<div class="chips" id="languageChips"></div>
 
 </div>
-
-<div class="grid-2">
 
 <div class="field">
 
 <label>Custom Language</label>
 
+<div style="display:flex;gap:7px;">
+
 <input
 id="customLanguage"
-placeholder="Example: Spanish">
-
-</div>
-
-<div
-class="field"
-style="display:flex;align-items:end;">
+type="text"
+placeholder="English"
+>
 
 <button
-type="button"
 class="small-btn"
-id="addCustomLanguage">
-Add Language
+type="button"
+id="addCustomLanguage"
+>
+Add
 </button>
 
 </div>
 
 </div>
 
-</div>
+<div id="selectedLanguages" class="chips"></div>
 
+</div>
 
 <!-- LINKS -->
 <div class="section">
 
-<div class="section-title">
-9. Professional Links
-</div>
+<div class="section-title">Professional Links</div>
 
-<div id="linkList"></div>
+<div id="linkContainer"></div>
 
 <button
-type="button"
 class="add-btn"
-id="addLinkBtn">
-+ Add Link
+type="button"
+id="addLinkBtn"
+>
+Add Link
 </button>
 
 </div>
 
-
+<!-- ACTIONS -->
 <div class="actions">
 
 <div class="pdf-wrap">
 
 <button
+class="primary-btn"
 type="button"
-class="primary-btn pdf-main"
-id="pdfButton">
-Save as PDF ▾
+id="pdfButton"
+>
+Save as PDF
 </button>
 
-<div
-class="pdf-menu"
-id="pdfMenu">
+<div class="pdf-menu" id="pdfMenu">
 
 <button
 type="button"
-id="downloadPdf">
+id="downloadPdfBtn"
+>
 Download PDF
 </button>
 
 <button
 type="button"
-id="printResume">
-Print Resume
+id="printPdfBtn"
+>
+Print
 </button>
 
 </div>
@@ -918,91 +576,92 @@ Print Resume
 </div>
 
 <button
-type="button"
 class="secondary-btn"
-id="resetButton">
+type="button"
+id="resetBtn"
+>
 Reset
 </button>
 
 </div>
 
-</div>
-
+</section>
 
 <!-- LIVE PREVIEW -->
-<div class="panel preview-area">
+<section class="panel preview-area">
 
-<div class="preview-label">
-Live Preview
-</div>
+<div class="preview-label">Live Preview</div>
 
 <div class="preview-note">
-Your resume updates automatically as you type.
+Your resume updates automatically as you enter information.
 </div>
 
 <div class="preview-scroll">
 
-<div
-class="resume-page"
-id="resumePreview">
+<div id="resumePreview" class="resume-page">
 
 <div class="resume-header">
 
 <div class="resume-header-info">
 
-<div
+<h2
+id="previewName"
 class="resume-name"
-id="previewName">
-Your Name
-</div>
+>
+ABC XYZ
+</h2>
 
 <div
+id="previewTitle"
 class="resume-title"
-id="previewTitle">
+>
 Professional Title
 </div>
 
 <div
+id="previewContact"
 class="contact-line"
-id="previewContact">
+>
 Email • Phone • Location
 </div>
 
 </div>
 
 <div
+id="resumePhotoWrap"
 class="resume-photo-wrap"
-id="previewPhotoWrap">
+>
 
 <img
 id="previewPhoto"
 class="resume-photo"
-alt="Profile photo">
+alt="Profile photo"
+>
 
 </div>
 
 </div>
 
-
-<div
+<section
+id="summarySection"
 class="resume-section hidden"
-id="summarySection">
+>
 
 <div class="resume-section-title">
 Professional Summary
 </div>
 
 <div
+id="previewSummary"
 class="resume-text"
-id="previewSummary">
-</div>
+></div>
 
-</div>
+</section>
 
-
-<div
+<section
+id="educationSection"
 class="resume-section hidden"
-id="educationSection">
+>
 
 <div class="resume-section-title">
 Education
@@ -1010,28 +669,28 @@ Education
 
 <div id="previewEducation"></div>
 
-</div>
+</section>
 
-
-<div
+<section
+id="skillsSection"
 class="resume-section hidden"
-id="skillsSection">
+>
 
 <div class="resume-section-title">
 Skills
 </div>
 
 <div
+id="previewSkills"
 class="resume-skills"
-id="previewSkills">
-</div>
+></div>
 
-</div>
+</section>
 
-
-<div
+<section
+id="projectsSection"
 class="resume-section hidden"
-id="projectsSection">
+>
 
 <div class="resume-section-title">
 Projects
@@ -1039,12 +698,12 @@ Projects
 
 <div id="previewProjects"></div>
 
-</div>
+</section>
 
-
-<div
+<section
+id="experienceSection"
 class="resume-section hidden"
-id="experienceSection">
+>
 
 <div class="resume-section-title">
 Experience & Activities
@@ -1052,12 +711,12 @@ Experience & Activities
 
 <div id="previewExperience"></div>
 
-</div>
+</section>
 
-
-<div
+<section
+id="certificationsSection"
 class="resume-section hidden"
-id="certificationSection">
+>
 
 <div class="resume-section-title">
 Certifications
@@ -1065,247 +724,85 @@ Certifications
 
 <div id="previewCertifications"></div>
 
-</div>
+</section>
 
-
-<div
+<section
+id="languagesSection"
 class="resume-section hidden"
-id="languageSection">
+>
 
 <div class="resume-section-title">
 Languages
 </div>
 
 <div
-class="resume-text"
-id="previewLanguages">
-</div>
+id="previewLanguages"
+class="resume-skills"
+></div>
 
-</div>
+</section>
 
-
-<div
+<section
+id="linksSection"
 class="resume-section hidden"
-id="linksSection">
+>
 
 <div class="resume-section-title">
 Professional Links
 </div>
 
 <div
+id="previewLinks"
 class="resume-links"
-id="previewLinks">
-</div>
+></div>
+
+</section>
 
 </div>
 
 </div>
 
-</div>
-
-</div>
+</section>
 
 </div>
 
 </main>
 
-
 <script>
 
-const years = Array.from(
-    {length:81},
-    (_,i)=>1970+i
-);
-
-
-const countryCodes = [
-
-["India","91"],
-["Afghanistan","93"],
-["Albania","355"],
-["Algeria","213"],
-["Andorra","376"],
-["Angola","244"],
-["Argentina","54"],
-["Armenia","374"],
-["Australia","61"],
-["Austria","43"],
-["Azerbaijan","994"],
-["Bahamas","1"],
-["Bahrain","973"],
-["Bangladesh","880"],
-["Barbados","1"],
-["Belarus","375"],
-["Belgium","32"],
-["Belize","501"],
-["Benin","229"],
-["Bhutan","975"],
-["Bolivia","591"],
-["Bosnia and Herzegovina","387"],
-["Botswana","267"],
-["Brazil","55"],
-["Brunei","673"],
-["Bulgaria","359"],
-["Burkina Faso","226"],
-["Burundi","257"],
-["Cambodia","855"],
-["Cameroon","237"],
-["Canada","1"],
-["Cape Verde","238"],
-["Central African Republic","236"],
-["Chad","235"],
-["Chile","56"],
-["China","86"],
-["Colombia","57"],
-["Comoros","269"],
-["Costa Rica","506"],
-["Croatia","385"],
-["Cuba","53"],
-["Cyprus","357"],
-["Czech Republic","420"],
-["Denmark","45"],
-["Djibouti","253"],
-["Dominica","1"],
-["Dominican Republic","1"],
-["Ecuador","593"],
-["Egypt","20"],
-["El Salvador","503"],
-["Estonia","372"],
-["Ethiopia","251"],
-["Fiji","679"],
-["Finland","358"],
-["France","33"],
-["Georgia","995"],
-["Germany","49"],
-["Ghana","233"],
-["Greece","30"],
-["Grenada","1"],
-["Guatemala","502"],
-["Guinea","224"],
-["Guyana","592"],
-["Haiti","509"],
-["Honduras","504"],
-["Hong Kong","852"],
-["Hungary","36"],
-["Iceland","354"],
-["Indonesia","62"],
-["Iran","98"],
-["Iraq","964"],
-["Ireland","353"],
-["Israel","972"],
-["Italy","39"],
-["Jamaica","1"],
-["Japan","81"],
-["Jordan","962"],
-["Kazakhstan","7"],
-["Kenya","254"],
-["Kuwait","965"],
-["Kyrgyzstan","996"],
-["Laos","856"],
-["Latvia","371"],
-["Lebanon","961"],
-["Lesotho","266"],
-["Liberia","231"],
-["Libya","218"],
-["Lithuania","370"],
-["Luxembourg","352"],
-["Malaysia","60"],
-["Maldives","960"],
-["Mali","223"],
-["Malta","356"],
-["Mauritius","230"],
-["Mexico","52"],
-["Moldova","373"],
-["Monaco","377"],
-["Mongolia","976"],
-["Montenegro","382"],
-["Morocco","212"],
-["Mozambique","258"],
-["Myanmar","95"],
-["Namibia","264"],
-["Nepal","977"],
-["Netherlands","31"],
-["New Zealand","64"],
-["Nicaragua","505"],
-["Niger","227"],
-["Nigeria","234"],
-["North Korea","850"],
-["North Macedonia","389"],
-["Norway","47"],
-["Oman","968"],
-["Pakistan","92"],
-["Palau","680"],
-["Panama","507"],
-["Papua New Guinea","675"],
-["Paraguay","595"],
-["Peru","51"],
-["Philippines","63"],
-["Poland","48"],
-["Portugal","351"],
-["Qatar","974"],
-["Romania","40"],
-["Russia","7"],
-["Rwanda","250"],
-["Saudi Arabia","966"],
-["Senegal","221"],
-["Serbia","381"],
-["Seychelles","248"],
-["Singapore","65"],
-["Slovakia","421"],
-["Slovenia","386"],
-["Somalia","252"],
-["South Africa","27"],
-["South Korea","82"],
-["South Sudan","211"],
-["Spain","34"],
-["Sri Lanka","94"],
-["Sudan","249"],
-["Suriname","597"],
-["Sweden","46"],
-["Switzerland","41"],
-["Syria","963"],
-["Taiwan","886"],
-["Tajikistan","992"],
-["Tanzania","255"],
-["Thailand","66"],
-["Timor-Leste","670"],
-["Togo","228"],
-["Tonga","676"],
-["Trinidad and Tobago","1"],
-["Tunisia","216"],
-["Turkey","90"],
-["Turkmenistan","993"],
-["Uganda","256"],
-["Ukraine","380"],
-["United Arab Emirates","971"],
-["United Kingdom","44"],
-["United States","1"],
-["Uruguay","598"],
-["Uzbekistan","998"],
-["Vanuatu","678"],
-["Venezuela","58"],
-["Vietnam","84"],
-["Yemen","967"],
-["Zambia","260"],
-["Zimbabwe","263"]
-
-];
-
+/* =========================
+   LOCATION DATA
+========================= */
 
 const stateDistricts = {
 
+"Uttar Pradesh":[
+"Agra","Aligarh","Ambedkar Nagar","Amroha","Auraiya","Ayodhya",
+"Azamgarh","Baghpat","Bahraich","Ballia","Balrampur","Banda",
+"Barabanki","Bareilly","Basti","Bhadohi","Bijnor","Budaun",
+"Bulandshahr","Chandauli","Chitrakoot","Deoria","Etah","Etawah",
+"Farrukhabad","Fatehpur","Firozabad","Gautam Buddha Nagar",
+"Ghaziabad","Ghazipur","Gonda","Gorakhpur","Hamirpur","Hapur",
+"Hardoi","Hathras","Jalaun","Jaunpur","Jhansi","Kannauj",
+"Kanpur Dehat","Kanpur Nagar","Kasganj","Kaushambi","Kushinagar",
+"Lakhimpur Kheri","Lalitpur","Lucknow","Maharajganj","Mahoba",
+"Mainpuri","Mathura","Mau","Meerut","Mirzapur","Moradabad",
+"Muzaffarnagar","Pilibhit","Pratapgarh","Prayagraj","Raebareli",
+"Rampur","Saharanpur","Sambhal","Sant Kabir Nagar","Shahjahanpur",
+"Shamli","Shravasti","Siddharthnagar","Sitapur","Sonbhadra",
+"Sultanpur","Unnao","Varanasi"
+],
+
 "Andhra Pradesh":[
-"Alluri Sitharama Raju","Anakapalli","Ananthapuramu","Annamayya",
-"Bapatla","Chittoor","East Godavari","Eluru","Guntur","Kakinada",
-"Krishna","Kurnool","Nandyal","NTR","Palnadu","Prakasam",
-"Sri Potti Sriramulu Nellore","Srikakulam","Tirupati",
-"Visakhapatnam","Vizianagaram","West Godavari","YSR Kadapa"
+"Anantapur","Chittoor","East Godavari","Guntur","Kakinada",
+"Krishna","Kurnool","Nandyal","Nellore","Prakasam","Srikakulam",
+"Tirupati","Visakhapatnam","Vizianagaram","West Godavari"
 ],
 
 "Arunachal Pradesh":[
 "Anjaw","Changlang","Dibang Valley","East Kameng","East Siang",
-"Itanagar Capital Complex","Lohit","Longding","Lower Dibang Valley",
-"Lower Siang","Lower Subansiri","Namsai","Papum Pare","Tawang",
+"Itanagar","Kurung Kumey","Lohit","Longding","Lower Dibang Valley",
+"Lower Subansiri","Namsai","Papum Pare","Siang","Tawang",
 "Tirap","Upper Siang","Upper Subansiri","West Kameng","West Siang"
 ],
 
@@ -1313,9 +810,9 @@ const stateDistricts = {
 "Baksa","Barpeta","Biswanath","Bongaigaon","Cachar","Charaideo",
 "Darrang","Dhemaji","Dhubri","Dibrugarh","Dima Hasao","Goalpara",
 "Golaghat","Hailakandi","Hojai","Jorhat","Kamrup",
-"Kamrup Metropolitan","Karbi Anglong","Kokrajhar","Lakhimpur",
-"Majuli","Morigaon","Nagaon","Nalbari","Sivasagar","Sonitpur",
-"Tinsukia","Udalguri"
+"Kamrup Metropolitan","Karbi Anglong","Karimganj","Kokrajhar",
+"Lakhimpur","Majuli","Morigaon","Nagaon","Nalbari","Sivasagar",
+"Sonitpur","South Salmara-Mankachar","Tinsukia","Udalguri"
 ],
 
 "Bihar":[
@@ -1329,16 +826,14 @@ const stateDistricts = {
 ],
 
 "Chhattisgarh":[
-"Balod","Baloda Bazar","Balrampur-Ramanujganj","Bastar","Bemetara",
-"Bijapur","Bilaspur","Dantewada","Dhamtari","Durg","Gariaband",
-"Janjgir-Champa","Jashpur","Kabirdham","Kanker","Kondagaon","Korba",
-"Korea","Mahasamund","Mungeli","Narayanpur","Raigarh",
+"Balod","Baloda Bazar","Balrampur","Bastar","Bemetara","Bijapur",
+"Bilaspur","Dantewada","Dhamtari","Durg","Gariaband","Janjgir-Champa",
+"Jashpur","Kabirdham","Kanker","Kondagaon","Korba","Koriya",
+"Mahasamund","Mungeli","Narayanpur","Raigarh","Raipur",
 "Rajnandgaon","Sukma","Surajpur","Surguja"
 ],
 
-"Goa":[
-"North Goa","South Goa"
-],
+"Goa":["North Goa","South Goa"],
 
 "Gujarat":[
 "Ahmedabad","Amreli","Anand","Aravalli","Banaskantha","Bharuch",
@@ -1363,9 +858,10 @@ const stateDistricts = {
 
 "Jharkhand":[
 "Bokaro","Chatra","Deoghar","Dhanbad","Dumka","East Singhbhum",
-"Garhwa","Giridih","Godda","Gumla","Hazaribagh","Jamtara","Khunti",
-"Koderma","Latehar","Lohardaga","Pakur","Palamu","Ramgarh",
-"Ranchi","Sahibganj","Seraikela Kharsawan","Simdega","West Singhbhum"
+"Garhwa","Giridih","Godda","Gumla","Hazaribagh","Jamtara",
+"Khunti","Koderma","Latehar","Lohardaga","Pakur","Palamu",
+"Ramgarh","Ranchi","Sahebganj","Seraikela Kharsawan","Simdega",
+"West Singhbhum"
 ],
 
 "Karnataka":[
@@ -1418,19 +914,19 @@ const stateDistricts = {
 
 "Mizoram":[
 "Aizawl","Champhai","Hnahthial","Khawzawl","Kolasib","Lawngtlai",
-"Lunglei","Mamit","Saitual","Serchhip"
+"Lunglei","Mamit","Saiha","Saitual","Serchhip"
 ],
 
 "Nagaland":[
 "Chumoukedima","Dimapur","Kiphire","Kohima","Longleng","Mokokchung",
-"Mon","Niuland","Noklak","Peren","Phek","Shamator","Tseminyu",
-"Tuensang","Wokha","Zunheboto"
+"Mon","Niuland","Noklak","Peren","Phek","Shamator","Tuensang",
+"Wokha","Zunheboto"
 ],
 
 "Odisha":[
 "Angul","Balangir","Balasore","Bargarh","Bhadrak","Boudh","Cuttack",
 "Deogarh","Dhenkanal","Gajapati","Ganjam","Jagatsinghpur","Jajpur",
-"Jharsuguda","Kalahandi","Kandhamal","Kendrapara","Kendujhar",
+"Jharsuguda","Kalahandi","Kandhamal","Kendrapara","Keonjhar",
 "Khordha","Koraput","Malkangiri","Mayurbhanj","Nabarangpur",
 "Nayagarh","Nuapada","Puri","Rayagada","Sambalpur","Subarnapur",
 "Sundargarh"
@@ -1440,31 +936,29 @@ const stateDistricts = {
 "Amritsar","Barnala","Bathinda","Faridkot","Fatehgarh Sahib",
 "Fazilka","Ferozepur","Gurdaspur","Hoshiarpur","Jalandhar",
 "Kapurthala","Ludhiana","Malerkotla","Mansa","Moga","Pathankot",
-"Patiala","Rupnagar","Sahibzada Ajit Singh Nagar","Sangrur",
-"Shaheed Bhagat Singh Nagar","Sri Muktsar Sahib","Tarn Taran"
+"Patiala","Rupnagar","Sangrur","SAS Nagar","Shaheed Bhagat Singh Nagar",
+"Sri Muktsar Sahib","Tarn Taran"
 ],
 
 "Rajasthan":[
-"Ajmer","Alwar","Balotra","Banswara","Baran","Barmer","Beawar",
-"Bharatpur","Bhilwara","Bikaner","Bundi","Chittorgarh","Churu",
-"Dausa","Deeg","Dholpur","Didwana-Kuchaman","Dungarpur",
-"Hanumangarh","Jaipur","Jaisalmer","Jalore","Jhalawar","Jhunjhunu",
-"Jodhpur","Karauli","Khairthal-Tijara","Kota","Nagaur","Pali",
-"Pratapgarh","Rajsamand","Sawai Madhopur","Sikar","Sirohi","Tonk",
-"Udaipur"
+"Ajmer","Alwar","Anupgarh","Balotra","Banswara","Baran","Barmer",
+"Beawar","Bharatpur","Bhilwara","Bikaner","Bundi","Chittorgarh",
+"Churu","Dausa","Deeg","Dholpur","Didwana-Kuchamana","Dungarpur",
+"Ganganagar","Gangapur City","Hanumangarh","Jaipur","Jaisalmer",
+"Jalore","Jhalawar","Jhunjhunu","Jodhpur","Karauli","Kota",
+"Nagaur","Pali","Phalodi","Pratapgarh","Rajsamand","Salumbar",
+"Sawai Madhopur","Sikar","Sirohi","Tonk","Udaipur"
 ],
 
-"Sikkim":[
-"Gangtok","Gyalshing","Mangan","Namchi","Pakyong","Soreng"
-],
+"Sikkim":["Gangtok","Gyalshing","Mangan","Namchi","Pakyong","Soreng"],
 
 "Tamil Nadu":[
 "Ariyalur","Chengalpattu","Chennai","Coimbatore","Cuddalore",
 "Dharmapuri","Dindigul","Erode","Kallakurichi","Kancheepuram",
 "Karur","Krishnagiri","Madurai","Mayiladuthurai","Nagapattinam",
-"Namakkal","Nilgiris","Perambalur","Pudukkottai",
-"Ramanathapuram","Ranipet","Salem","Sivaganga","Tenkasi","Thanjavur",
-"Theni","Thoothukudi","Tiruchirappalli","Tirunelveli","Tirupathur",
+"Namakkal","Nilgiris","Perambalur","Pudukkottai","Ramanathapuram",
+"Ranipet","Salem","Sivaganga","Tenkasi","Thanjavur","Theni",
+"Thoothukudi","Tiruchirappalli","Tirunelveli","Tirupathur",
 "Tiruppur","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore",
 "Viluppuram","Virudhunagar"
 ],
@@ -1472,32 +966,16 @@ const stateDistricts = {
 "Telangana":[
 "Adilabad","Bhadradri Kothagudem","Hanamkonda","Hyderabad","Jagtial",
 "Jangaon","Jayashankar Bhupalpally","Jogulamba Gadwal","Kamareddy",
-"Karimnagar","Khammam","Komaram Bheem","Mahabubabad","Mahbubnagar",
-"Mancherial","Medak","Medchal-Malkajgiri","Mulugu","Nagarkurnool",
-"Nalgonda","Narayanpet","Nirmal","Nizamabad","Peddapalli",
-"Rajanna Sircilla","Rangareddy","Sangareddy","Siddipet","Suryapet",
-"Vikarabad","Wanaparthy","Warangal","Yadadri Bhuvanagiri"
+"Karimnagar","Khammam","Komaram Bheem Asifabad","Mahabubabad",
+"Mahbubnagar","Mancherial","Medak","Medchal-Malkajgiri","Mulugu",
+"Nagarkurnool","Nalgonda","Narayanpet","Nirmal","Nizamabad",
+"Peddapalli","Rajanna Sircilla","Rangareddy","Sangareddy","Siddipet",
+"Suryapet","Vikarabad","Wanaparthy","Warangal","Yadadri Bhuvanagiri"
 ],
 
 "Tripura":[
 "Dhalai","Gomati","Khowai","North Tripura","Sepahijala",
 "South Tripura","Unakoti","West Tripura"
-],
-
-"Uttar Pradesh":[
-"Agra","Aligarh","Ambedkar Nagar","Amethi","Amroha","Auraiya",
-"Ayodhya","Azamgarh","Baghpat","Bahraich","Ballia","Balrampur",
-"Banda","Barabanki","Bareilly","Basti","Bhadohi","Bijnor","Budaun",
-"Bulandshahr","Chandauli","Chitrakoot","Deoria","Etah","Etawah",
-"Farrukhabad","Fatehpur","Firozabad","Gautam Buddha Nagar",
-"Ghaziabad","Ghazipur","Gonda","Gorakhpur","Hamirpur","Hapur",
-"Hardoi","Hathras","Jalaun","Jaunpur","Jhansi","Kannauj","Kanpur Dehat",
-"Kanpur Nagar","Kasganj","Kaushambi","Kushinagar","Lakhimpur Kheri",
-"Lalitpur","Lucknow","Maharajganj","Mahoba","Mainpuri","Mathura",
-"Mau","Meerut","Mirzapur","Moradabad","Muzaffarnagar","Pilibhit",
-"Pratapgarh","Prayagraj","Raebareli","Rampur","Saharanpur","Sambhal",
-"Sant Kabir Nagar","Shahjahanpur","Shamli","Shrawasti","Siddharthnagar",
-"Sitapur","Sonbhadra","Sultanpur","Unnao","Varanasi"
 ],
 
 "Uttarakhand":[
@@ -1507,20 +985,18 @@ const stateDistricts = {
 ],
 
 "West Bengal":[
-"Alipurduar","Bankura","Paschim Bardhaman","Paschim Medinipur",
-"Purba Bardhaman","Purba Medinipur","Cooch Behar","Darjeeling",
-"Hooghly","Howrah","Jalpaiguri","Jhargram","Kalimpong","Kolkata",
-"Maldah","Murshidabad","Nadia","North 24 Parganas",
-"South 24 Parganas","Uttar Dinajpur","Dakshin Dinajpur","Birbhum"
+"Alipurduar","Bankura","Paschim Bardhaman","Purba Bardhaman",
+"Birbhum","Cooch Behar","Dakshin Dinajpur","Darjeeling","Hooghly",
+"Howrah","Jalpaiguri","Jhargram","Kalimpong","Kolkata","Maldah",
+"Murshidabad","Nadia","North 24 Parganas","Paschim Medinipur",
+"Purba Medinipur","South 24 Parganas","Uttar Dinajpur"
 ],
 
 "Andaman and Nicobar Islands":[
 "Nicobar","North and Middle Andaman","South Andaman"
 ],
 
-"Chandigarh":[
-"Chandigarh"
-],
+"Chandigarh":["Chandigarh"],
 
 "Dadra and Nagar Haveli and Daman and Diu":[
 "Dadra and Nagar Haveli","Daman","Diu"
@@ -1538,13 +1014,11 @@ const stateDistricts = {
 "Rajouri","Ramban","Reasi","Samba","Shopian","Srinagar","Udhampur"
 ],
 
-"Ladakh":[
-"Kargil","Leh"
-],
+"Ladakh":["Kargil","Leh"],
 
 "Lakshadweep":[
-"Agatti","Amini","Andrott","Bitra","Chetlat","Kadmat",
-"Kalpeni","Kavaratti","Kiltan","Minicoy"
+"Agatti","Amini","Andrott","Bitra","Chetlat","Kadmat","Kalpeni",
+"Kavaratti","Kiltan","Minicoy"
 ],
 
 "Puducherry":[
@@ -1554,97 +1028,305 @@ const stateDistricts = {
 };
 
 
-const boardOptions = [
+/* =========================
+   COUNTRY CALLING CODES
+========================= */
+
+const countryCodes = [
+
+["India","+91"],
+["Afghanistan","+93"],
+["Albania","+355"],
+["Algeria","+213"],
+["Andorra","+376"],
+["Angola","+244"],
+["Argentina","+54"],
+["Armenia","+374"],
+["Australia","+61"],
+["Austria","+43"],
+["Azerbaijan","+994"],
+["Bahamas","+1"],
+["Bahrain","+973"],
+["Bangladesh","+880"],
+["Barbados","+1"],
+["Belarus","+375"],
+["Belgium","+32"],
+["Belize","+501"],
+["Benin","+229"],
+["Bhutan","+975"],
+["Bolivia","+591"],
+["Bosnia and Herzegovina","+387"],
+["Botswana","+267"],
+["Brazil","+55"],
+["Brunei","+673"],
+["Bulgaria","+359"],
+["Burkina Faso","+226"],
+["Burundi","+257"],
+["Cambodia","+855"],
+["Cameroon","+237"],
+["Canada","+1"],
+["Cape Verde","+238"],
+["Central African Republic","+236"],
+["Chad","+235"],
+["Chile","+56"],
+["China","+86"],
+["Colombia","+57"],
+["Comoros","+269"],
+["Congo","+242"],
+["Costa Rica","+506"],
+["Croatia","+385"],
+["Cuba","+53"],
+["Cyprus","+357"],
+["Czech Republic","+420"],
+["Denmark","+45"],
+["Djibouti","+253"],
+["Dominica","+1"],
+["Dominican Republic","+1"],
+["Ecuador","+593"],
+["Egypt","+20"],
+["El Salvador","+503"],
+["Equatorial Guinea","+240"],
+["Eritrea","+291"],
+["Estonia","+372"],
+["Eswatini","+268"],
+["Ethiopia","+251"],
+["Fiji","+679"],
+["Finland","+358"],
+["France","+33"],
+["Gabon","+241"],
+["Gambia","+220"],
+["Georgia","+995"],
+["Germany","+49"],
+["Ghana","+233"],
+["Greece","+30"],
+["Grenada","+1"],
+["Guatemala","+502"],
+["Guinea","+224"],
+["Guinea-Bissau","+245"],
+["Guyana","+592"],
+["Haiti","+509"],
+["Honduras","+504"],
+["Hungary","+36"],
+["Iceland","+354"],
+["Indonesia","+62"],
+["Iran","+98"],
+["Iraq","+964"],
+["Ireland","+353"],
+["Israel","+972"],
+["Italy","+39"],
+["Jamaica","+1"],
+["Japan","+81"],
+["Jordan","+962"],
+["Kazakhstan","+7"],
+["Kenya","+254"],
+["Kiribati","+686"],
+["Kuwait","+965"],
+["Kyrgyzstan","+996"],
+["Laos","+856"],
+["Latvia","+371"],
+["Lebanon","+961"],
+["Lesotho","+266"],
+["Liberia","+231"],
+["Libya","+218"],
+["Liechtenstein","+423"],
+["Lithuania","+370"],
+["Luxembourg","+352"],
+["Madagascar","+261"],
+["Malawi","+265"],
+["Malaysia","+60"],
+["Maldives","+960"],
+["Mali","+223"],
+["Malta","+356"],
+["Marshall Islands","+692"],
+["Mauritania","+222"],
+["Mauritius","+230"],
+["Mexico","+52"],
+["Micronesia","+691"],
+["Moldova","+373"],
+["Monaco","+377"],
+["Mongolia","+976"],
+["Montenegro","+382"],
+["Morocco","+212"],
+["Mozambique","+258"],
+["Myanmar","+95"],
+["Namibia","+264"],
+["Nauru","+674"],
+["Nepal","+977"],
+["Netherlands","+31"],
+["New Zealand","+64"],
+["Nicaragua","+505"],
+["Niger","+227"],
+["Nigeria","+234"],
+["North Korea","+850"],
+["North Macedonia","+389"],
+["Norway","+47"],
+["Oman","+968"],
+["Pakistan","+92"],
+["Palau","+680"],
+["Palestine","+970"],
+["Panama","+507"],
+["Papua New Guinea","+675"],
+["Paraguay","+595"],
+["Peru","+51"],
+["Philippines","+63"],
+["Poland","+48"],
+["Portugal","+351"],
+["Qatar","+974"],
+["Romania","+40"],
+["Russia","+7"],
+["Rwanda","+250"],
+["Saint Kitts and Nevis","+1"],
+["Saint Lucia","+1"],
+["Saint Vincent and the Grenadines","+1"],
+["Samoa","+685"],
+["San Marino","+378"],
+["Saudi Arabia","+966"],
+["Senegal","+221"],
+["Serbia","+381"],
+["Seychelles","+248"],
+["Sierra Leone","+232"],
+["Singapore","+65"],
+["Slovakia","+421"],
+["Slovenia","+386"],
+["Solomon Islands","+677"],
+["Somalia","+252"],
+["South Africa","+27"],
+["South Korea","+82"],
+["South Sudan","+211"],
+["Spain","+34"],
+["Sri Lanka","+94"],
+["Sudan","+249"],
+["Suriname","+597"],
+["Sweden","+46"],
+["Switzerland","+41"],
+["Syria","+963"],
+["Taiwan","+886"],
+["Tajikistan","+992"],
+["Tanzania","+255"],
+["Thailand","+66"],
+["Timor-Leste","+670"],
+["Togo","+228"],
+["Tonga","+676"],
+["Trinidad and Tobago","+1"],
+["Tunisia","+216"],
+["Turkey","+90"],
+["Turkmenistan","+993"],
+["Tuvalu","+688"],
+["Uganda","+256"],
+["Ukraine","+380"],
+["United Arab Emirates","+971"],
+["United Kingdom","+44"],
+["United States","+1"],
+["Uruguay","+598"],
+["Uzbekistan","+998"],
+["Vanuatu","+678"],
+["Vatican City","+39"],
+["Venezuela","+58"],
+["Vietnam","+84"],
+["Yemen","+967"],
+["Zambia","+260"],
+["Zimbabwe","+263"]
+
+];
+
+
+/* =========================
+   COMMON OPTIONS
+========================= */
+
+const boardOptions=[
 "CBSE",
 "CISCE / ICSE",
 "NIOS",
 "UP Board",
 "Bihar Board",
 "MP Board",
-"Rajasthan Board",
+"RBSE",
+"BSE Odisha",
+"WBBSE",
+"WBCHSE",
 "Maharashtra State Board",
 "Gujarat Board",
-"Haryana Board",
 "Punjab School Education Board",
-"West Bengal Board",
-"Karnataka SSLC",
+"Haryana Board",
+"HPBOSE",
+"JKBOSE",
+"JK Board",
+"CGBSE",
+"JAC",
+"Karnataka State Board",
 "Kerala Board",
 "Tamil Nadu State Board",
 "Telangana Board",
 "Andhra Pradesh Board",
-"Odisha Board",
-"Jharkhand Academic Council",
-"Chhattisgarh Board",
-"Uttarakhand Board",
-"Himachal Pradesh Board",
 "Assam Board",
+"Manipur Board",
+"Meghalaya Board",
+"Mizoram Board",
+"Nagaland Board",
+"Tripura Board",
+"Uttarakhand Board",
 "Other"
 ];
 
-
-const collegeSuggestions = [
-"ABC Institute of Technology",
-"XYZ College",
-"ABC University",
+const collegeSuggestions=[
+"ABC College",
 "XYZ Institute",
-"ABC Polytechnic",
-"XYZ Technical Institute",
-"ABC Degree College",
-"XYZ College of Engineering"
+"Government College",
+"Government Polytechnic",
+"ABC Institute of Technology",
+"XYZ University College",
+"ABC School of Management"
 ];
 
-
-const universitySuggestions = [
+const universitySuggestions=[
 "ABC University",
 "XYZ University",
-"ABC State University",
-"XYZ Technical University",
-"ABC Open University",
-"XYZ Institute of Technology"
+"State Technical University",
+"State University",
+"National University",
+"Open University",
+"ABC Technical University"
 ];
 
-
-const skillOptions = [
+const commonSkills=[
 "C Programming",
 "Python",
+"Java",
 "JavaScript",
 "HTML",
 "CSS",
 "SQL",
-"Java",
+"MS Office",
 "Git",
 "GitHub",
-"MS Office",
-"Computer Fundamentals",
-"Data Structures",
 "Problem Solving",
 "Logical Thinking",
-"Analytical Thinking",
-"Database Management",
-"Web Development"
+"Data Analysis",
+"Communication",
+"Teamwork",
+"Leadership",
+"Computer Fundamentals"
 ];
 
-
-const languageOptions = [
+const commonLanguages=[
 "English",
 "Hindi",
-"Spanish",
-"French",
-"German",
-"Arabic",
 "Bengali",
+"Telugu",
+"Marathi",
+"Tamil",
 "Gujarati",
 "Kannada",
 "Malayalam",
-"Marathi",
+"Odia",
 "Punjabi",
-"Tamil",
-"Telugu",
-"Urdu"
+"Urdu",
+"Assamese",
+"Nepali"
 ];
 
-
-const experienceTypes = [
+const experienceTypes=[
 "Job",
 "Internship",
 "Freelance Work",
@@ -1661,119 +1343,160 @@ const experienceTypes = [
 "Other"
 ];
 
+const years=[];
 
-let selectedSkills=[];
-let selectedLanguages=[];
+for(let y=2026;y>=1950;y--){
+years.push(y);
+}
 
+const futureYears=[];
+
+for(let y=2026;y<=2050;y++){
+futureYears.push(y);
+}
+
+let skills=[];
+let languages=[];
+
+let educationCount=0;
+let projectCount=0;
+let experienceCount=0;
+let certificationCount=0;
+let linkCount=0;
 
 const $=id=>document.getElementById(id);
 
-
-function safe(value){
-
-return String(value||"")
-.replace(/[&<>"']/g,ch=>({
+const safe=value=>
+String(value??"").replace(/[&<>"']/g,char=>({
 "&":"&amp;",
 "<":"&lt;",
 ">":"&gt;",
 '"':"&quot;",
 "'":"&#039;"
-}[ch]));
+}[char]));
 
+
+/* =========================
+   YEAR OPTIONS
+========================= */
+
+function yearOptions(
+selected="",
+includePresent=false,
+ascending=false
+){
+
+const arr=ascending?[...futureYears]:[...years];
+
+let html='<option value="">Select Year</option>';
+
+if(includePresent){
+html+='<option value="Present">Present</option>';
+}
+
+arr.forEach(y=>{
+
+html+=`
+<option value="${y}"
+${String(selected)===String(y)?"selected":""}>
+${y}
+</option>`;
+
+});
+
+return html;
 }
 
 
-function yearOptions(){
+/* =========================
+   BOARD SELECT
+========================= */
+
+function boardSelect(){
 
 return `
-<option value="">Select Year</option>
-${years.map(y=>`<option value="${y}">${y}</option>`).join("")}
-`;
-
-}
-
-
-function boardSelectHTML(){
-
-return `
-<select class="edu-board">
+<select class="edu-board" required>
 
 <option value="">
 Select Board
 </option>
 
-${boardOptions.map(
-b=>`<option value="${safe(b)}">${safe(b)}</option>`
+${boardOptions.map(x=>
+`<option value="${safe(x)}">
+${safe(x)}
+</option>`
 ).join("")}
 
 </select>
 
 <input
-class="edu-board-other board-other"
-placeholder="Enter board name">
-
+class="edu-other-board hidden"
+type="text"
+placeholder="Enter Board Name"
+>
 `;
 
 }
 
 
-function instituteInputHTML(){
+/* =========================
+   EDUCATION HELPERS
+========================= */
+
+function collegeInput(){
 
 return `
 <input
 class="edu-institute"
 list="collegeSuggestions"
-placeholder="ABC College / Institute">
+type="text"
+placeholder="ABC College or XYZ Institute"
+>
 `;
 
 }
 
-
-function universityInputHTML(){
+function universityInput(){
 
 return `
 <input
 class="edu-university"
 list="universitySuggestions"
-placeholder="ABC University">
+type="text"
+placeholder="ABC University"
+>
 `;
 
 }
 
 
-function scoreHTML(){
+/* =========================
+   EDUCATION TEMPLATE
+========================= */
+
+function educationTemplate(id){
 
 return `
-<input
-class="edu-score"
-placeholder="Percentage or CGPA">
-`;
 
-}
-
-
-function addEducation(){
-
-const item=document.createElement("div");
-
-item.className="dynamic-item education-item";
-
-item.innerHTML=`
+<div
+class="dynamic-item education-item"
+data-id="${id}"
+>
 
 <div class="dynamic-head">
 
 <strong>
-Education
+Education ${id}
 </strong>
 
 <button
 type="button"
-class="remove-btn">
+class="remove-btn remove-education"
+>
 Remove
 </button>
 
 </div>
-
 
 <div class="field">
 
@@ -1781,90 +1504,72 @@ Remove
 Qualification
 </label>
 
-<select class="edu-type">
+<select class="edu-qualification">
 
 <option value="">
 Select Qualification
 </option>
 
-<option>
+<option value="10th">
 10th
 </option>
 
-<option>
+<option value="12th">
 12th / Intermediate
 </option>
 
-<option>
+<option value="Diploma">
 Diploma
 </option>
 
-<option>
+<option value="Graduation">
 Graduation
 </option>
 
-<option>
+<option value="Post Graduation">
 Post Graduation
 </option>
 
-<option>
-Other
+<option value="Other">
+Other Qualification
 </option>
 
 </select>
 
 </div>
 
-
 <div class="education-fields"></div>
+
+</div>
 
 `;
 
-$("educationList").appendChild(item);
-
-
-item.querySelector(".remove-btn")
-.addEventListener("click",()=>{
-
-item.remove();
-updatePreview();
-
-});
-
-
-item.querySelector(".edu-type")
-.addEventListener("change",()=>{
-
-renderEducationFields(item);
-updatePreview();
-
-});
-
-
-renderEducationFields(item);
-
 }
 
+
+/* =========================
+   EDUCATION FIELDS
+========================= */
 
 function renderEducationFields(item){
 
-const type=item.querySelector(".edu-type").value;
+const type=
+item.querySelector(".edu-qualification")?.value||"";
 
-const box=item.querySelector(".education-fields");
-
+const box=
+item.querySelector(".education-fields");
 
 if(!type){
 
-box.innerHTML=`
-<div class="status-note">
-Select a qualification to continue.
-</div>
-`;
+box.innerHTML="";
+
+updatePreview();
 
 return;
-
 }
 
+
+/* 10TH */
 
 if(type==="10th"){
 
@@ -1876,10 +1581,13 @@ box.innerHTML=`
 School Name
 </label>
 
-${instituteInputHTML()}
+<input
+class="edu-school"
+type="text"
+placeholder="ABC School"
+>
 
 </div>
-
 
 <div class="field">
 
@@ -1887,10 +1595,9 @@ ${instituteInputHTML()}
 Board
 </label>
 
-${boardSelectHTML()}
+${boardSelect()}
 
 </div>
-
 
 <div class="grid-2">
 
@@ -1900,14 +1607,11 @@ ${boardSelectHTML()}
 Passing Year
 </label>
 
-<select class="edu-completion-year">
-
-${yearOptions()}
-
+<select class="edu-completion">
+${yearOptions("",false,false)}
 </select>
 
 </div>
-
 
 <div class="field">
 
@@ -1915,7 +1619,11 @@ ${yearOptions()}
 Percentage
 </label>
 
-${scoreHTML()}
+<input
+class="edu-score"
+type="text"
+placeholder="85%"
+>
 
 </div>
 
@@ -1926,7 +1634,9 @@ ${scoreHTML()}
 }
 
 
-else if(type==="12th / Intermediate"){
+/* 12TH */
+
+else if(type==="12th"){
 
 box.innerHTML=`
 
@@ -1936,10 +1646,9 @@ box.innerHTML=`
 School / College Name
 </label>
 
-${instituteInputHTML()}
+${collegeInput()}
 
 </div>
-
 
 <div class="field">
 
@@ -1947,10 +1656,9 @@ ${instituteInputHTML()}
 Board
 </label>
 
-${boardSelectHTML()}
+${boardSelect()}
 
 </div>
-
 
 <div class="grid-2">
 
@@ -1960,14 +1668,11 @@ ${boardSelectHTML()}
 Passing Year
 </label>
 
-<select class="edu-completion-year">
-
-${yearOptions()}
-
+<select class="edu-completion">
+${yearOptions("",false,false)}
 </select>
 
 </div>
-
 
 <div class="field">
 
@@ -1975,7 +1680,11 @@ ${yearOptions()}
 Percentage
 </label>
 
-${scoreHTML()}
+<input
+class="edu-score"
+type="text"
+placeholder="85%"
+>
 
 </div>
 
@@ -1985,6 +1694,8 @@ ${scoreHTML()}
 
 }
 
+
+/* DIPLOMA */
 
 else if(type==="Diploma"){
 
@@ -1998,10 +1709,11 @@ Diploma / Course Name
 
 <input
 class="edu-course"
-placeholder="Diploma in Computer Applications">
+type="text"
+placeholder="Diploma in Computer Applications"
+>
 
 </div>
-
 
 <div class="field">
 
@@ -2009,10 +1721,9 @@ placeholder="Diploma in Computer Applications">
 Institute
 </label>
 
-${instituteInputHTML()}
+${collegeInput()}
 
 </div>
-
 
 <div class="field">
 
@@ -2020,10 +1731,9 @@ ${instituteInputHTML()}
 Board / University
 </label>
 
-${universityInputHTML()}
+${universityInput()}
 
 </div>
-
 
 <div class="grid-2">
 
@@ -2033,14 +1743,11 @@ ${universityInputHTML()}
 Passing Year
 </label>
 
-<select class="edu-completion-year">
-
-${yearOptions()}
-
+<select class="edu-completion">
+${yearOptions("",false,false)}
 </select>
 
 </div>
-
 
 <div class="field">
 
@@ -2048,7 +1755,11 @@ ${yearOptions()}
 Percentage / CGPA
 </label>
 
-${scoreHTML()}
+<input
+class="edu-score"
+type="text"
+placeholder="8.2 CGPA"
+>
 
 </div>
 
@@ -2059,11 +1770,14 @@ ${scoreHTML()}
 }
 
 
-else if(type==="Graduation" || type==="Post Graduation"){
+/* GRADUATION / POST GRADUATION */
+
+else if(
+type==="Graduation"||
+type==="Post Graduation"
+){
 
 box.innerHTML=`
-
-<div class="grid-2">
 
 <div class="field">
 
@@ -2073,10 +1787,11 @@ Course / Degree
 
 <input
 class="edu-course"
-placeholder="Bachelor of Computer Applications">
+type="text"
+placeholder="Bachelor of Computer Applications"
+>
 
 </div>
-
 
 <div class="field">
 
@@ -2084,12 +1799,9 @@ placeholder="Bachelor of Computer Applications">
 College / Institute
 </label>
 
-${instituteInputHTML()}
+${collegeInput()}
 
 </div>
-
-</div>
-
 
 <div class="field">
 
@@ -2097,10 +1809,9 @@ ${instituteInputHTML()}
 University
 </label>
 
-${universityInputHTML()}
+${universityInput()}
 
 </div>
-
 
 <div class="grid-2">
 
@@ -2128,36 +1839,19 @@ Pursuing
 
 </div>
 
-
-<div class="field">
-
-<label>
-Overall Percentage / CGPA (Optional)
-</label>
-
-${scoreHTML()}
-
-</div>
-
-</div>
-
-
-<div class="grid-2">
-
 <div class="field">
 
 <label>
 Start Year
 </label>
 
-<select class="edu-start-year">
-
-${yearOptions()}
-
+<select class="edu-start">
+${yearOptions("",false,false)}
 </select>
 
 </div>
 
+</div>
 
 <div class="field">
 
@@ -2165,125 +1859,40 @@ ${yearOptions()}
 Completion Year
 </label>
 
-<select class="edu-end-year">
-
-${yearOptions()}
-
+<select class="edu-completion">
+${yearOptions("",true,true)}
 </select>
 
 <div class="status-note edu-present-note hidden">
-Completion: Present
+Completion year is set to Present while pursuing.
 </div>
 
 </div>
 
-</div>
-
+<div class="semester-area"></div>
 
 <div class="field">
 
 <label>
-Semester Details (Optional)
+Overall Percentage / CGPA (Optional)
 </label>
 
-<div class="semester-boxes"></div>
+<input
+class="edu-score"
+type="text"
+placeholder="8.4 CGPA"
+>
 
 </div>
 
 `;
 
-
-const semesterBox=item.querySelector(".semester-boxes");
-
-
-for(let y=1;y<=4;y++){
-
-const first=(y*2)-1;
-const second=y*2;
-
-semesterBox.insertAdjacentHTML(
-"beforeend",
-
-`
-
-<div class="semester-box">
-
-<div class="semester-title">
-Year ${y}
-</div>
-
-
-<div class="grid-2">
-
-<div class="field">
-
-<label>
-Semester ${first} CGPA / SGPA
-</label>
-
-<input
-class="semester-input"
-data-sem="${first}"
-placeholder="Example: 8.2 / 8.5">
-
-</div>
-
-
-<div class="field">
-
-<label>
-Semester ${second} CGPA / SGPA
-</label>
-
-<input
-class="semester-input"
-data-sem="${second}"
-placeholder="Example: 8.4 / 8.7">
-
-</div>
-
-</div>
-
-</div>
-
-`
-
-);
+renderSemesterArea(item);
 
 }
 
 
-item.querySelector(".edu-status")
-.addEventListener("change",()=>{
-
-const status=item.querySelector(".edu-status").value;
-
-const end=item.querySelector(".edu-end-year");
-
-const note=item.querySelector(".edu-present-note");
-
-
-if(status==="Pursuing"){
-
-end.value="";
-end.disabled=true;
-note.classList.remove("hidden");
-
-}
-
-else{
-
-end.disabled=false;
-note.classList.add("hidden");
-
-}
-
-updatePreview();
-
-});
-
-}
-
+/* OTHER */
 
 else{
 
@@ -2297,10 +1906,11 @@ Qualification Name
 
 <input
 class="edu-course"
-placeholder="Other Qualification">
+type="text"
+placeholder="Professional Qualification"
+>
 
 </div>
-
 
 <div class="field">
 
@@ -2308,10 +1918,9 @@ placeholder="Other Qualification">
 Institute
 </label>
 
-${instituteInputHTML()}
+${collegeInput()}
 
 </div>
-
 
 <div class="field">
 
@@ -2319,10 +1928,9 @@ ${instituteInputHTML()}
 Board / University
 </label>
 
-${universityInputHTML()}
+${universityInput()}
 
 </div>
-
 
 <div class="grid-2">
 
@@ -2332,14 +1940,11 @@ ${universityInputHTML()}
 Completion Year
 </label>
 
-<select class="edu-completion-year">
-
-${yearOptions()}
-
+<select class="edu-completion">
+${yearOptions("",true,false)}
 </select>
 
 </div>
-
 
 <div class="field">
 
@@ -2347,7 +1952,11 @@ ${yearOptions()}
 Percentage / CGPA
 </label>
 
-${scoreHTML()}
+<input
+class="edu-score"
+type="text"
+placeholder="85% or 8.5 CGPA"
+>
 
 </div>
 
@@ -2358,70 +1967,309 @@ ${scoreHTML()}
 }
 
 
-const board=item.querySelector(".edu-board");
+bindEducationFieldEvents(item);
 
-
-if(board){
-
-board.addEventListener("change",()=>{
-
-const other=item.querySelector(".edu-board-other");
-
-
-if(board.value==="Other"){
-
-other.style.display="block";
+updatePreview();
 
 }
 
-else{
 
-other.style.display="none";
-other.value="";
+/* =========================
+   SEMESTERS
+========================= */
+
+function renderSemesterArea(item){
+
+const type=
+item.querySelector(".edu-qualification").value;
+
+const area=
+item.querySelector(".semester-area");
+
+if(!area)return;
+
+const maxYears=
+type==="Post Graduation"?2:4;
+
+let html=`
+<div class="field">
+<label>
+Year-wise Semester Details
+</label>
+</div>
+`;
+
+for(
+let year=1;
+year<=maxYears;
+year++
+){
+
+const s1=(year*2)-1;
+const s2=year*2;
+
+html+=`
+
+<div class="semester-box">
+
+<div class="semester-title">
+Year ${year}
+</div>
+
+<div class="grid-2">
+
+<div>
+
+<div class="field">
+
+<label>
+Semester ${s1} CGPA
+</label>
+
+<input
+class="semester-cgpa"
+data-semester="${s1}"
+type="text"
+placeholder="8.2"
+>
+
+</div>
+
+<div class="field">
+
+<label>
+Semester ${s1} SGPA
+</label>
+
+<input
+class="semester-sgpa"
+data-semester="${s1}"
+type="text"
+placeholder="8.4"
+>
+
+</div>
+
+</div>
+
+<div>
+
+<div class="field">
+
+<label>
+Semester ${s2} CGPA
+</label>
+
+<input
+class="semester-cgpa"
+data-semester="${s2}"
+type="text"
+placeholder="8.5"
+>
+
+</div>
+
+<div class="field">
+
+<label>
+Semester ${s2} SGPA
+</label>
+
+<input
+class="semester-sgpa"
+data-semester="${s2}"
+type="text"
+placeholder="8.6"
+>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+area.innerHTML=html;
+
+}
+
+
+/* =========================
+   EDUCATION EVENTS
+========================= */
+
+function bindEducationFieldEvents(item){
+
+const qualification=
+item.querySelector(".edu-qualification");
+
+if(qualification){
+
+qualification.onchange=()=>{
+renderEducationFields(item);
+};
+
+}
+
+const board=
+item.querySelector(".edu-board");
+
+if(board){
+
+board.onchange=()=>{
+
+const other=
+item.querySelector(".edu-other-board");
+
+if(other){
+
+other.classList.toggle(
+"hidden",
+board.value!=="Other"
+);
 
 }
 
 updatePreview();
 
+};
+
+}
+
+const status=
+item.querySelector(".edu-status");
+
+if(status){
+
+status.onchange=()=>{
+
+const end=
+item.querySelector(".edu-completion");
+
+const note=
+item.querySelector(".edu-present-note");
+
+if(end){
+
+if(status.value==="Pursuing"){
+
+end.value="Present";
+end.disabled=true;
+
+if(note){
+note.classList.remove("hidden");
+}
+
+}else{
+
+end.disabled=false;
+
+if(end.value==="Present"){
+end.value="";
+}
+
+if(note){
+note.classList.add("hidden");
+}
+
+}
+
+}
+
+updatePreview();
+
+};
+
+}
+
+item
+.querySelectorAll("input,select,textarea")
+.forEach(el=>{
+
+el.addEventListener(
+"input",
+updatePreview
+);
+
+el.addEventListener(
+"change",
+updatePreview
+);
+
 });
 
 }
 
 
-box.querySelectorAll(
-"input,select,textarea"
-).forEach(el=>{
+/* =========================
+   ADD EDUCATION
+========================= */
 
-el.addEventListener("input",updatePreview);
-el.addEventListener("change",updatePreview);
+function addEducation(){
 
-});
+educationCount++;
+
+$("educationContainer")
+.insertAdjacentHTML(
+"beforeend",
+educationTemplate(educationCount)
+);
+
+const item=
+$("educationContainer").lastElementChild;
+
+item
+.querySelector(".remove-education")
+.onclick=()=>{
+
+item.remove();
+
+updatePreview();
+
+};
+
+updatePreview();
 
 }
 
+
+/* =========================
+   PROJECT
+========================= */
 
 function addProject(){
 
-const item=document.createElement("div");
+projectCount++;
 
-item.className="dynamic-item project-item";
+const id=projectCount;
 
-item.innerHTML=`
+$("projectContainer")
+.insertAdjacentHTML(
+"beforeend",
+
+`
+
+<div class="dynamic-item project-item">
 
 <div class="dynamic-head">
 
 <strong>
-Project
+Project ${id}
 </strong>
 
 <button
 type="button"
-class="remove-btn">
+class="remove-btn remove-project"
+>
 Remove
 </button>
 
 </div>
-
 
 <div class="field">
 
@@ -2431,23 +2279,41 @@ Project Name
 
 <input
 class="project-name"
-placeholder="ABC Project">
+type="text"
+placeholder="ABC Project"
+>
 
 </div>
 
+<div class="grid-2">
 
 <div class="field">
 
 <label>
-Technologies / Tools
+Role / Technology
 </label>
 
 <input
-class="project-tech"
-placeholder="HTML, CSS, JavaScript">
+class="project-role"
+type="text"
+placeholder="Python / Web Development"
+>
 
 </div>
 
+<div class="field">
+
+<label>
+Project Year
+</label>
+
+<select class="project-year">
+${yearOptions("",false,false)}
+</select>
+
+</div>
+
+</div>
 
 <div class="field">
 
@@ -2456,68 +2322,74 @@ Description
 </label>
 
 <textarea
-class="project-desc"
-placeholder="Describe what you built and your contribution."></textarea>
+class="project-description"
+placeholder="Describe the project, your contribution and the result."
+></textarea>
 
 </div>
 
-
-<div class="field">
-
-<label>
-Project Link (Optional)
-</label>
-
-<input
-class="project-link"
-placeholder="https://example.com/project">
-
 </div>
 
-`;
+`
 
-$("projectList").appendChild(item);
+);
 
+const item=
+$("projectContainer").lastElementChild;
 
-item.querySelector(".remove-btn")
-.addEventListener("click",()=>{
-
+item
+.querySelector(".remove-project")
+.onclick=()=>{
 item.remove();
 updatePreview();
+};
+
+item
+.querySelectorAll("input,select,textarea")
+.forEach(el=>{
+
+el.addEventListener("input",updatePreview);
+el.addEventListener("change",updatePreview);
 
 });
 
-
-item.querySelectorAll("input,textarea")
-.forEach(el=>el.addEventListener("input",updatePreview));
+updatePreview();
 
 }
 
 
+/* =========================
+   EXPERIENCE
+========================= */
+
 function addExperience(){
 
-const item=document.createElement("div");
+experienceCount++;
 
-item.className="dynamic-item experience-item";
+const id=experienceCount;
 
-item.innerHTML=`
+$("experienceContainer")
+.insertAdjacentHTML(
+"beforeend",
+
+`
+
+<div class="dynamic-item experience-item">
 
 <div class="dynamic-head">
 
 <strong>
-Experience / Activity
+Experience ${id}
 </strong>
 
 <button
 type="button"
-class="remove-btn">
+class="remove-btn remove-experience"
+>
 Remove
 </button>
 
 </div>
-
-
-<div class="grid-2">
 
 <div class="field">
 
@@ -2525,20 +2397,21 @@ Remove
 Experience Type
 </label>
 
-<select class="exp-type">
+<select class="experience-type">
 
 <option value="">
 Select Type
 </option>
 
-${experienceTypes.map(
-x=>`<option>${safe(x)}</option>`
+${experienceTypes.map(x=>
+`<option>${safe(x)}</option>`
 ).join("")}
 
 </select>
 
 </div>
 
+<div class="grid-2">
 
 <div class="field">
 
@@ -2547,26 +2420,28 @@ Role / Position
 </label>
 
 <input
-class="exp-role"
-placeholder="ABC Role">
+class="experience-role"
+type="text"
+placeholder="Developer / Volunteer"
+>
 
 </div>
-
-</div>
-
 
 <div class="field">
 
 <label>
-Organization / Company / Institute
+Organization / Project
 </label>
 
 <input
-class="exp-org"
-placeholder="XYZ Organization">
+class="experience-org"
+type="text"
+placeholder="ABC Organization"
+>
 
 </div>
 
+</div>
 
 <div class="grid-2">
 
@@ -2576,14 +2451,11 @@ placeholder="XYZ Organization">
 Start Year
 </label>
 
-<select class="exp-start">
-
-${yearOptions()}
-
+<select class="experience-start">
+${yearOptions("",false,false)}
 </select>
 
 </div>
-
 
 <div class="field">
 
@@ -2591,28 +2463,21 @@ ${yearOptions()}
 End Year
 </label>
 
-<select class="exp-end">
-
-${yearOptions()}
-
+<select class="experience-end">
+${yearOptions("",true,true)}
 </select>
 
-<div class="status-note exp-present-note hidden">
-End Year: Present
 </div>
 
 </div>
-
-</div>
-
 
 <div class="field">
 
 <label>
-Status
+Current Status
 </label>
 
-<select class="exp-status">
+<select class="experience-status">
 
 <option value="Completed">
 Completed
@@ -2626,7 +2491,6 @@ Currently Ongoing
 
 </div>
 
-
 <div class="field">
 
 <label>
@@ -2634,85 +2498,101 @@ Description
 </label>
 
 <textarea
-class="exp-desc"
-placeholder="Describe your work, responsibility, activity, or achievement."></textarea>
+class="experience-description"
+placeholder="Describe your responsibilities, achievements or activities."
+></textarea>
 
 </div>
 
-`;
+</div>
 
-$("experienceList").appendChild(item);
+`
 
-
-item.querySelector(".remove-btn")
-.addEventListener("click",()=>{
-
-item.remove();
-updatePreview();
-
-});
-
-
-item.querySelector(".exp-status")
-.addEventListener("change",()=>{
-
-const ongoing=
-item.querySelector(".exp-status").value==="Ongoing";
-
-const end=item.querySelector(".exp-end");
-
-const note=item.querySelector(".exp-present-note");
-
-end.disabled=ongoing;
-
-note.classList.toggle(
-"hidden",
-!ongoing
 );
 
-if(ongoing){
+const item=
+$("experienceContainer").lastElementChild;
+
+const status=
+item.querySelector(".experience-status");
+
+const end=
+item.querySelector(".experience-end");
+
+status.onchange=()=>{
+
+if(status.value==="Ongoing"){
+
+end.value="Present";
+end.disabled=true;
+
+}else{
+
+end.disabled=false;
+
+if(end.value==="Present"){
 end.value="";
+}
+
 }
 
 updatePreview();
 
-});
+};
 
+item
+.querySelector(".remove-experience")
+.onclick=()=>{
+item.remove();
+updatePreview();
+};
 
-item.querySelectorAll(
-"input,select,textarea"
-).forEach(el=>{
+item
+.querySelectorAll("input,select,textarea")
+.forEach(el=>{
 
 el.addEventListener("input",updatePreview);
 el.addEventListener("change",updatePreview);
 
 });
 
+updatePreview();
+
 }
 
 
+/* =========================
+   CERTIFICATION
+========================= */
+
 function addCertification(){
 
-const item=document.createElement("div");
+certificationCount++;
 
-item.className="dynamic-item certification-item";
+const id=certificationCount;
 
-item.innerHTML=`
+$("certificationContainer")
+.insertAdjacentHTML(
+"beforeend",
+
+`
+
+<div class="dynamic-item certification-item">
 
 <div class="dynamic-head">
 
 <strong>
-Certification
+Certification ${id}
 </strong>
 
 <button
 type="button"
-class="remove-btn">
+class="remove-btn remove-certification"
+>
 Remove
 </button>
 
 </div>
-
 
 <div class="grid-2">
 
@@ -2724,27 +2604,27 @@ Certification Name
 
 <input
 class="cert-name"
-placeholder="ABC Certification">
+type="text"
+placeholder="ABC Certification"
+>
 
 </div>
-
 
 <div class="field">
 
 <label>
-Issuing Organization
+Issuer
 </label>
 
 <input
-class="cert-org"
-placeholder="XYZ Organization">
+class="cert-issuer"
+type="text"
+placeholder="XYZ Organization"
+>
 
 </div>
 
 </div>
-
-
-<div class="grid-2">
 
 <div class="field">
 
@@ -2753,105 +2633,89 @@ Year
 </label>
 
 <select class="cert-year">
-
-${yearOptions()}
-
+${yearOptions("",true,false)}
 </select>
 
 </div>
 
-
-<div class="field">
-
-<label>
-Credential Link (Optional)
-</label>
-
-<input
-class="cert-link"
-placeholder="https://example.com/certificate">
-
 </div>
 
-</div>
+`
 
-`;
+);
 
-$("certificationList").appendChild(item);
+const item=
+$("certificationContainer").lastElementChild;
 
-
-item.querySelector(".remove-btn")
-.addEventListener("click",()=>{
-
+item
+.querySelector(".remove-certification")
+.onclick=()=>{
 item.remove();
 updatePreview();
+};
+
+item
+.querySelectorAll("input,select")
+.forEach(el=>{
+
+el.addEventListener("input",updatePreview);
+el.addEventListener("change",updatePreview);
 
 });
 
-
-item.querySelectorAll("input,select")
-.forEach(el=>el.addEventListener("input",updatePreview));
+updatePreview();
 
 }
 
 
+/* =========================
+   LINKS
+========================= */
+
 function addLink(){
 
-const item=document.createElement("div");
+linkCount++;
 
-item.className="dynamic-item link-item";
+const id=linkCount;
 
-item.innerHTML=`
+$("linkContainer")
+.insertAdjacentHTML(
+"beforeend",
+
+`
+
+<div class="dynamic-item link-item">
 
 <div class="dynamic-head">
 
 <strong>
-Professional Link
+Link ${id}
 </strong>
 
 <button
 type="button"
-class="remove-btn">
+class="remove-btn remove-link"
+>
 Remove
 </button>
 
 </div>
-
 
 <div class="grid-2">
 
 <div class="field">
 
 <label>
-Link Type
+Platform
 </label>
 
-<select class="link-type">
-
-<option>
-LinkedIn
-</option>
-
-<option>
-GitHub
-</option>
-
-<option>
-Portfolio
-</option>
-
-<option>
-Website
-</option>
-
-<option>
-Other
-</option>
-
-</select>
+<input
+class="link-platform"
+type="text"
+placeholder="LinkedIn"
+>
 
 </div>
-
 
 <div class="field">
 
@@ -2861,270 +2725,402 @@ URL
 
 <input
 class="link-url"
-placeholder="https://example.com">
+type="url"
+placeholder="https://example.com/abc"
+>
 
 </div>
 
 </div>
 
-`;
+</div>
 
-$("linkList").appendChild(item);
+`
 
+);
 
-item.querySelector(".remove-btn")
-.addEventListener("click",()=>{
+const item=
+$("linkContainer").lastElementChild;
 
+item
+.querySelector(".remove-link")
+.onclick=()=>{
 item.remove();
 updatePreview();
+};
 
+item
+.querySelectorAll("input")
+.forEach(el=>{
+el.addEventListener("input",updatePreview);
 });
 
-
-item.querySelectorAll("input,select")
-.forEach(el=>el.addEventListener("input",updatePreview));
+updatePreview();
 
 }
 
+
+/* =========================
+   CHIPS
+========================= */
 
 function renderChips(){
 
 $("skillChips").innerHTML=
-skillOptions.map(x=>`
-
-<button
-type="button"
-class="chip ${selectedSkills.includes(x)?"active":""}"
-data-skill="${safe(x)}">
-
-${safe(x)}
-
-</button>
-
-`).join("");
-
-
-$("languageChips").innerHTML=
-languageOptions.map(x=>`
-
-<button
-type="button"
-class="chip ${selectedLanguages.includes(x)?"active":""}"
-data-language="${safe(x)}">
-
-${safe(x)}
-
-</button>
-
-`).join("");
-
-
-document.querySelectorAll("[data-skill]")
-.forEach(btn=>{
-
-btn.addEventListener("click",()=>{
-
-const x=btn.dataset.skill;
-
-if(selectedSkills.includes(x)){
-
-selectedSkills=
-selectedSkills.filter(v=>v!==x);
-
-}
-else{
-
-selectedSkills.push(x);
-
-}
-
-renderChips();
-updatePreview();
-
-});
-
-});
-
-
-document.querySelectorAll("[data-language]")
-.forEach(btn=>{
-
-btn.addEventListener("click",()=>{
-
-const x=btn.dataset.language;
-
-if(selectedLanguages.includes(x)){
-
-selectedLanguages=
-selectedLanguages.filter(v=>v!==x);
-
-}
-else{
-
-selectedLanguages.push(x);
-
-}
-
-renderChips();
-updatePreview();
-
-});
-
-});
-
-}
-
-
-function loadStates(){
-
-const select=$("state");
-
-select.innerHTML=`
-
-<option value="">
-Select State
-</option>
-
-${Object.keys(stateDistricts)
-.sort()
-.map(
-s=>`<option value="${safe(s)}">${safe(s)}</option>`
-)
-.join("")}
-
-`;
-
-}
-
-
-function loadDistricts(){
-
-const state=$("state").value;
-
-const district=$("district");
-
-district.innerHTML=`
-
-<option value="">
-Select District
-</option>
-
-`;
-
-if(!state){
-
-district.disabled=true;
-return;
-
-}
-
-district.disabled=false;
-
-
-(stateDistricts[state]||[])
-.sort()
-.forEach(d=>{
-
-district.insertAdjacentHTML(
-"beforeend",
-`<option value="${safe(d)}">${safe(d)}</option>`
-);
-
-});
-
-}
-
-
-function loadCountryCodes(){
-
-$("countryCode").innerHTML=
-
-countryCodes.map(
-([name,code])=>`
-
-<option
-value="+${code}"
-${code==="91"?"selected":""}>
-
-${safe(name)} (+${code})
-
-</option>
+commonSkills.map(skill=>
 
 `
+
+<button
+type="button"
+class="chip common-skill"
+data-value="${safe(skill)}"
+>
+${safe(skill)}
+</button>
+
+`
+
 ).join("");
 
-}
-
-
-function setupDatalists(){
-
-document.body.insertAdjacentHTML(
-"beforeend",
+$("languageChips").innerHTML=
+commonLanguages.map(lang=>
 
 `
 
-<datalist id="collegeSuggestions">
-
-${collegeSuggestions.map(
-x=>`<option value="${safe(x)}">`
-).join("")}
-
-</datalist>
-
-
-<datalist id="universitySuggestions">
-
-${universitySuggestions.map(
-x=>`<option value="${safe(x)}">`
-).join("")}
-
-</datalist>
+<button
+type="button"
+class="chip common-language"
+data-value="${safe(lang)}"
+>
+${safe(lang)}
+</button>
 
 `
 
+).join("");
+
+document
+.querySelectorAll(".common-skill")
+.forEach(btn=>{
+
+btn.onclick=()=>{
+
+toggleArrayItem(
+skills,
+btn.dataset.value
 );
 
+btn.classList.toggle(
+"active",
+skills.includes(btn.dataset.value)
+);
+
+renderSelectedSkills();
+updatePreview();
+
+};
+
+});
+
+document
+.querySelectorAll(".common-language")
+.forEach(btn=>{
+
+btn.onclick=()=>{
+
+toggleArrayItem(
+languages,
+btn.dataset.value
+);
+
+btn.classList.toggle(
+"active",
+languages.includes(btn.dataset.value)
+);
+
+renderSelectedLanguages();
+updatePreview();
+
+};
+
+});
+
 }
 
+function toggleArrayItem(arr,value){
+
+const index=arr.indexOf(value);
+
+if(index>=0){
+arr.splice(index,1);
+}else{
+arr.push(value);
+}
+
+}
+
+function renderSelectedSkills(){
+
+$("selectedSkills").innerHTML=
+skills.map((x,i)=>
+
+`
+
+<span class="chip active">
+
+${safe(x)}
+
+<button
+type="button"
+style="border:0;background:transparent;color:inherit;cursor:pointer;"
+data-index="${i}"
+class="remove-skill"
+>
+×
+</button>
+
+</span>
+
+`
+
+).join("");
+
+document
+.querySelectorAll(".remove-skill")
+.forEach(btn=>{
+
+btn.onclick=()=>{
+
+skills.splice(
+Number(btn.dataset.index),
+1
+);
+
+renderSelectedSkills();
+updatePreview();
+
+};
+
+});
+
+}
+
+function renderSelectedLanguages(){
+
+$("selectedLanguages").innerHTML=
+languages.map((x,i)=>
+
+`
+
+<span class="chip active">
+
+${safe(x)}
+
+<button
+type="button"
+style="border:0;background:transparent;color:inherit;cursor:pointer;"
+data-index="${i}"
+class="remove-language"
+>
+×
+</button>
+
+</span>
+
+`
+
+).join("");
+
+document
+.querySelectorAll(".remove-language")
+.forEach(btn=>{
+
+btn.onclick=()=>{
+
+languages.splice(
+Number(btn.dataset.index),
+1
+);
+
+renderSelectedLanguages();
+updatePreview();
+
+};
+
+});
+
+}
+
+
+/* =========================
+   EDUCATION DATA
+========================= */
+
+function getEducationData(){
+
+return [
+
+...document
+.querySelectorAll(".education-item")
+
+].map(item=>{
+
+const type=
+item.querySelector(".edu-qualification")
+?.value||"";
+
+const board=
+item.querySelector(".edu-board")
+?.value||"";
+
+const otherBoard=
+item.querySelector(".edu-other-board")
+?.value||"";
+
+const affiliation=
+board==="Other"
+?otherBoard
+:(board||
+item.querySelector(".edu-university")
+?.value||"");
+
+const institute=
+item.querySelector(".edu-school")
+?.value||
+item.querySelector(".edu-institute")
+?.value||"";
+
+const course=
+item.querySelector(".edu-course")
+?.value||"";
+
+const start=
+item.querySelector(".edu-start")
+?.value||"";
+
+const end=
+item.querySelector(".edu-completion")
+?.value||"";
+
+const status=
+item.querySelector(".edu-status")
+?.value||"";
+
+const score=
+item.querySelector(".edu-score")
+?.value||"";
+
+const semesters=[
+
+...item.querySelectorAll(".semester-box")
+
+].map(box=>{
+
+const cgpas=[
+...box.querySelectorAll(".semester-cgpa")
+];
+
+const sgpas=[
+...box.querySelectorAll(".semester-sgpa")
+];
+
+const values=[];
+
+cgpas.forEach(c=>{
+
+const semester=c.dataset.semester;
+
+const sg=
+sgpas.find(
+x=>x.dataset.semester===semester
+);
+
+if(c.value||sg?.value){
+
+values.push({
+
+semester,
+cgpa:c.value,
+sgpa:sg?.value||""
+
+});
+
+}
+
+});
+
+return values;
+
+}).flat();
+
+return{
+type,
+institute,
+course,
+affiliation,
+start,
+end,
+status,
+score,
+semesters
+};
+
+});
+
+}
+
+
+/* =========================
+   PREVIEW
+========================= */
 
 function updatePreview(){
 
-const name=$("fullName").value.trim();
+const name=
+$("fullName").value.trim();
 
-const title=$("jobTitle").value.trim();
+const title=
+$("professionalTitle").value.trim();
 
-const email=$("email").value.trim();
+const email=
+$("email").value.trim();
 
-const code=$("countryCode").value;
+const code=
+$("countryCode").value;
 
-const phone=$("phone").value.trim();
+const phone=
+$("phone").value.trim();
 
-const city=$("city").value.trim();
+const city=
+$("city").value.trim();
 
-const state=$("state").value;
+const state=
+$("state").value;
 
-const district=$("district").value;
+const district=
+$("district").value;
 
-const pin=$("pin").value.trim();
+const pin=
+$("pinCode").value.trim();
 
 
 $("previewName").textContent=
-name||"Your Name";
+name||"ABC XYZ";
 
 $("previewTitle").textContent=
 title||"Professional Title";
 
 
-const contacts=[];
+const contact=[];
 
+if(email){
+contact.push(email);
+}
 
-if(email)
-contacts.push(email);
-
-
-if(phone)
-contacts.push(`${code} ${phone}`);
-
+if(phone){
+contact.push(`${code} ${phone}`);
+}
 
 const location=[
 city,
@@ -3133,20 +3129,19 @@ state,
 pin
 ].filter(Boolean).join(", ");
 
-
-if(location)
-contacts.push(location);
-
+if(location){
+contact.push(location);
+}
 
 $("previewContact").textContent=
-contacts.length
-?contacts.join(" • ")
-:"Email • Phone • Location";
+contact.join(" • ")||
+"Email • Phone • Location";
 
+
+/* SUMMARY */
 
 const summary=
 $("summary").value.trim();
-
 
 $("summarySection")
 .classList.toggle(
@@ -3154,628 +3149,478 @@ $("summarySection")
 !summary
 );
 
-
 $("previewSummary").textContent=
 summary;
 
 
-updateEducationPreview();
+/* EDUCATION */
 
-updateSkillsPreview();
+const edu=
+getEducationData();
 
-updateProjectsPreview();
-
-updateExperiencePreview();
-
-updateCertificationPreview();
-
-updateLanguagePreview();
-
-updateLinksPreview();
-
-}
-
-
-function updateEducationPreview(){
-
-const box=$("previewEducation");
-
-box.innerHTML="";
-
-let count=0;
-
-
-document.querySelectorAll(".education-item")
-.forEach(item=>{
-
-const type=
-item.querySelector(".edu-type")?.value;
-
-if(!type)
-return;
-
-
-const course=
-item.querySelector(".edu-course")?.value.trim()||"";
-
-const institute=
-item.querySelector(".edu-institute")?.value.trim()||"";
-
-const university=
-item.querySelector(".edu-university")?.value.trim()||"";
-
-const score=
-item.querySelector(".edu-score")?.value.trim()||"";
-
-const status=
-item.querySelector(".edu-status")?.value||"";
-
-const start=
-item.querySelector(".edu-start-year")?.value||"";
-
-const end=
-item.querySelector(".edu-end-year")?.value||
-item.querySelector(".edu-completion-year")?.value||
-"";
-
-const board=
-item.querySelector(".edu-board")?.value||"";
-
-const boardOther=
-item.querySelector(".edu-board-other")?.value.trim()||"";
-
-const finalBoard=
-board==="Other"
-?boardOther
-:board;
-
-
-let title="";
-
-let meta=[];
-
-
-if(
-type==="10th" ||
-type==="12th / Intermediate"
-){
-
-title=type;
-
-if(institute)
-meta.push(institute);
-
-if(finalBoard)
-meta.push(finalBoard);
-
-if(end)
-meta.push(`Passing Year: ${end}`);
-
-if(score)
-meta.push(`Percentage: ${score}`);
-
-}
-
-
-else if(type==="Diploma"){
-
-title=course||"Diploma";
-
-if(institute)
-meta.push(institute);
-
-if(university)
-meta.push(university);
-
-if(end)
-meta.push(`Passing Year: ${end}`);
-
-if(score)
-meta.push(`Score: ${score}`);
-
-}
-
-
-else if(
-type==="Graduation" ||
-type==="Post Graduation"
-){
-
-title=course||type;
-
-if(institute)
-meta.push(institute);
-
-if(university)
-meta.push(university);
-
-if(start)
-meta.push(`Start Year: ${start}`);
-
-if(status==="Pursuing")
-meta.push("Present");
-
-else if(end)
-meta.push(`Completion Year: ${end}`);
-
-if(status)
-meta.push(status);
-
-if(score)
-meta.push(`Score: ${score}`);
-
-}
-
-
-else{
-
-title=
-course||
-"Other Qualification";
-
-if(institute)
-meta.push(institute);
-
-if(university)
-meta.push(university);
-
-if(end)
-meta.push(`Completion Year: ${end}`);
-
-if(score)
-meta.push(`Score: ${score}`);
-
-}
-
-
-const semesters=[];
-
-
-item.querySelectorAll(".semester-input")
-.forEach(input=>{
-
-if(input.value.trim()){
-
-semesters.push(
-`Semester ${input.dataset.sem}: ${safe(input.value.trim())}`
-);
-
-}
-
-});
-
-
-if(
-title ||
-meta.length ||
-semesters.length
-){
-
-count++;
-
-
-const div=
-document.createElement("div");
-
-div.className="edu-block";
-
-
-div.innerHTML=`
-
-<div class="resume-item-title">
-${safe(title)}
-</div>
-
-<div class="resume-meta">
-${meta.map(s=>safe(s)).join(" • ")}
-</div>
-
-${
-semesters.length
-?
-`<div class="resume-meta" style="margin-top:4px;">
-${semesters.join(" • ")}
-</div>`
-:""
-}
-
-`;
-
-box.appendChild(div);
-
-}
-
-});
-
+const hasEducation=
+edu.length>0&&
+edu.some(x=>x.type);
 
 $("educationSection")
 .classList.toggle(
 "hidden",
-count===0
+!hasEducation
 );
+
+$("previewEducation").innerHTML=
+
+edu
+.filter(x=>x.type)
+.map(e=>{
+
+let titleText=
+e.course||
+e.type;
+
+let meta=[];
+
+if(e.institute){
+meta.push(e.institute);
+}
+
+if(e.affiliation){
+meta.push(e.affiliation);
+}
+
+let period="";
+
+if(
+e.type==="10th"||
+e.type==="12th"||
+e.type==="Diploma"||
+e.type==="Other"
+){
+
+if(e.end){
+period=e.end;
+}
+
+}else{
+
+if(e.start||e.end){
+
+period=
+`${e.start||""}${
+e.start||e.end?" – ":""
+}${e.end||""}`;
 
 }
 
+if(
+e.status==="Pursuing"&&
+e.end==="Present"
+){
 
-function updateSkillsPreview(){
+period=
+`${e.start||""}${
+e.start?" – ":""
+}Present`;
 
-const box=$("previewSkills");
+}
 
-box.innerHTML="";
+}
+
+if(period){
+meta.push(period);
+}
+
+if(e.status){
+meta.push(e.status);
+}
+
+if(e.score){
+meta.push(e.score);
+}
+
+let semesterHtml="";
+
+if(e.semesters.length){
+
+semesterHtml=`
+
+<div class="semester-box">
+
+<div class="semester-title">
+Semester Details
+</div>
+
+${
+e.semesters.map(s=>
+
+`
+
+<div class="resume-meta">
+
+Semester ${safe(s.semester)}
+
+${s.cgpa?
+` • CGPA: ${safe(s.cgpa)}`
+:""}
+
+${s.sgpa?
+` • SGPA: ${safe(s.sgpa)}`
+:""}
+
+</div>
+
+`
+
+).join("")
+}
+
+</div>
+
+`;
+
+}
+
+return`
+
+<div class="edu-block">
+
+<div class="resume-item-title">
+${safe(titleText)}
+</div>
+
+<div class="resume-meta">
+${safe(meta.join(" • "))}
+</div>
+
+${semesterHtml}
+
+</div>
+
+`;
+
+}).join("");
 
 
-selectedSkills.forEach(x=>{
-
-const span=
-document.createElement("span");
-
-span.className="resume-skill";
-
-span.textContent=x;
-
-box.appendChild(span);
-
-});
-
+/* SKILLS */
 
 $("skillsSection")
 .classList.toggle(
 "hidden",
-selectedSkills.length===0
+skills.length===0
 );
 
-}
+$("previewSkills").innerHTML=
+skills.map(x=>
+`<span class="resume-skill">${safe(x)}</span>`
+).join("");
 
 
-function updateProjectsPreview(){
+/* PROJECTS */
 
-const box=$("previewProjects");
+const projects=[
 
-box.innerHTML="";
+...document
+.querySelectorAll(".project-item")
 
-let count=0;
+].map(item=>({
 
+name:
+item.querySelector(".project-name")
+?.value.trim()||"",
 
-document.querySelectorAll(".project-item")
-.forEach(item=>{
+role:
+item.querySelector(".project-role")
+?.value.trim()||"",
 
-const name=
-item.querySelector(".project-name").value.trim();
+year:
+item.querySelector(".project-year")
+?.value||"",
 
-const tech=
-item.querySelector(".project-tech").value.trim();
+desc:
+item.querySelector(".project-description")
+?.value.trim()||""
 
-const desc=
-item.querySelector(".project-desc").value.trim();
-
-const link=
-item.querySelector(".project-link").value.trim();
-
-
-if(!(name||tech||desc||link))
-return;
-
-
-count++;
-
-
-const div=
-document.createElement("div");
-
-div.className="project-block";
-
-
-div.innerHTML=`
-
-<div class="resume-item-title">
-${safe(name||"Project")}
-</div>
-
-${
-tech
-?
-`<div class="resume-meta">
-Technologies: ${safe(tech)}
-</div>`
-:""
-}
-
-${
-desc
-?
-`<div class="resume-text">
-${safe(desc)}
-</div>`
-:""
-}
-
-${
-link
-?
-`<div class="resume-meta">
-${safe(link)}
-</div>`
-:""
-}
-
-`;
-
-box.appendChild(div);
-
-});
-
+})).filter(x=>
+x.name||
+x.role||
+x.year||
+x.desc
+);
 
 $("projectsSection")
 .classList.toggle(
 "hidden",
-count===0
+projects.length===0
 );
 
-}
+$("previewProjects").innerHTML=
 
+projects.map(p=>`
 
-function updateExperiencePreview(){
-
-const box=$("previewExperience");
-
-box.innerHTML="";
-
-let count=0;
-
-
-document.querySelectorAll(".experience-item")
-.forEach(item=>{
-
-const type=
-item.querySelector(".exp-type").value;
-
-const role=
-item.querySelector(".exp-role").value.trim();
-
-const org=
-item.querySelector(".exp-org").value.trim();
-
-const start=
-item.querySelector(".exp-start").value;
-
-const end=
-item.querySelector(".exp-end").value;
-
-const status=
-item.querySelector(".exp-status").value;
-
-const desc=
-item.querySelector(".exp-desc").value.trim();
-
-
-if(!(type||role||org||start||end||desc))
-return;
-
-
-count++;
-
-
-const dateText=[
-start,
-status==="Ongoing"
-?"Present"
-:end
-]
-.filter(Boolean)
-.join(" – ");
-
-
-const div=
-document.createElement("div");
-
-div.className="exp-block";
-
-
-div.innerHTML=`
+<div class="project-block">
 
 <div class="resume-item-title">
-${safe(role||type||"Experience")}
+${safe(p.name||"Project")}
 </div>
 
 <div class="resume-meta">
-${[
-type,
-org,
-dateText
-]
+${safe(
+[p.role,p.year]
 .filter(Boolean)
-.map(s=>safe(s))
-.join(" • ")}
+.join(" • ")
+)}
 </div>
 
 ${
-desc
-?
-`<div class="resume-text">
-${safe(desc)}
-</div>`
+p.desc
+?`<div class="resume-text">${safe(p.desc)}</div>`
 :""
 }
 
-`;
+</div>
 
-box.appendChild(div);
+`).join("");
 
-});
 
+/* EXPERIENCE */
+
+const experiences=[
+
+...document
+.querySelectorAll(".experience-item")
+
+].map(item=>({
+
+type:
+item.querySelector(".experience-type")
+?.value||"",
+
+role:
+item.querySelector(".experience-role")
+?.value.trim()||"",
+
+org:
+item.querySelector(".experience-org")
+?.value.trim()||"",
+
+start:
+item.querySelector(".experience-start")
+?.value||"",
+
+end:
+item.querySelector(".experience-end")
+?.value||"",
+
+status:
+item.querySelector(".experience-status")
+?.value||"",
+
+desc:
+item.querySelector(".experience-description")
+?.value.trim()||""
+
+})).filter(x=>
+x.type||
+x.role||
+x.org||
+x.start||
+x.end||
+x.desc
+);
 
 $("experienceSection")
 .classList.toggle(
 "hidden",
-count===0
+experiences.length===0
 );
 
-}
+$("previewExperience").innerHTML=
 
+experiences.map(x=>{
 
-function updateCertificationPreview(){
+let period=
+x.end==="Present"||
+x.status==="Ongoing"
 
-const box=$("previewCertifications");
+?`${x.start?x.start+" – ":""}Present`
 
-box.innerHTML="";
+:[x.start,x.end]
+.filter(Boolean)
+.join(" – ");
 
-let count=0;
+return`
 
-
-document.querySelectorAll(".certification-item")
-.forEach(item=>{
-
-const name=
-item.querySelector(".cert-name").value.trim();
-
-const org=
-item.querySelector(".cert-org").value.trim();
-
-const year=
-item.querySelector(".cert-year").value;
-
-const link=
-item.querySelector(".cert-link").value.trim();
-
-
-if(!(name||org||year||link))
-return;
-
-
-count++;
-
-
-const div=
-document.createElement("div");
-
-div.className="cert-block";
-
-
-div.innerHTML=`
+<div class="exp-block">
 
 <div class="resume-item-title">
-${safe(name||"Certification")}
+${safe(x.role||x.type||"Experience")}
 </div>
 
 <div class="resume-meta">
-${[
-org,
-year
+${safe(
+[
+x.type,
+x.org,
+period
 ]
 .filter(Boolean)
-.map(s=>safe(s))
-.join(" • ")}
+.join(" • ")
+)}
 </div>
 
 ${
-link
-?
-`<div class="resume-meta">
-${safe(link)}
-</div>`
+x.desc
+?`<div class="resume-text">${safe(x.desc)}</div>`
 :""
 }
 
-`;
-
-box.appendChild(div);
-
-});
-
-
-$("certificationSection")
-.classList.toggle(
-"hidden",
-count===0
-);
-
-}
-
-
-function updateLanguagePreview(){
-
-$("previewLanguages").textContent=
-selectedLanguages.join(" • ");
-
-
-$("languageSection")
-.classList.toggle(
-"hidden",
-selectedLanguages.length===0
-);
-
-}
-
-
-function updateLinksPreview(){
-
-const box=$("previewLinks");
-
-box.innerHTML="";
-
-let count=0;
-
-
-document.querySelectorAll(".link-item")
-.forEach(item=>{
-
-const type=
-item.querySelector(".link-type").value;
-
-const url=
-item.querySelector(".link-url").value.trim();
-
-
-if(!url)
-return;
-
-
-count++;
-
-
-const div=
-document.createElement("div");
-
-div.className="resume-link-item";
-
-
-div.innerHTML=`
-
-<strong>
-${safe(type)}
-</strong>
-
-<span>
-${safe(url)}
-</span>
+</div>
 
 `;
 
-box.appendChild(div);
+}).join("");
 
-});
 
+/* CERTIFICATIONS */
+
+const certs=[
+
+...document
+.querySelectorAll(".certification-item")
+
+].map(item=>({
+
+name:
+item.querySelector(".cert-name")
+?.value.trim()||"",
+
+issuer:
+item.querySelector(".cert-issuer")
+?.value.trim()||"",
+
+year:
+item.querySelector(".cert-year")
+?.value||""
+
+})).filter(x=>
+x.name||
+x.issuer||
+x.year
+);
+
+$("certificationsSection")
+.classList.toggle(
+"hidden",
+certs.length===0
+);
+
+$("previewCertifications").innerHTML=
+
+certs.map(x=>`
+
+<div class="cert-block">
+
+<div class="resume-item-title">
+${safe(x.name||"Certification")}
+</div>
+
+<div class="resume-meta">
+${safe(
+[x.issuer,x.year]
+.filter(Boolean)
+.join(" • ")
+)}
+</div>
+
+</div>
+
+`).join("");
+
+
+/* LANGUAGES */
+
+$("languagesSection")
+.classList.toggle(
+"hidden",
+languages.length===0
+);
+
+$("previewLanguages").innerHTML=
+
+languages.map(x=>
+`<span class="resume-skill">${safe(x)}</span>`
+).join("");
+
+
+/* LINKS */
+
+const links=[
+
+...document
+.querySelectorAll(".link-item")
+
+].map(item=>({
+
+platform:
+item.querySelector(".link-platform")
+?.value.trim()||"",
+
+url:
+item.querySelector(".link-url")
+?.value.trim()||""
+
+})).filter(x=>
+x.platform||
+x.url
+);
 
 $("linksSection")
 .classList.toggle(
 "hidden",
-count===0
+links.length===0
 );
+
+$("previewLinks").innerHTML=
+
+links.map(x=>`
+
+<div class="resume-link-item">
+
+<strong>
+${safe(x.platform||"Professional Link")}
+</strong>
+
+<span>
+${safe(x.url)}
+</span>
+
+</div>
+
+`).join("");
 
 }
 
 
-function setupEvents(){
+/* =========================
+   LOCATIONS
+========================= */
 
-document.querySelectorAll(
-"#fullName,#jobTitle,#email,#phone,#city,#pin,#summary"
-)
-.forEach(el=>{
+function populateLocations(){
 
-el.addEventListener(
-"input",
-updatePreview
-);
+$("state").innerHTML=
+'<option value="">Select State / UT</option>';
+
+Object.keys(stateDistricts)
+.sort()
+.forEach(state=>{
+
+const option=
+document.createElement("option");
+
+option.value=state;
+option.textContent=state;
+
+$("state").appendChild(option);
 
 });
 
@@ -3784,7 +3629,27 @@ $("state").addEventListener(
 "change",
 ()=>{
 
-loadDistricts();
+const state=
+$("state").value;
+
+$("district").innerHTML=
+'<option value="">Select District</option>';
+
+$("district").disabled=!state;
+
+(
+stateDistricts[state]||[]
+).forEach(d=>{
+
+const option=
+document.createElement("option");
+
+option.value=d;
+option.textContent=d;
+
+$("district").appendChild(option);
+
+});
 
 updatePreview();
 
@@ -3792,256 +3657,150 @@ updatePreview();
 );
 
 
-$("district").addEventListener(
+$("district")
+.addEventListener(
 "change",
 updatePreview
 );
 
+}
 
-$("countryCode").addEventListener(
-"change",
-updatePreview
+
+/* =========================
+   COUNTRY CODES
+========================= */
+
+function populateCountryCodes(){
+
+$("countryCode").innerHTML=
+
+countryCodes.map(
+([country,code])=>
+
+`
+
+<option
+value="${code}"
+${code==="+91"?"selected":""}
+>
+
+${safe(country)}
+(${safe(code)})
+
+</option>
+
+`
+
+).join("");
+
+}
+
+
+/* =========================
+   DATALISTS
+========================= */
+
+function addDatalists(){
+
+const college=
+document.createElement("datalist");
+
+college.id=
+"collegeSuggestions";
+
+college.innerHTML=
+collegeSuggestions
+.map(x=>
+`<option value="${safe(x)}">`
+)
+.join("");
+
+document.body.appendChild(college);
+
+
+const university=
+document.createElement("datalist");
+
+university.id=
+"universitySuggestions";
+
+university.innerHTML=
+universitySuggestions
+.map(x=>
+`<option value="${safe(x)}">`
+)
+.join("");
+
+document.body.appendChild(university);
+
+}
+
+
+/* =========================
+   PDF DOWNLOAD
+========================= */
+
+async function downloadPDF(){
+
+const element=
+$("resumePreview");
+
+if(!element){
+
+alert(
+"Resume preview not found."
 );
 
+return;
 
-$("profilePhoto").addEventListener(
-"change",
-function(){
+}
 
-const file=this.files[0];
+if(typeof html2pdf==="undefined"){
 
-
-if(!file){
-
-$("photoPreview").style.display="none";
-
-$("photoPreview").src="";
-
-$("previewPhoto").style.display="none";
-
-$("previewPhoto").src="";
-
-$("previewPhotoWrap").style.display="none";
+alert(
+"PDF library could not be loaded. Please refresh the page and try again."
+);
 
 return;
 
 }
 
 
-const reader=
-new FileReader();
-
-
-reader.onload=e=>{
-
-$("photoPreview").src=
-e.target.result;
-
-$("photoPreview").style.display=
-"block";
-
-
-$("previewPhoto").src=
-e.target.result;
-
-$("previewPhoto").style.display=
-"block";
-
-
-$("previewPhotoWrap").style.display=
-"flex";
-
-};
-
-
-reader.readAsDataURL(file);
-
-}
-);
-
-
-$("addEducationBtn")
-.addEventListener(
-"click",
-addEducation
-);
-
-
-$("addProjectBtn")
-.addEventListener(
-"click",
-addProject
-);
-
-
-$("addExperienceBtn")
-.addEventListener(
-"click",
-addExperience
-);
-
-
-$("addCertificationBtn")
-.addEventListener(
-"click",
-addCertification
-);
-
-
-$("addLinkBtn")
-.addEventListener(
-"click",
-addLink
-);
-
-
-$("addCustomSkill")
-.addEventListener(
-"click",
-()=>{
-
-const value=
-$("customSkill").value.trim();
-
-
-if(
-value &&
-!selectedSkills.includes(value)
-){
-
-selectedSkills.push(value);
-
-}
-
-
-$("customSkill").value="";
-
-renderChips();
-
-updatePreview();
-
-}
-);
-
-
-$("addCustomLanguage")
-.addEventListener(
-"click",
-()=>{
-
-const value=
-$("customLanguage").value.trim();
-
-
-if(
-value &&
-!selectedLanguages.includes(value)
-){
-
-selectedLanguages.push(value);
-
-}
-
-
-$("customLanguage").value="";
-
-renderChips();
-
-updatePreview();
-
-}
-);
-
-
-$("pdfButton")
-.addEventListener(
-"click",
-e=>{
-
-e.stopPropagation();
-
-$("pdfMenu").style.display=
-$("pdfMenu").style.display==="block"
-?"none"
-:"block";
-
-}
-);
-
-
-document.addEventListener(
-"click",
-e=>{
-
-if(!e.target.closest(".pdf-wrap")){
-
-$("pdfMenu").style.display=
-"none";
-
-}
-
-}
-);
-
-
-$("downloadPdf")
-.addEventListener(
-"click",
-downloadPDF
-);
-
-
-$("printResume")
-.addEventListener(
-"click",
-()=>{
-
-$("pdfMenu").style.display="none";
-
-window.print();
-
-}
-);
-
-
-$("resetButton")
-.addEventListener(
-"click",
-resetForm
-);
-
-}
-
-
-async function downloadPDF(){
-
-$("pdfMenu").style.display=
-"none";
-
-
-const element=
-$("resumePreview");
-
-
-const name=
-(
-$("fullName").value.trim()||
-"professional-resume"
-)
-.replace(
-/[^a-z0-9]+/gi,
-"-"
-)
-.replace(
-/^-+|-+$/g,
-""
-)
-.toLowerCase();
-
+/*
+IMPORTANT:
+The PDF is generated from the actual
+visible resume preview only.
+*/
+
+const oldClass=
+element.className;
 
 element.classList.add(
 "pdf-mode"
 );
+
+
+/*
+Force browser to finish rendering
+before html2pdf captures the element.
+*/
+
+await new Promise(resolve=>{
+
+requestAnimationFrame(()=>{
+
+requestAnimationFrame(()=>{
+
+setTimeout(
+resolve,
+300
+);
+
+});
+
+});
+
+});
 
 
 const options={
@@ -4049,7 +3808,7 @@ const options={
 margin:0,
 
 filename:
-`${name||"professional-resume"}.pdf`,
+"toolora-resume.pdf",
 
 image:{
 type:"jpeg",
@@ -4057,15 +3816,48 @@ quality:0.98
 },
 
 html2canvas:{
+
 scale:2,
+
 useCORS:true,
-backgroundColor:"#ffffff"
+
+allowTaint:true,
+
+backgroundColor:"#ffffff",
+
+logging:false,
+
+scrollX:0,
+
+scrollY:0,
+
+windowWidth:
+element.scrollWidth,
+
+windowHeight:
+element.scrollHeight
+
 },
 
 jsPDF:{
+
 unit:"mm",
+
 format:"a4",
-orientation:"portrait"
+
+orientation:"portrait",
+
+compress:true
+
+},
+
+pagebreak:{
+
+mode:[
+"css",
+"legacy"
+]
+
 }
 
 };
@@ -4073,132 +3865,366 @@ orientation:"portrait"
 
 try{
 
-if(typeof html2pdf!=="function"){
-
-alert(
-"PDF generator could not be loaded. Please check your internet connection and try again."
-);
-
-return;
-
-}
-
-
 await html2pdf()
+
 .set(options)
+
 .from(element)
+
+.toCanvas()
+
+.toPdf()
+
 .save();
 
-}
+}catch(error){
 
-catch(error){
-
-console.error(error);
+console.error(
+"PDF generation error:",
+error
+);
 
 alert(
-"Unable to generate the PDF. Please try again."
+"PDF could not be generated. Please try again."
 );
 
-}
+}finally{
 
-finally{
-
-element.classList.remove(
-"pdf-mode"
-);
+element.className=
+oldClass;
 
 }
 
 }
 
+
+/* =========================
+   PRINT
+========================= */
+
+function printResume(){
+
+$("pdfMenu").style.display=
+"none";
+
+window.print();
+
+}
+
+
+/* =========================
+   RESET
+========================= */
 
 function resetForm(){
 
-document.querySelectorAll(
-"input,textarea"
-)
+document
+.querySelectorAll("input,textarea")
 .forEach(el=>{
 
-if(el.type!=="file")
+if(el.type!=="file"){
 el.value="";
+}
 
 });
 
 
-document.querySelectorAll("select")
+document
+.querySelectorAll("select")
 .forEach(el=>{
 
-if(el.id!=="countryCode")
+if(el.id!=="countryCode"){
 el.selectedIndex=0;
+}
 
 });
-
-
-$("district").disabled=true;
 
 
 $("profilePhoto").value="";
 
-
 $("photoPreview").src="";
 $("photoPreview").style.display="none";
-
 
 $("previewPhoto").src="";
 $("previewPhoto").style.display="none";
 
-
-$("previewPhotoWrap").style.display=
-"none";
+$("resumePhotoWrap").style.display="none";
 
 
-$("educationList").innerHTML="";
+$("district").innerHTML=
+'<option value="">Select District</option>';
 
-$("projectList").innerHTML="";
-
-$("experienceList").innerHTML="";
-
-$("certificationList").innerHTML="";
-
-$("linkList").innerHTML="";
+$("district").disabled=true;
 
 
-selectedSkills=[];
+$("educationContainer").innerHTML="";
+$("projectContainer").innerHTML="";
+$("experienceContainer").innerHTML="";
+$("certificationContainer").innerHTML="";
+$("linkContainer").innerHTML="";
 
-selectedLanguages=[];
+
+educationCount=0;
+projectCount=0;
+experienceCount=0;
+certificationCount=0;
+linkCount=0;
+
+skills=[];
+languages=[];
 
 
-renderChips();
+renderSelectedSkills();
+renderSelectedLanguages();
+
+
+document
+.querySelectorAll(
+".common-skill,.common-language"
+)
+.forEach(x=>
+x.classList.remove("active")
+);
 
 
 addEducation();
-
 
 updatePreview();
 
 }
 
+
+/* =========================
+   INITIALIZATION
+========================= */
 
 document.addEventListener(
 "DOMContentLoaded",
 ()=>{
 
-setupDatalists();
+populateLocations();
 
-loadStates();
+populateCountryCodes();
 
-loadCountryCodes();
+addDatalists();
 
 renderChips();
 
-setupEvents();
+
+document
+.querySelectorAll(
+"#fullName,#professionalTitle,#email,#phone,#city,#pinCode,#summary"
+)
+.forEach(el=>{
+
+el.addEventListener(
+"input",
+updatePreview
+);
+
+el.addEventListener(
+"change",
+updatePreview
+);
+
+});
+
+
+/* PHOTO */
+
+$("profilePhoto")
+.addEventListener(
+"change",
+event=>{
+
+const file=
+event.target.files[0];
+
+if(!file){
+return;
+}
+
+if(!file.type.startsWith("image/")){
+
+alert(
+"Please select an image file."
+);
+
+event.target.value="";
+
+return;
+
+}
+
+const reader=
+new FileReader();
+
+reader.onload=
+event=>{
+
+$("photoPreview").src=
+event.target.result;
+
+$("photoPreview").style.display=
+"block";
+
+$("previewPhoto").src=
+event.target.result;
+
+$("previewPhoto").style.display=
+"block";
+
+$("resumePhotoWrap").style.display=
+"flex";
+
+};
+
+reader.readAsDataURL(file);
+
+});
+
+
+/* BUTTONS */
+
+$("addEducationBtn")
+.onclick=addEducation;
+
+$("addProjectBtn")
+.onclick=addProject;
+
+$("addExperienceBtn")
+.onclick=addExperience;
+
+$("addCertificationBtn")
+.onclick=
+addCertification;
+
+$("addLinkBtn")
+.onclick=addLink;
+
+
+/* CUSTOM SKILL */
+
+$("addCustomSkill")
+.onclick=()=>{
+
+const value=
+$("customSkill").value.trim();
+
+if(!value){
+return;
+}
+
+if(!skills.includes(value)){
+skills.push(value);
+}
+
+$("customSkill").value="";
+
+renderSelectedSkills();
+
+updatePreview();
+
+};
+
+
+/* CUSTOM LANGUAGE */
+
+$("addCustomLanguage")
+.onclick=()=>{
+
+const value=
+$("customLanguage").value.trim();
+
+if(!value){
+return;
+}
+
+if(!languages.includes(value)){
+languages.push(value);
+}
+
+$("customLanguage").value="";
+
+renderSelectedLanguages();
+
+updatePreview();
+
+};
+
+
+/* PDF MENU */
+
+$("pdfButton")
+.onclick=()=>{
+
+$("pdfMenu").style.display=
+$("pdfMenu").style.display==="block"
+?"none"
+:"block";
+
+};
+
+
+$("downloadPdfBtn")
+.onclick=async()=>{
+
+$("pdfMenu").style.display=
+"none";
+
+await downloadPDF();
+
+};
+
+
+$("printPdfBtn")
+.onclick=
+printResume;
+
+
+/* RESET */
+
+$("resetBtn")
+.onclick=()=>{
+
+if(
+confirm(
+"Reset all resume data?"
+)
+){
+
+resetForm();
+
+}
+
+};
+
+
+/* CLOSE PDF MENU */
+
+document.addEventListener(
+"click",
+event=>{
+
+if(
+!event.target.closest(".pdf-wrap")
+){
+
+$("pdfMenu").style.display=
+"none";
+
+}
+
+});
+
+
+/* FIRST EDUCATION */
 
 addEducation();
 
 updatePreview();
 
-}
-);
+});
 
 </script>
 
