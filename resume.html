@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toolora - Professional Resume Maker</title>
+    <title>Professional Resume Maker - Toolora</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -13,128 +13,259 @@
         }
 
         body {
+            margin: 0;
             background: #f3f4f6;
-            color: #111827;
-        }
-
-        .section-card {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-        }
-
-        .field-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 6px;
-        }
-
-        .field-input,
-        .field-select,
-        .field-textarea {
-            width: 100%;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 14px;
-            outline: none;
-            background: white;
-            transition: 0.2s;
-        }
-
-        .field-input:focus,
-        .field-select:focus,
-        .field-textarea:focus {
-            border-color: #111827;
-            box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
-        }
-
-        .field-textarea {
-            min-height: 90px;
-            resize: vertical;
-        }
-
-        .education-card,
-        .experience-card,
-        .project-card,
-        .certification-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            padding: 16px;
-            margin-top: 14px;
-            background: #fafafa;
-        }
-
-        .semester-box {
-            border: 1px solid #e5e7eb;
-            background: white;
-            border-radius: 12px;
-            padding: 12px;
-        }
-
-        .preview-wrapper {
-            position: sticky;
-            top: 20px;
-        }
-
-        .resume-page {
-            width: 794px;
-            min-height: 1123px;
-            background: white;
-            margin: auto;
-            padding: 42px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
             color: #111827;
             font-family: Arial, Helvetica, sans-serif;
         }
 
-        .resume-header {
+        .toolora-header {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 1500px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 24px;
+        }
+
+        .panel {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #111827;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 7px;
+        }
+
+        .input,
+        .select,
+        .textarea {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 11px 12px;
+            font-size: 14px;
+            outline: none;
+            background: #ffffff;
+            transition: 0.2s;
+        }
+
+        .input:focus,
+        .select:focus,
+        .textarea:focus {
+            border-color: #111827;
+            box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+        }
+
+        .textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 14px;
+            background: #fafafa;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: #111827;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #000000;
+        }
+
+        .btn-secondary {
+            background: #eef2ff;
+            color: #3730a3;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .btn-light {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eef2ff;
+            color: #3730a3;
+            border-radius: 999px;
+            padding: 7px 11px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 4px;
+        }
+
+        .skill-buttons {
             display: flex;
-            justify-content: space-between;
-            gap: 25px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .skill-option {
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 999px;
+            padding: 7px 11px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .skill-option.active {
+            background: #111827;
+            color: white;
+            border-color: #111827;
+        }
+
+        .photo-upload {
+            border: 2px dashed #d1d5db;
+            border-radius: 14px;
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            background: #fafafa;
+        }
+
+        .photo-preview {
+            max-width: 150px;
+            max-height: 180px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            margin: 10px auto;
+            border-radius: 8px;
+        }
+
+        .preview-area {
+            width: 100%;
+        }
+
+        .preview-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .preview-wrapper {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        .resume-page {
+            width: 100%;
+            max-width: 794px;
+            min-height: 1123px;
+            margin: auto;
+            background: white;
+            padding: 42px;
+            box-shadow: 0 8px 35px rgba(0, 0, 0, 0.12);
+            color: #111827;
+        }
+
+        .resume-top {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
             border-bottom: 2px solid #111827;
             padding-bottom: 18px;
-            margin-bottom: 18px;
+            margin-bottom: 20px;
+        }
+
+        .resume-photo-container {
+            flex: 0 0 auto;
+        }
+
+        .resume-photo {
+            width: auto;
+            height: auto;
+            max-width: 105px;
+            max-height: 130px;
+            object-fit: contain;
+            border-radius: 6px;
+            display: block;
+        }
+
+        .resume-header-info {
+            min-width: 0;
+            flex: 1;
         }
 
         .resume-name {
-            font-size: 30px;
-            font-weight: 800;
+            font-size: 29px;
             line-height: 1.15;
-            margin-bottom: 7px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            overflow-wrap: anywhere;
         }
 
         .resume-contact {
             font-size: 11px;
             color: #4b5563;
             line-height: 1.7;
-        }
-
-        .resume-photo-box {
-            width: 105px;
-            min-width: 105px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        .resume-photo {
-            max-width: 105px;
-            max-height: 125px;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            border-radius: 6px;
-            border: 1px solid #d1d5db;
+            overflow-wrap: anywhere;
         }
 
         .resume-section {
-            margin-bottom: 17px;
+            margin-top: 18px;
         }
 
         .resume-section-title {
@@ -143,8 +274,14 @@
             text-transform: uppercase;
             letter-spacing: 0.8px;
             border-bottom: 1px solid #d1d5db;
-            padding-bottom: 4px;
+            padding-bottom: 5px;
             margin-bottom: 9px;
+        }
+
+        .resume-summary {
+            font-size: 11px;
+            line-height: 1.65;
+            white-space: pre-line;
         }
 
         .resume-item {
@@ -157,67 +294,106 @@
         }
 
         .resume-item-subtitle {
-            font-size: 11px;
-            color: #374151;
+            font-size: 10.5px;
+            color: #4b5563;
+            margin-top: 2px;
         }
 
         .resume-item-text {
             font-size: 10.5px;
             line-height: 1.55;
-            color: #374151;
+            margin-top: 4px;
             white-space: pre-line;
         }
 
         .resume-list {
-            margin: 4px 0 0 15px;
+            margin: 4px 0 0 16px;
             padding: 0;
         }
 
         .resume-list li {
             font-size: 10.5px;
-            margin-bottom: 3px;
+            line-height: 1.5;
+            margin-bottom: 2px;
         }
 
-        .skill-list {
+        .resume-skills {
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
         }
 
-        .skill-tag {
+        .resume-skill {
             font-size: 9.5px;
+            background: #f3f4f6;
             border: 1px solid #d1d5db;
             padding: 4px 7px;
-            border-radius: 5px;
+            border-radius: 4px;
         }
 
-        .link-text {
-            font-size: 10.5px;
-            word-break: break-all;
+        .empty-preview {
+            color: #9ca3af;
+            font-size: 11px;
+            font-style: italic;
         }
 
-        .hidden-field {
-            display: none;
+        .hidden {
+            display: none !important;
         }
 
-        @media (max-width: 1000px) {
+        @media (min-width: 768px) {
+            .form-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .page-container {
+                padding: 28px;
+            }
+        }
+
+        @media (min-width: 1100px) {
+            .editor-grid {
+                grid-template-columns: minmax(380px, 0.9fr) minmax(500px, 1.1fr);
+                align-items: start;
+            }
+
+            .preview-area {
+                position: sticky;
+                top: 95px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .page-container {
+                padding: 12px;
+            }
+
+            .panel {
+                padding: 15px;
+                border-radius: 14px;
+            }
+
             .resume-page {
-                transform-origin: top left;
+                padding: 22px 17px;
+                min-height: auto;
+                box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
             }
 
-            .preview-wrapper {
-                position: static;
-            }
-        }
-
-        @media (max-width: 700px) {
-            .resume-page {
-                width: 794px;
+            .resume-top {
+                gap: 12px;
             }
 
-            .preview-scroll {
-                overflow-x: auto;
-                padding-bottom: 20px;
+            .resume-name {
+                font-size: 23px;
+            }
+
+            .resume-photo {
+                max-width: 75px;
+                max-height: 95px;
+            }
+
+            .preview-toolbar .btn {
+                flex: 1;
             }
         }
 
@@ -226,28 +402,37 @@
                 background: white;
             }
 
-            body * {
-                visibility: hidden;
+            .toolora-header,
+            .editor-panel,
+            .preview-toolbar,
+            .preview-heading {
+                display: none !important;
             }
 
-            #resumePreview,
-            #resumePreview * {
-                visibility: visible;
+            .page-container {
+                padding: 0;
+                max-width: none;
             }
 
-            #resumePreview {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
+            .editor-grid {
+                display: block;
+            }
+
+            .preview-area {
+                position: static;
+            }
+
+            .preview-wrapper {
+                overflow: visible;
             }
 
             .resume-page {
                 width: 210mm;
                 min-height: 297mm;
-                box-shadow: none;
-                margin: 0;
+                max-width: none;
                 padding: 14mm;
+                margin: 0;
+                box-shadow: none;
             }
 
             @page {
@@ -260,536 +445,309 @@
 
 <body>
 
-<header class="bg-white border-b sticky top-0 z-50">
+<header class="toolora-header">
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="index.html" class="font-extrabold text-xl text-gray-900">
+        <a href="index.html" class="font-bold text-xl text-gray-900">
             Toolora
         </a>
 
-        <a href="index.html"
-           class="text-sm font-semibold text-gray-600 hover:text-gray-900">
+        <a href="index.html" class="text-sm text-gray-600 hover:text-black">
             Back to Home
         </a>
     </div>
 </header>
 
-<main class="max-w-7xl mx-auto px-4 py-6">
+<main class="page-container">
 
-    <div class="mb-7">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">
-            Professional Resume Maker
-        </h1>
-
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Professional Resume Maker</h1>
         <p class="text-gray-500 mt-2">
-            Create a clean and professional resume with guided sections and a live preview.
+            Create a clean, professional resume with live preview and PDF printing.
         </p>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
+    <div class="editor-grid">
 
-        <!-- LEFT SIDE -->
-        <div>
+        <!-- ================= FORM ================= -->
 
-            <!-- PERSONAL INFORMATION -->
-            <section class="section-card">
+        <section class="panel editor-panel">
 
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 class="text-xl font-bold">Personal Information</h2>
-                        <p class="text-sm text-gray-500">
-                            Add your basic contact and location details.
-                        </p>
-                    </div>
+            <!-- Personal Information -->
+            <div class="section-title">1. Personal Information</div>
+
+            <div class="form-grid">
+
+                <div class="full">
+                    <label class="form-label">Full Name *</label>
+                    <input id="fullName" class="input" type="text" placeholder="ABC XYZ">
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-4">
-
-                    <div>
-                        <label class="field-label">Full Name *</label>
-                        <input id="fullName"
-                               class="field-input"
-                               placeholder="ABC XYZ"
-                               oninput="updatePreview()">
-                    </div>
-
-                    <div>
-                        <label class="field-label">Professional Title</label>
-                        <input id="professionalTitle"
-                               class="field-input"
-                               placeholder="Software Developer">
-                    </div>
-
-                    <div>
-                        <label class="field-label">Email</label>
-                        <input id="email"
-                               type="email"
-                               class="field-input"
-                               placeholder="abc@example.com"
-                               oninput="updatePreview()">
-                    </div>
-
-                    <div>
-                        <label class="field-label">Phone</label>
-                        <input id="phone"
-                               class="field-input"
-                               placeholder="+91 9876543210"
-                               oninput="updatePreview()">
-                    </div>
-
-                    <div>
-                        <label class="field-label">State</label>
-
-                        <select id="state"
-                                class="field-select"
-                                onchange="loadDistricts(); updatePreview();">
-                            <option value="">Select State</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="field-label">District</label>
-
-                        <select id="district"
-                                class="field-select"
-                                onchange="updatePreview()"
-                                disabled>
-                            <option value="">Select District</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="field-label">City / Town</label>
-                        <input id="city"
-                               class="field-input"
-                               placeholder="ABC City"
-                               oninput="updatePreview()">
-                    </div>
-
-                    <div>
-                        <label class="field-label">Postal Code</label>
-                        <input id="postalCode"
-                               class="field-input"
-                               placeholder="000000"
-                               oninput="updatePreview()">
-                    </div>
-
+                <div>
+                    <label class="form-label">Email</label>
+                    <input id="email" class="input" type="email" placeholder="abc@example.com">
                 </div>
 
-                <div class="mt-4">
-                    <label class="field-label">Profile Photo</label>
-
-                    <input id="profilePhoto"
-                           type="file"
-                           accept="image/*"
-                           class="field-input"
-                           onchange="handlePhoto(event)">
-
-                    <p class="text-xs text-gray-500 mt-2">
-                        Your photo keeps its original aspect ratio.
-                    </p>
-
-                    <div id="photoPreviewBox" class="hidden mt-3">
-                        <img id="uploadedPhoto"
-                             class="max-w-32 max-h-32 rounded-lg border"
-                             alt="Profile preview">
-                    </div>
+                <div>
+                    <label class="form-label">Phone</label>
+                    <input id="phone" class="input" type="tel" placeholder="+91 9876543210">
                 </div>
 
-            </section>
-
-            <!-- SUMMARY -->
-            <section class="section-card">
-
-                <h2 class="text-xl font-bold mb-1">
-                    Professional Summary
-                </h2>
-
-                <p class="text-sm text-gray-500 mb-4">
-                    Write a short introduction about yourself.
-                </p>
-
-                <textarea id="summary"
-                          class="field-textarea"
-                          placeholder="Write a short professional summary..."
-                          oninput="updatePreview()"></textarea>
-
-            </section>
-
-            <!-- EDUCATION -->
-            <section class="section-card">
-
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-xl font-bold">Education</h2>
-                        <p class="text-sm text-gray-500">
-                            Add one or more qualifications.
-                        </p>
-                    </div>
-
-                    <button onclick="addEducation()"
-                            class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-semibold">
-                        + Add Education
-                    </button>
+                <div>
+                    <label class="form-label">City</label>
+                    <input id="city" class="input" type="text" placeholder="Kanpur">
                 </div>
 
-                <div id="educationContainer"></div>
-
-            </section>
-
-            <!-- SKILLS -->
-            <section class="section-card">
-
-                <h2 class="text-xl font-bold mb-1">Skills</h2>
-
-                <p class="text-sm text-gray-500 mb-4">
-                    Select skills or add your own.
-                </p>
-
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-
-                    <label><input type="checkbox" class="skill-option" value="C Programming" onchange="updatePreview()"> C Programming</label>
-
-                    <label><input type="checkbox" class="skill-option" value="C++" onchange="updatePreview()"> C++</label>
-
-                    <label><input type="checkbox" class="skill-option" value="Python" onchange="updatePreview()"> Python</label>
-
-                    <label><input type="checkbox" class="skill-option" value="Java" onchange="updatePreview()"> Java</label>
-
-                    <label><input type="checkbox" class="skill-option" value="HTML" onchange="updatePreview()"> HTML</label>
-
-                    <label><input type="checkbox" class="skill-option" value="CSS" onchange="updatePreview()"> CSS</label>
-
-                    <label><input type="checkbox" class="skill-option" value="JavaScript" onchange="updatePreview()"> JavaScript</label>
-
-                    <label><input type="checkbox" class="skill-option" value="MS Office" onchange="updatePreview()"> MS Office</label>
-
-                    <label><input type="checkbox" class="skill-option" value="Problem Solving" onchange="updatePreview()"> Problem Solving</label>
-
-                    <label><input type="checkbox" class="skill-option" value="Logical Thinking" onchange="updatePreview()"> Logical Thinking</label>
-
+                <div>
+                    <label class="form-label">State</label>
+                    <select id="state" class="select">
+                        <option value="">Select State</option>
+                    </select>
                 </div>
 
-                <div class="mt-4 flex gap-2">
-                    <input id="customSkill"
-                           class="field-input"
-                           placeholder="Add custom skill">
-
-                    <button onclick="addCustomSkill()"
-                            class="bg-gray-900 text-white px-4 rounded-lg">
-                        Add
-                    </button>
+                <div>
+                    <label class="form-label">District</label>
+                    <select id="district" class="select" disabled>
+                        <option value="">Select District</option>
+                    </select>
                 </div>
 
-                <div id="customSkillsList"
-                     class="flex flex-wrap gap-2 mt-3"></div>
-
-            </section>
-
-            <!-- PROJECTS -->
-            <section class="section-card">
-
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-xl font-bold">Projects</h2>
-                        <p class="text-sm text-gray-500">
-                            Add academic, personal, or professional projects.
-                        </p>
-                    </div>
-
-                    <button onclick="addProject()"
-                            class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm">
-                        + Add Project
-                    </button>
+                <div>
+                    <label class="form-label">PIN Code</label>
+                    <input id="pincode" class="input" type="text" placeholder="208001">
                 </div>
 
-                <div id="projectContainer"></div>
-
-            </section>
-
-            <!-- EXPERIENCE -->
-            <section class="section-card">
-
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-xl font-bold">Experience & Activities</h2>
-
-                        <p class="text-sm text-gray-500">
-                            Add jobs, internships, freelance work, projects, training, activities, or other experience.
-                        </p>
-                    </div>
-
-                    <button onclick="addExperience()"
-                            class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm">
-                        + Add Experience
-                    </button>
+                <div>
+                    <label class="form-label">Professional Title</label>
+                    <input id="professionalTitle" class="input" type="text" placeholder="BCA Student">
                 </div>
 
-                <div id="experienceContainer"></div>
+                <div class="full">
+                    <label class="form-label">Profile Photo</label>
 
-            </section>
-
-            <!-- CERTIFICATIONS -->
-            <section class="section-card">
-
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-xl font-bold">Certifications</h2>
-                        <p class="text-sm text-gray-500">
-                            Add certificates and professional credentials.
-                        </p>
-                    </div>
-
-                    <button onclick="addCertification()"
-                            class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm">
-                        + Add Certification
-                    </button>
-                </div>
-
-                <div id="certificationContainer"></div>
-
-            </section>
-
-            <!-- LANGUAGES -->
-            <section class="section-card">
-
-                <h2 class="text-xl font-bold mb-4">Languages</h2>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-
-                    <label>
-                        <input type="checkbox"
-                               class="language-option"
-                               value="English"
-                               onchange="updatePreview()">
-                        English
+                    <label class="photo-upload" for="photoInput">
+                        <div class="font-semibold text-gray-700">
+                            Click to upload profile photo
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            JPG or PNG
+                        </div>
                     </label>
 
-                    <label>
-                        <input type="checkbox"
-                               class="language-option"
-                               value="Hindi"
-                               onchange="updatePreview()">
-                        Hindi
-                    </label>
+                    <input id="photoInput" type="file" accept="image/png,image/jpeg" class="hidden">
 
-                    <label>
-                        <input type="checkbox"
-                               class="language-option"
-                               value="French"
-                               onchange="updatePreview()">
-                        French
-                    </label>
-
-                    <label>
-                        <input type="checkbox"
-                               class="language-option"
-                               value="Spanish"
-                               onchange="updatePreview()">
-                        Spanish
-                    </label>
-
+                    <div id="photoPreviewBox" class="hidden">
+                        <img id="photoPreview" class="photo-preview" alt="Profile Preview">
+                        <button type="button" class="btn btn-danger w-full" onclick="removePhoto()">
+                            Remove Photo
+                        </button>
+                    </div>
                 </div>
 
-                <div class="mt-4 flex gap-2">
-                    <input id="customLanguage"
-                           class="field-input"
-                           placeholder="Add custom language">
+            </div>
 
-                    <button onclick="addCustomLanguage()"
-                            class="bg-gray-900 text-white px-4 rounded-lg">
-                        Add
-                    </button>
+            <!-- Summary -->
+            <div class="section-title mt-8">2. Professional Summary</div>
+
+            <textarea
+                id="summary"
+                class="textarea"
+                placeholder="Write a short professional summary about yourself."
+            ></textarea>
+
+            <!-- Education -->
+            <div class="section-title mt-8">3. Education</div>
+
+            <div id="educationContainer"></div>
+
+            <button type="button" class="btn btn-secondary" onclick="addEducation()">
+                + Add Education
+            </button>
+
+            <!-- Skills -->
+            <div class="section-title mt-8">4. Skills</div>
+
+            <div class="skill-buttons mb-4" id="skillOptions"></div>
+
+            <div class="flex gap-2">
+                <input
+                    id="customSkill"
+                    class="input"
+                    type="text"
+                    placeholder="Add custom skill"
+                >
+                <button type="button" class="btn btn-primary" onclick="addCustomSkill()">
+                    Add
+                </button>
+            </div>
+
+            <div id="selectedSkills" class="mt-3"></div>
+
+            <!-- Projects -->
+            <div class="section-title mt-8">5. Projects</div>
+
+            <div id="projectsContainer"></div>
+
+            <button type="button" class="btn btn-secondary" onclick="addProject()">
+                + Add Project
+            </button>
+
+            <!-- Experience -->
+            <div class="section-title mt-8">6. Experience & Activities</div>
+
+            <div id="experienceContainer"></div>
+
+            <button type="button" class="btn btn-secondary" onclick="addExperience()">
+                + Add Experience / Activity
+            </button>
+
+            <!-- Certifications -->
+            <div class="section-title mt-8">7. Certifications</div>
+
+            <div id="certificationsContainer"></div>
+
+            <button type="button" class="btn btn-secondary" onclick="addCertification()">
+                + Add Certification
+            </button>
+
+            <!-- Languages -->
+            <div class="section-title mt-8">8. Languages</div>
+
+            <div class="skill-buttons mb-4" id="languageOptions"></div>
+
+            <div class="flex gap-2">
+                <input
+                    id="customLanguage"
+                    class="input"
+                    type="text"
+                    placeholder="Add custom language"
+                >
+                <button type="button" class="btn btn-primary" onclick="addCustomLanguage()">
+                    Add
+                </button>
+            </div>
+
+            <div id="selectedLanguages" class="mt-3"></div>
+
+            <!-- Links -->
+            <div class="section-title mt-8">9. Professional Links</div>
+
+            <div class="form-grid">
+
+                <div>
+                    <label class="form-label">LinkedIn</label>
+                    <input id="linkedin" class="input" type="url" placeholder="https://linkedin.com/in/abc">
                 </div>
 
-                <div id="customLanguagesList"
-                     class="flex flex-wrap gap-2 mt-3"></div>
-
-            </section>
-
-            <!-- LINKS -->
-            <section class="section-card">
-
-                <h2 class="text-xl font-bold mb-4">
-                    Professional Links
-                </h2>
-
-                <div class="space-y-3">
-
-                    <input id="linkedin"
-                           class="field-input"
-                           placeholder="LinkedIn URL"
-                           oninput="updatePreview()">
-
-                    <input id="github"
-                           class="field-input"
-                           placeholder="GitHub URL"
-                           oninput="updatePreview()">
-
-                    <input id="portfolio"
-                           class="field-input"
-                           placeholder="Portfolio URL"
-                           oninput="updatePreview()">
-
+                <div>
+                    <label class="form-label">GitHub</label>
+                    <input id="github" class="input" type="url" placeholder="https://github.com/abc">
                 </div>
 
-            </section>
+                <div>
+                    <label class="form-label">Portfolio</label>
+                    <input id="portfolio" class="input" type="url" placeholder="https://example.com">
+                </div>
 
-        </div>
+                <div>
+                    <label class="form-label">Other Professional Link</label>
+                    <input id="otherLink" class="input" type="url" placeholder="https://example.com">
+                </div>
 
-        <!-- RIGHT SIDE -->
-        <div class="preview-wrapper">
+            </div>
 
-            <div class="bg-white rounded-2xl border p-4 mb-4">
+        </section>
 
-                <div class="flex items-center justify-between gap-3">
+        <!-- ================= LIVE PREVIEW ================= -->
 
+        <section class="preview-area">
+
+            <div class="panel">
+
+                <div class="preview-heading flex items-center justify-between mb-4">
                     <div>
-                        <h2 class="font-bold text-lg">
-                            Live Resume Preview
-                        </h2>
-
-                        <p class="text-xs text-gray-500">
+                        <div class="text-xl font-bold">Live Preview</div>
+                        <div class="text-sm text-gray-500">
                             Your resume updates automatically.
-                        </p>
+                        </div>
                     </div>
+                </div>
 
-                    <button onclick="window.print()"
-                            class="bg-black text-white px-5 py-2.5 rounded-lg text-sm font-semibold">
-                        Save / Print PDF
+                <div class="preview-toolbar">
+                    <button type="button" class="btn btn-primary" onclick="printResume()">
+                        Print / Save PDF
                     </button>
 
+                    <button type="button" class="btn btn-light" onclick="resetResume()">
+                        Reset
+                    </button>
                 </div>
 
-            </div>
+                <div class="preview-wrapper">
 
-            <div class="preview-scroll">
+                    <div id="resumePreview" class="resume-page">
 
-                <div id="resumePreview">
+                        <div class="resume-top">
 
-                    <div class="resume-page">
-
-                        <div class="resume-header">
-
-                            <div class="flex-1">
-
-                                <div id="previewName"
-                                     class="resume-name">
-                                    ABC XYZ
-                                </div>
-
-                                <div id="previewTitle"
-                                     class="text-sm font-semibold text-gray-600 mb-2">
-                                </div>
-
-                                <div id="previewContact"
-                                     class="resume-contact">
-                                </div>
-
+                            <div id="resumePhotoContainer" class="resume-photo-container hidden">
+                                <img id="resumePhoto" class="resume-photo" alt="Profile Photo">
                             </div>
 
-                            <div id="previewPhotoBox"
-                                 class="resume-photo-box hidden">
+                            <div class="resume-header-info">
 
-                                <img id="previewPhoto"
-                                     class="resume-photo"
-                                     alt="Profile photo">
+                                <div id="previewName" class="resume-name">
+                                    Your Name
+                                </div>
+
+                                <div id="previewTitle" class="text-sm font-semibold text-gray-600 mb-1">
+                                    Professional Title
+                                </div>
+
+                                <div id="previewContact" class="resume-contact">
+                                    Email • Phone • City • State • District • PIN
+                                </div>
 
                             </div>
 
                         </div>
 
-                        <div id="previewSummarySection"
-                             class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Professional Summary
-                            </div>
-
-                            <div id="previewSummary"
-                                 class="resume-item-text">
-                            </div>
-
+                        <div id="summarySection" class="resume-section hidden">
+                            <div class="resume-section-title">Professional Summary</div>
+                            <div id="previewSummary" class="resume-summary"></div>
                         </div>
 
-                        <div id="previewEducationSection"
-                             class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Education
-                            </div>
-
+                        <div id="educationSection" class="resume-section">
+                            <div class="resume-section-title">Education</div>
                             <div id="previewEducation"></div>
-
                         </div>
 
-                        <div id="previewSkillsSection"
-                             class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Skills
-                            </div>
-
-                            <div id="previewSkills"
-                                 class="skill-list">
-                            </div>
-
+                        <div id="skillsSection" class="resume-section hidden">
+                            <div class="resume-section-title">Skills</div>
+                            <div id="previewSkills" class="resume-skills"></div>
                         </div>
 
-                        <div id="previewProjectsSection"
-                             class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Projects
-                            </div>
-
+                        <div id="projectsSection" class="resume-section hidden">
+                            <div class="resume-section-title">Projects</div>
                             <div id="previewProjects"></div>
-
                         </div>
 
-                        <div id="previewExperienceSection"
-                             class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Experience & Activities
-                            </div>
-
+                        <div id="experienceSection" class="resume-section hidden">
+                            <div class="resume-section-title">Experience & Activities</div>
                             <div id="previewExperience"></div>
-
                         </div>
 
-                        <div id="previewCertificationsSection"
-                             class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Certifications
-                            </div>
-
+                        <div id="certificationsSection" class="resume-section hidden">
+                            <div class="resume-section-title">Certifications</div>
                             <div id="previewCertifications"></div>
-
                         </div>
 
-                        <div id="previewLanguagesSection"
-                             class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Languages
-                            </div>
-
-                            <div id="previewLanguages"
-                                 class="skill-list">
-                            </div>
-
+                        <div id="languagesSection" class="resume-section hidden">
+                            <div class="resume-section-title">Languages</div>
+                            <div id="previewLanguages"></div>
                         </div>
 
-                        <div id="previewLinksSection"
-                             class="resume-section hidden">
-
-                            <div class="resume-section-title">
-                                Professional Links
-                            </div>
-
+                        <div id="linksSection" class="resume-section hidden">
+                            <div class="resume-section-title">Professional Links</div>
                             <div id="previewLinks"></div>
-
                         </div>
 
                     </div>
@@ -798,33 +756,18 @@
 
             </div>
 
-        </div>
+        </section>
 
     </div>
 
 </main>
 
-
 <script>
-
 /* =========================================================
-   GENERAL DATA
-========================================================= */
+   INDIA STATES AND DISTRICTS
+   ========================================================= */
 
-const currentYear = new Date().getFullYear();
-
-const years = [];
-
-for (let year = currentYear + 5; year >= 1950; year--) {
-    years.push(year);
-}
-
-
-/* =========================================================
-   INDIAN STATES AND DISTRICTS
-========================================================= */
-
-const stateDistricts = {
+const INDIA_LOCATIONS = {
 
     "Andhra Pradesh": [
         "Alluri Sitharama Raju",
@@ -845,8 +788,9 @@ const stateDistricts = {
         "Palnadu",
         "Parvathipuram Manyam",
         "Prakasam",
-        "Srikakulam",
+        "Sri Potti Sriramulu Nellore",
         "Sri Sathya Sai",
+        "Srikakulam",
         "Tirupati",
         "Visakhapatnam",
         "Vizianagaram",
@@ -886,7 +830,6 @@ const stateDistricts = {
     "Assam": [
         "Baksa",
         "Barpeta",
-        "Bajali",
         "Biswanath",
         "Bongaigaon",
         "Cachar",
@@ -1047,7 +990,6 @@ const stateDistricts = {
         "Fatehabad",
         "Gurugram",
         "Hisar",
-        "Jhajjar",
         "Jind",
         "Kaithal",
         "Karnal",
@@ -1100,7 +1042,7 @@ const stateDistricts = {
         "Palamu",
         "Ramgarh",
         "Ranchi",
-        "Sahibganj",
+        "Sahebganj",
         "Seraikela Kharsawan",
         "Simdega",
         "West Singhbhum"
@@ -1136,7 +1078,6 @@ const stateDistricts = {
         "Udupi",
         "Uttara Kannada",
         "Vijayapura",
-        "Vijayanagara",
         "Yadgir"
     ],
 
@@ -1253,6 +1194,73 @@ const stateDistricts = {
         "Yavatmal"
     ],
 
+    "Manipur": [
+        "Bishnupur",
+        "Chandel",
+        "Churachandpur",
+        "Imphal East",
+        "Imphal West",
+        "Jiribam",
+        "Kakching",
+        "Kamjong",
+        "Kangpokpi",
+        "Noney",
+        "Pherzawl",
+        "Senapati",
+        "Tamenglong",
+        "Tengnoupal",
+        "Thoubal",
+        "Ukhrul"
+    ],
+
+    "Meghalaya": [
+        "East Garo Hills",
+        "East Jaintia Hills",
+        "East Khasi Hills",
+        "Eastern West Khasi Hills",
+        "North Garo Hills",
+        "Ri Bhoi",
+        "South Garo Hills",
+        "South West Garo Hills",
+        "South West Khasi Hills",
+        "West Garo Hills",
+        "West Jaintia Hills",
+        "West Khasi Hills"
+    ],
+
+    "Mizoram": [
+        "Aizawl",
+        "Champhai",
+        "Hnahthial",
+        "Khawzawl",
+        "Kolasib",
+        "Lawngtlai",
+        "Lunglei",
+        "Mamit",
+        "Saiha",
+        "Saitual",
+        "Serchhip"
+    ],
+
+    "Nagaland": [
+        "Chumoukedima",
+        "Dimapur",
+        "Kiphire",
+        "Kohima",
+        "Longleng",
+        "Mokokchung",
+        "Mon",
+        "Niuland",
+        "Noklak",
+        "Peren",
+        "Phek",
+        "Shamator",
+        "Tseminyu",
+        "Tuensang",
+        "Wokha",
+        "Zunheboto"
+    ],
+
     "Odisha": [
         "Angul",
         "Balangir",
@@ -1307,7 +1315,7 @@ const stateDistricts = {
         "Rupnagar",
         "Sahibzada Ajit Singh Nagar",
         "Sangrur",
-        "Shaheed Bhagat Singh Nagar",
+        "Shahid Bhagat Singh Nagar",
         "Sri Muktsar Sahib",
         "Tarn Taran"
     ],
@@ -1333,7 +1341,6 @@ const stateDistricts = {
         "Didwana-Kuchamana",
         "Dudu",
         "Dungarpur",
-        "Gangapur City",
         "Hanumangarh",
         "Jaipur",
         "Jaisalmer",
@@ -1342,6 +1349,7 @@ const stateDistricts = {
         "Jhunjhunu",
         "Jodhpur",
         "Karauli",
+        "Kekri",
         "Khairthal-Tijara",
         "Kota",
         "Kotputli-Behror",
@@ -1353,11 +1361,21 @@ const stateDistricts = {
         "Rajsamand",
         "Salumbar",
         "Sawai Madhopur",
+        "Shahpura",
         "Sikar",
         "Sirohi",
         "Sri Ganganagar",
         "Tonk",
         "Udaipur"
+    ],
+
+    "Sikkim": [
+        "Gangtok",
+        "Gyalshing",
+        "Mangan",
+        "Namchi",
+        "Pakyong",
+        "Soreng"
     ],
 
     "Tamil Nadu": [
@@ -1434,6 +1452,17 @@ const stateDistricts = {
         "Wanaparthy",
         "Warangal",
         "Yadadri Bhuvanagiri"
+    ],
+
+    "Tripura": [
+        "Dhalai",
+        "Gomati",
+        "Khowai",
+        "North Tripura",
+        "Sepahijala",
+        "South Tripura",
+        "Unakoti",
+        "West Tripura"
     ],
 
     "Uttar Pradesh": [
@@ -1533,8 +1562,6 @@ const stateDistricts = {
     "West Bengal": [
         "Alipurduar",
         "Bankura",
-        "Paschim Bardhaman",
-        "Purba Bardhaman",
         "Birbhum",
         "Cooch Behar",
         "Dakshin Dinajpur",
@@ -1549,10 +1576,29 @@ const stateDistricts = {
         "Murshidabad",
         "Nadia",
         "North 24 Parganas",
-        "South 24 Parganas",
-        "Uttar Dinajpur",
+        "Paschim Bardhaman",
         "Paschim Medinipur",
-        "Purba Medinipur"
+        "Purba Bardhaman",
+        "Purba Medinipur",
+        "Purulia",
+        "South 24 Parganas",
+        "Uttar Dinajpur"
+    ],
+
+    "Andaman and Nicobar Islands": [
+        "Nicobar",
+        "North and Middle Andaman",
+        "South Andaman"
+    ],
+
+    "Chandigarh": [
+        "Chandigarh"
+    ],
+
+    "Dadra and Nagar Haveli and Daman and Diu": [
+        "Dadra and Nagar Haveli",
+        "Daman",
+        "Diu"
     ],
 
     "Delhi": [
@@ -1597,8 +1643,8 @@ const stateDistricts = {
         "Leh"
     ],
 
-    "Chandigarh": [
-        "Chandigarh"
+    "Lakshadweep": [
+        "Lakshadweep"
     ],
 
     "Puducherry": [
@@ -1606,122 +1652,126 @@ const stateDistricts = {
         "Mahe",
         "Puducherry",
         "Yanam"
-    ],
-
-    "Andaman and Nicobar Islands": [
-        "Nicobar",
-        "North and Middle Andaman",
-        "South Andaman"
-    ],
-
-    "Dadra and Nagar Haveli and Daman and Diu": [
-        "Dadra and Nagar Haveli",
-        "Daman",
-        "Diu"
-    ],
-
-    "Lakshadweep": [
-        "Lakshadweep"
-    ],
-
-    "Manipur": [
-        "Bishnupur",
-        "Chandel",
-        "Churachandpur",
-        "Imphal East",
-        "Imphal West",
-        "Jiribam",
-        "Kakching",
-        "Kamjong",
-        "Kangpokpi",
-        "Noney",
-        "Pherzawl",
-        "Senapati",
-        "Tamenglong",
-        "Tengnoupal",
-        "Thoubal",
-        "Ukhrul"
-    ],
-
-    "Meghalaya": [
-        "East Garo Hills",
-        "East Jaintia Hills",
-        "East Khasi Hills",
-        "Eastern West Khasi Hills",
-        "North Garo Hills",
-        "Ri-Bhoi",
-        "South Garo Hills",
-        "South West Garo Hills",
-        "South West Khasi Hills",
-        "West Garo Hills",
-        "West Jaintia Hills",
-        "West Khasi Hills"
-    ],
-
-    "Mizoram": [
-        "Aizawl",
-        "Champhai",
-        "Hnahthial",
-        "Khawzawl",
-        "Kolasib",
-        "Lawngtlai",
-        "Lunglei",
-        "Mamit",
-        "Saiha",
-        "Saitual",
-        "Serchhip"
-    ],
-
-    "Nagaland": [
-        "Chumoukedima",
-        "Dimapur",
-        "Kiphire",
-        "Kohima",
-        "Longleng",
-        "Mokokchung",
-        "Mon",
-        "Niuland",
-        "Noklak",
-        "Peren",
-        "Phek",
-        "Shamator",
-        "Tseminyu",
-        "Tuensang",
-        "Wokha",
-        "Zunheboto"
-    ],
-
-    "Sikkim": [
-        "Gangtok",
-        "Gyalshing",
-        "Mangan",
-        "Namchi",
-        "Pakyong",
-        "Soreng"
-    ],
-
-    "Tripura": [
-        "Dhalai",
-        "Gomati",
-        "Khowai",
-        "North Tripura",
-        "Sepahijala",
-        "South Tripura",
-        "Unakoti",
-        "West Tripura"
     ]
 };
 
 
 /* =========================================================
-   INITIALIZE STATES
-========================================================= */
+   COMMON OPTIONS
+   ========================================================= */
+
+const BOARD_OPTIONS = [
+    "CBSE",
+    "CISCE",
+    "ICSE",
+    "ISC",
+    "State Board",
+    "NIOS",
+    "IB",
+    "Cambridge",
+    "Other"
+];
+
+const YEARS = [];
+
+for (let year = 2035; year >= 1990; year--) {
+    YEARS.push(year);
+}
+
+const SKILLS = [
+    "C Programming",
+    "C++",
+    "Java",
+    "Python",
+    "JavaScript",
+    "HTML",
+    "CSS",
+    "SQL",
+    "Git",
+    "GitHub",
+    "MS Office",
+    "Excel",
+    "PowerPoint",
+    "Data Analysis",
+    "Problem Solving",
+    "Logical Thinking",
+    "Computer Fundamentals",
+    "Web Development",
+    "Communication",
+    "Teamwork"
+];
+
+const LANGUAGES = [
+    "English",
+    "Hindi",
+    "Urdu",
+    "Bengali",
+    "Marathi",
+    "Gujarati",
+    "Punjabi",
+    "Tamil",
+    "Telugu",
+    "Kannada",
+    "Malayalam"
+];
+
+let selectedSkills = [];
+let selectedLanguages = [];
+
+
+/* =========================================================
+   BASIC HELPERS
+   ========================================================= */
+
+function escapeHtml(value) {
+
+    if (value === undefined || value === null) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function optionList(options, selected = "") {
+
+    return options.map(option => {
+        return `
+            <option value="${escapeHtml(option)}"
+                ${option === selected ? "selected" : ""}>
+                ${escapeHtml(option)}
+            </option>
+        `;
+    }).join("");
+}
+
+
+function yearOptions() {
+
+    return YEARS.map(year => {
+        return `<option value="${year}">${year}</option>`;
+    }).join("");
+}
+
+
+/* =========================================================
+   STATE / DISTRICT
+   ========================================================= */
 
 function loadStates() {
 
     const stateSelect = document.getElementById("state");
 
-    Object.keys(stateDistricts)
+    stateSelect.innerHTML = `
+        <option value="">Select State</option>
+    `;
+
+    Object.keys(INDIA_LOCATIONS)
         .sort()
         .forEach(state => {
 
@@ -1734,22 +1784,28 @@ function loadStates() {
         });
 }
 
+
 function loadDistricts() {
 
-    const state = document.getElementById("state").value;
-
+    const stateSelect = document.getElementById("state");
     const districtSelect = document.getElementById("district");
 
-    districtSelect.innerHTML =
-        '<option value="">Select District</option>';
+    const state = stateSelect.value;
 
-    districtSelect.disabled = true;
+    districtSelect.innerHTML = `
+        <option value="">Select District</option>
+    `;
 
-    if (!state || !stateDistricts[state]) {
+    if (!state || !INDIA_LOCATIONS[state]) {
+
+        districtSelect.disabled = true;
+
         return;
     }
 
-    stateDistricts[state]
+    districtSelect.disabled = false;
+
+    INDIA_LOCATIONS[state]
         .sort()
         .forEach(district => {
 
@@ -1761,479 +1817,647 @@ function loadDistricts() {
             districtSelect.appendChild(option);
         });
 
-    districtSelect.disabled = false;
-}
-
-
-/* =========================================================
-   HELPER FUNCTIONS
-========================================================= */
-
-function yearOptions(selected = "") {
-
-    return `
-        <option value="">Select Year</option>
-        ${years.map(year =>
-            `<option value="${year}" ${String(year) === String(selected) ? "selected" : ""}>${year}</option>`
-        ).join("")}
-    `;
-}
-
-function boardOptions() {
-
-    return `
-        <option value="">Select Board</option>
-        <option>CBSE</option>
-        <option>CISCE / ICSE</option>
-        <option>NIOS</option>
-        <option>State Board</option>
-        <option>IB</option>
-        <option>Cambridge International</option>
-        <option>Open School</option>
-        <option>Other</option>
-    `;
-}
-
-function qualificationOptions() {
-
-    return `
-        <option value="">Select Qualification</option>
-        <option value="10th">10th / Secondary</option>
-        <option value="12th">12th / Intermediate</option>
-        <option value="Diploma">Diploma</option>
-        <option value="Graduation">Graduation</option>
-        <option value="Post Graduation">Post Graduation</option>
-        <option value="Other">Other Qualification</option>
-    `;
-}
-
-function escapeHtml(value) {
-
-    if (!value) return "";
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-function removeElement(button) {
-
-    button.closest(".dynamic-card").remove();
-
     updatePreview();
 }
 
 
 /* =========================================================
    EDUCATION
-========================================================= */
+   ========================================================= */
+
+function educationFieldsHTML(id) {
+
+    return `
+        <div class="card education-card" data-id="${id}">
+
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-800">
+                    Education
+                </h3>
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    onclick="removeEducation(${id})">
+                    Remove
+                </button>
+            </div>
+
+            <div class="form-grid">
+
+                <div>
+                    <label class="form-label">Qualification</label>
+
+                    <select
+                        class="select education-qualification"
+                        onchange="toggleEducationFields(${id})">
+
+                        <option value="10th">10th</option>
+                        <option value="12th">12th / Intermediate</option>
+                        <option value="Diploma">Diploma</option>
+                        <option value="Graduation">Graduation</option>
+                        <option value="Post Graduation">Post Graduation</option>
+                        <option value="Other">Other Qualification</option>
+
+                    </select>
+                </div>
+
+                <div class="other-qualification-box hidden">
+                    <label class="form-label">Custom Qualification</label>
+                    <input class="input education-custom-qualification"
+                           placeholder="Example: Certificate Course">
+                </div>
+
+                <div>
+                    <label class="form-label institute-label">
+                        School Name
+                    </label>
+
+                    <input
+                        class="input education-institute"
+                        placeholder="ABC School">
+                </div>
+
+                <div>
+                    <label class="form-label board-label">
+                        Board
+                    </label>
+
+                    <select class="select education-board">
+                        ${optionList(BOARD_OPTIONS)}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">Passing Year</label>
+
+                    <select class="select education-passing-year">
+                        <option value="">Select Year</option>
+                        ${yearOptions()}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">Percentage / CGPA</label>
+
+                    <input
+                        class="input education-score"
+                        placeholder="Example: 82% or 8.4 CGPA">
+                </div>
+
+            </div>
+
+
+            <!-- Graduation / PG section -->
+
+            <div class="graduation-fields hidden mt-5">
+
+                <div class="form-grid">
+
+                    <div>
+                        <label class="form-label">Course / Degree</label>
+
+                        <input
+                            class="input education-course"
+                            placeholder="Example: Bachelor of Computer Applications">
+                    </div>
+
+                    <div>
+                        <label class="form-label">University</label>
+
+                        <input
+                            class="input education-university"
+                            placeholder="XYZ University">
+                    </div>
+
+                    <div>
+                        <label class="form-label">Study Status</label>
+
+                        <select class="select education-status">
+                            <option value="">Select Status</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Pursuing">Pursuing</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Start Year</label>
+
+                        <select class="select education-start-year">
+                            <option value="">Select Year</option>
+                            ${yearOptions()}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Completion Year</label>
+
+                        <select class="select education-completion-year">
+                            <option value="">Select Year</option>
+                            ${yearOptions()}
+                        </select>
+                    </div>
+
+                </div>
+
+
+                <div class="mt-5">
+
+                    <div class="font-semibold text-sm mb-3">
+                        Semester Details
+                    </div>
+
+                    <div class="space-y-3">
+
+                        ${semesterRow(1, 1, 2)}
+                        ${semesterRow(2, 3, 4)}
+                        ${semesterRow(3, 5, 6)}
+                        ${semesterRow(4, 7, 8)}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+function semesterRow(yearNumber, sem1, sem2) {
+
+    return `
+        <div class="border border-gray-200 rounded-xl p-3 bg-white">
+
+            <div class="font-semibold text-sm mb-3">
+                Year ${yearNumber}
+            </div>
+
+            <div class="form-grid">
+
+                <div>
+                    <label class="form-label">
+                        Semester ${sem1} CGPA
+                    </label>
+
+                    <input
+                        class="input semester-cgpa"
+                        data-semester="${sem1}"
+                        placeholder="Example: 8.2">
+                </div>
+
+                <div>
+                    <label class="form-label">
+                        Semester ${sem1} SGPA
+                    </label>
+
+                    <input
+                        class="input semester-sgpa"
+                        data-semester="${sem1}"
+                        placeholder="Example: 8.4">
+                </div>
+
+                <div>
+                    <label class="form-label">
+                        Semester ${sem2} CGPA
+                    </label>
+
+                    <input
+                        class="input semester-cgpa"
+                        data-semester="${sem2}"
+                        placeholder="Example: 8.5">
+                </div>
+
+                <div>
+                    <label class="form-label">
+                        Semester ${sem2} SGPA
+                    </label>
+
+                    <input
+                        class="input semester-sgpa"
+                        data-semester="${sem2}"
+                        placeholder="Example: 8.6">
+                </div>
+
+            </div>
+
+        </div>
+    `;
+}
+
 
 function addEducation() {
 
-    const container =
-        document.getElementById("educationContainer");
+    const container = document.getElementById("educationContainer");
 
-    const card =
-        document.createElement("div");
+    const id = Date.now() + Math.random();
 
-    card.className =
-        "education-card dynamic-card";
-
-    card.innerHTML = `
-
-        <div class="flex items-center justify-between mb-4">
-
-            <h3 class="font-bold text-gray-900">
-                Education Entry
-            </h3>
-
-            <button type="button"
-                    onclick="removeElement(this)"
-                    class="text-red-600 text-sm font-semibold">
-                Remove
-            </button>
-
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-4">
-
-            <div>
-
-                <label class="field-label">
-                    Qualification
-                </label>
-
-                <select class="field-select education-type"
-                        onchange="changeEducationType(this)">
-                    ${qualificationOptions()}
-                </select>
-
-            </div>
-
-        </div>
-
-        <div class="education-fields mt-4"></div>
-    `;
-
-    container.appendChild(card);
-
-    changeEducationType(
-        card.querySelector(".education-type")
+    container.insertAdjacentHTML(
+        "beforeend",
+        educationFieldsHTML(id)
     );
+
+    const card = container.lastElementChild;
+
+    bindCardEvents(card);
+
+    updatePreview();
 }
 
-function changeEducationType(select) {
 
-    const card = select.closest(".education-card");
+function removeEducation(id) {
 
-    const type = select.value;
+    const card = document.querySelector(
+        `.education-card[data-id="${id}"]`
+    );
 
-    const fields =
-        card.querySelector(".education-fields");
-
-    if (type === "10th") {
-
-        fields.innerHTML = `
-
-            <div class="grid md:grid-cols-2 gap-4">
-
-                <div>
-                    <label class="field-label">School Name</label>
-                    <input class="field-input edu-school"
-                           placeholder="ABC Public School">
-                </div>
-
-                <div>
-                    <label class="field-label">Board</label>
-                    <select class="field-select edu-board"
-                            onchange="toggleOtherBoard(this)">
-                        ${boardOptions()}
-                    </select>
-                </div>
-
-                <div class="hidden-field other-board-box">
-                    <label class="field-label">Custom Board Name</label>
-                    <input class="field-input edu-other-board"
-                           placeholder="Enter board name">
-                </div>
-
-                <div>
-                    <label class="field-label">Passing Year</label>
-                    <select class="field-select edu-year">
-                        ${yearOptions()}
-                    </select>
-                </div>
-
-                <div>
-                    <label class="field-label">Percentage</label>
-                    <input class="field-input edu-score"
-                           placeholder="85%">
-                </div>
-
-            </div>
-        `;
-
-    }
-
-    else if (type === "12th") {
-
-        fields.innerHTML = `
-
-            <div class="grid md:grid-cols-2 gap-4">
-
-                <div>
-                    <label class="field-label">
-                        School / College Name
-                    </label>
-
-                    <input class="field-input edu-school"
-                           placeholder="ABC Inter College">
-                </div>
-
-                <div>
-                    <label class="field-label">Board</label>
-
-                    <select class="field-select edu-board"
-                            onchange="toggleOtherBoard(this)">
-                        ${boardOptions()}
-                    </select>
-                </div>
-
-                <div class="hidden-field other-board-box">
-                    <label class="field-label">Custom Board Name</label>
-
-                    <input class="field-input edu-other-board"
-                           placeholder="Enter board name">
-                </div>
-
-                <div>
-                    <label class="field-label">Passing Year</label>
-
-                    <select class="field-select edu-year">
-                        ${yearOptions()}
-                    </select>
-                </div>
-
-                <div>
-                    <label class="field-label">Percentage</label>
-
-                    <input class="field-input edu-score"
-                           placeholder="85%">
-                </div>
-
-            </div>
-        `;
-    }
-
-    else if (type === "Diploma") {
-
-        fields.innerHTML = `
-
-            <div class="grid md:grid-cols-2 gap-4">
-
-                <div>
-                    <label class="field-label">
-                        Diploma / Course Name
-                    </label>
-
-                    <input class="field-input edu-course"
-                           placeholder="Diploma in Computer Applications">
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Institute
-                    </label>
-
-                    <input class="field-input edu-institute"
-                           placeholder="ABC Institute">
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Board / University
-                    </label>
-
-                    <input class="field-input edu-university"
-                           placeholder="XYZ Board / University">
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Passing Year
-                    </label>
-
-                    <select class="field-select edu-year">
-                        ${yearOptions()}
-                    </select>
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Percentage / CGPA
-                    </label>
-
-                    <input class="field-input edu-score"
-                           placeholder="8.2 CGPA">
-                </div>
-
-            </div>
-        `;
-    }
-
-    else if (type === "Graduation" || type === "Post Graduation") {
-
-        fields.innerHTML = `
-
-            <div class="grid md:grid-cols-2 gap-4">
-
-                <div>
-                    <label class="field-label">
-                        Course / Degree
-                    </label>
-
-                    <input class="field-input edu-course"
-                           placeholder="Bachelor of Computer Applications">
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        College / Institute
-                    </label>
-
-                    <input class="field-input edu-institute"
-                           placeholder="ABC College">
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        University
-                    </label>
-
-                    <input class="field-input edu-university"
-                           placeholder="XYZ University">
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Study Status
-                    </label>
-
-                    <select class="field-select edu-status">
-                        <option value="">Select Status</option>
-                        <option>Completed</option>
-                        <option>Pursuing</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Start Year
-                    </label>
-
-                    <select class="field-select edu-start-year">
-                        ${yearOptions()}
-                    </select>
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Completion Year
-                    </label>
-
-                    <select class="field-select edu-completion-year">
-                        ${yearOptions()}
-                    </select>
-                </div>
-
-            </div>
-
-            <div class="mt-5">
-
-                <h4 class="font-bold mb-3">
-                    Semester Details
-                </h4>
-
-                <p class="text-xs text-gray-500 mb-3">
-                    Fill only the semesters that are available.
-                </p>
-
-                <div class="grid md:grid-cols-2 gap-3">
-
-                    ${createSemesterBox(1)}
-                    ${createSemesterBox(2)}
-                    ${createSemesterBox(3)}
-                    ${createSemesterBox(4)}
-                    ${createSemesterBox(5)}
-                    ${createSemesterBox(6)}
-                    ${createSemesterBox(7)}
-                    ${createSemesterBox(8)}
-
-                </div>
-
-            </div>
-        `;
-    }
-
-    else if (type === "Other") {
-
-        fields.innerHTML = `
-
-            <div class="grid md:grid-cols-2 gap-4">
-
-                <div>
-                    <label class="field-label">
-                        Qualification Name
-                    </label>
-
-                    <input class="field-input edu-course"
-                           placeholder="Professional Certificate">
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Institute
-                    </label>
-
-                    <input class="field-input edu-institute"
-                           placeholder="ABC Institute">
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Board / University
-                    </label>
-
-                    <input class="field-input edu-university"
-                           placeholder="XYZ Organization">
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Completion Year
-                    </label>
-
-                    <select class="field-select edu-year">
-                        ${yearOptions()}
-                    </select>
-                </div>
-
-                <div>
-                    <label class="field-label">
-                        Percentage / CGPA
-                    </label>
-
-                    <input class="field-input edu-score"
-                           placeholder="85% / 8.5 CGPA">
-                </div>
-
-            </div>
-        `;
+    if (card) {
+        card.remove();
     }
 
     updatePreview();
 }
 
-function createSemesterBox(number) {
 
-    return `
+function toggleEducationFields(id) {
 
-        <div class="semester-box">
+    const card = document.querySelector(
+        `.education-card[data-id="${id}"]`
+    );
 
-            <div class="font-semibold text-sm mb-2">
-                Semester ${number}
+    if (!card) return;
+
+    const qualification =
+        card.querySelector(".education-qualification").value;
+
+    const graduationFields =
+        card.querySelector(".graduation-fields");
+
+    const otherQualification =
+        card.querySelector(".other-qualification-box");
+
+    const instituteLabel =
+        card.querySelector(".institute-label");
+
+    const boardLabel =
+        card.querySelector(".board-label");
+
+    if (
+        qualification === "Graduation" ||
+        qualification === "Post Graduation"
+    ) {
+
+        graduationFields.classList.remove("hidden");
+
+        instituteLabel.textContent =
+            "College / Institute";
+
+        boardLabel.textContent =
+            "Board / University";
+
+    } else {
+
+        graduationFields.classList.add("hidden");
+
+        instituteLabel.textContent =
+            qualification === "12th"
+                ? "School / College Name"
+                : qualification === "Diploma"
+                    ? "Institute"
+                    : "School Name";
+
+        boardLabel.textContent =
+            qualification === "Diploma"
+                ? "Board / University"
+                : "Board";
+    }
+
+    if (qualification === "Other") {
+        otherQualification.classList.remove("hidden");
+    } else {
+        otherQualification.classList.add("hidden");
+    }
+
+    updatePreview();
+}
+
+
+/* =========================================================
+   PROJECTS
+   ========================================================= */
+
+function addProject() {
+
+    const container =
+        document.getElementById("projectsContainer");
+
+    const id = Date.now() + Math.random();
+
+    container.insertAdjacentHTML("beforeend", `
+        <div class="card project-card" data-id="${id}">
+
+            <div class="flex justify-between items-center mb-4">
+
+                <h3 class="font-bold">
+                    Project
+                </h3>
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    onclick="removeProject(${id})">
+                    Remove
+                </button>
+
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div class="form-grid">
 
-                <input class="field-input semester-cgpa-${number}"
-                       placeholder="CGPA">
+                <div>
+                    <label class="form-label">Project Name</label>
 
-                <input class="field-input semester-sgpa-${number}"
-                       placeholder="SGPA / SGP">
+                    <input
+                        class="input project-name"
+                        placeholder="Example: Student Management System">
+                </div>
+
+                <div>
+                    <label class="form-label">Technology</label>
+
+                    <input
+                        class="input project-tech"
+                        placeholder="Example: HTML, CSS, JavaScript">
+                </div>
+
+                <div class="full">
+                    <label class="form-label">Project Description</label>
+
+                    <textarea
+                        class="textarea project-description"
+                        placeholder="Describe the project, your role and major features."></textarea>
+                </div>
 
             </div>
 
         </div>
-    `;
+    `);
+
+    bindCardEvents(container.lastElementChild);
+
+    updatePreview();
 }
 
-function toggleOtherBoard(select) {
 
-    const card = select.closest(".education-card");
+function removeProject(id) {
 
-    const box = card.querySelector(".other-board-box");
+    const card =
+        document.querySelector(
+            `.project-card[data-id="${id}"]`
+        );
 
-    if (!box) return;
+    if (card) card.remove();
 
-    if (select.value === "Other") {
-        box.classList.remove("hidden-field");
-    } else {
-        box.classList.add("hidden-field");
-    }
+    updatePreview();
+}
+
+
+/* =========================================================
+   EXPERIENCE
+   ========================================================= */
+
+function addExperience() {
+
+    const container =
+        document.getElementById("experienceContainer");
+
+    const id = Date.now() + Math.random();
+
+    container.insertAdjacentHTML("beforeend", `
+        <div class="card experience-card" data-id="${id}">
+
+            <div class="flex justify-between items-center mb-4">
+
+                <h3 class="font-bold">
+                    Experience / Activity
+                </h3>
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    onclick="removeExperience(${id})">
+                    Remove
+                </button>
+
+            </div>
+
+            <div class="form-grid">
+
+                <div>
+                    <label class="form-label">Type</label>
+
+                    <select class="select experience-type">
+
+                        <option value="Work Experience">
+                            Work Experience
+                        </option>
+
+                        <option value="Internship">
+                            Internship
+                        </option>
+
+                        <option value="Freelance Work">
+                            Freelance Work
+                        </option>
+
+                        <option value="Project Experience">
+                            Project Experience
+                        </option>
+
+                        <option value="Volunteer Work">
+                            Volunteer Work
+                        </option>
+
+                        <option value="Training">
+                            Training
+                        </option>
+
+                        <option value="Workshop">
+                            Workshop
+                        </option>
+
+                        <option value="Leadership">
+                            Leadership
+                        </option>
+
+                        <option value="College Activity">
+                            College Activity
+                        </option>
+
+                        <option value="Event Management">
+                            Event Management
+                        </option>
+
+                        <option value="Teaching / Tutoring">
+                            Teaching / Tutoring
+                        </option>
+
+                        <option value="Content Creation">
+                            Content Creation
+                        </option>
+
+                        <option value="Business / Self Employment">
+                            Business / Self Employment
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">Organization / Place</label>
+
+                    <input
+                        class="input experience-organization"
+                        placeholder="ABC Company">
+                </div>
+
+                <div>
+                    <label class="form-label">Role / Position</label>
+
+                    <input
+                        class="input experience-role"
+                        placeholder="Web Development Intern">
+                </div>
+
+                <div>
+                    <label class="form-label">Duration</label>
+
+                    <input
+                        class="input experience-duration"
+                        placeholder="Jan 2026 - Mar 2026">
+                </div>
+
+                <div class="full">
+
+                    <label class="form-label">
+                        Description
+                    </label>
+
+                    <textarea
+                        class="textarea experience-description"
+                        placeholder="Describe responsibilities, achievements or activities."></textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+    `);
+
+    bindCardEvents(container.lastElementChild);
+
+    updatePreview();
+}
+
+
+function removeExperience(id) {
+
+    const card =
+        document.querySelector(
+            `.experience-card[data-id="${id}"]`
+        );
+
+    if (card) card.remove();
+
+    updatePreview();
+}
+
+
+/* =========================================================
+   CERTIFICATIONS
+   ========================================================= */
+
+function addCertification() {
+
+    const container =
+        document.getElementById("certificationsContainer");
+
+    const id = Date.now() + Math.random();
+
+    container.insertAdjacentHTML("beforeend", `
+        <div class="card certification-card" data-id="${id}">
+
+            <div class="flex justify-between items-center mb-4">
+
+                <h3 class="font-bold">
+                    Certification
+                </h3>
+
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    onclick="removeCertification(${id})">
+                    Remove
+                </button>
+
+            </div>
+
+            <div class="form-grid">
+
+                <div>
+                    <label class="form-label">
+                        Certification Name
+                    </label>
+
+                    <input
+                        class="input certification-name"
+                        placeholder="Example: Python Programming">
+                </div>
+
+                <div>
+                    <label class="form-label">
+                        Issuing Organization
+                    </label>
+
+                    <input
+                        class="input certification-org"
+                        placeholder="XYZ Institute">
+                </div>
+
+                <div>
+                    <label class="form-label">
+                        Year
+                    </label>
+
+                    <select class="select certification-year">
+                        <option value="">Select Year</option>
+                        ${yearOptions()}
+                    </select>
+                </div>
+
+            </div>
+
+        </div>
+    `);
+
+    bindCardEvents(container.lastElementChild);
+
+    updatePreview();
+}
+
+
+function removeCertification(id) {
+
+    const card =
+        document.querySelector(
+            `.certification-card[data-id="${id}"]`
+        );
+
+    if (card) card.remove();
 
     updatePreview();
 }
@@ -2241,9 +2465,89 @@ function toggleOtherBoard(select) {
 
 /* =========================================================
    SKILLS
-========================================================= */
+   ========================================================= */
 
-let customSkills = [];
+function renderSkillOptions() {
+
+    const container =
+        document.getElementById("skillOptions");
+
+    container.innerHTML = "";
+
+    SKILLS.forEach(skill => {
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.className = "skill-option";
+
+        if (selectedSkills.includes(skill)) {
+            button.classList.add("active");
+        }
+
+        button.textContent = skill;
+
+        button.onclick = function () {
+
+            if (selectedSkills.includes(skill)) {
+
+                selectedSkills =
+                    selectedSkills.filter(
+                        item => item !== skill
+                    );
+
+            } else {
+
+                selectedSkills.push(skill);
+            }
+
+            renderSkillOptions();
+            renderSelectedSkills();
+            updatePreview();
+        };
+
+        container.appendChild(button);
+    });
+}
+
+
+function renderSelectedSkills() {
+
+    const container =
+        document.getElementById("selectedSkills");
+
+    container.innerHTML = "";
+
+    selectedSkills.forEach((skill, index) => {
+
+        container.insertAdjacentHTML(
+            "beforeend",
+            `
+            <span class="chip">
+                ${escapeHtml(skill)}
+
+                <button
+                    type="button"
+                    onclick="removeSkill(${index})">
+                    ×
+                </button>
+            </span>
+            `
+        );
+    });
+}
+
+
+function removeSkill(index) {
+
+    selectedSkills.splice(index, 1);
+
+    renderSkillOptions();
+    renderSelectedSkills();
+    updatePreview();
+}
+
 
 function addCustomSkill() {
 
@@ -2255,294 +2559,103 @@ function addCustomSkill() {
 
     if (!value) return;
 
-    customSkills.push(value);
+    if (!selectedSkills.includes(value)) {
+        selectedSkills.push(value);
+    }
 
     input.value = "";
 
-    renderCustomSkills();
-
-    updatePreview();
-}
-
-function renderCustomSkills() {
-
-    const box =
-        document.getElementById("customSkillsList");
-
-    box.innerHTML = "";
-
-    customSkills.forEach((skill, index) => {
-
-        const tag =
-            document.createElement("span");
-
-        tag.className =
-            "bg-gray-100 border px-3 py-1 rounded-full text-sm";
-
-        tag.innerHTML = `
-            ${escapeHtml(skill)}
-            <button onclick="removeCustomSkill(${index})"
-                    class="ml-2 text-red-600">
-                ×
-            </button>
-        `;
-
-        box.appendChild(tag);
-    });
-}
-
-function removeCustomSkill(index) {
-
-    customSkills.splice(index, 1);
-
-    renderCustomSkills();
-
-    updatePreview();
-}
-
-
-/* =========================================================
-   PROJECTS
-========================================================= */
-
-function addProject() {
-
-    const container =
-        document.getElementById("projectContainer");
-
-    const card =
-        document.createElement("div");
-
-    card.className =
-        "project-card dynamic-card";
-
-    card.innerHTML = `
-
-        <div class="flex justify-between mb-3">
-
-            <h3 class="font-bold">
-                Project
-            </h3>
-
-            <button onclick="removeElement(this)"
-                    class="text-red-600 text-sm">
-                Remove
-            </button>
-
-        </div>
-
-        <div class="space-y-3">
-
-            <input class="field-input project-name"
-                   placeholder="Project Name">
-
-            <input class="field-input project-tech"
-                   placeholder="Technologies / Tools">
-
-            <textarea class="field-textarea project-description"
-                      placeholder="Project description"></textarea>
-
-            <input class="field-input project-link"
-                   placeholder="Project Link">
-
-        </div>
-    `;
-
-    container.appendChild(card);
-
-    attachDynamicListeners();
-
-    updatePreview();
-}
-
-
-/* =========================================================
-   EXPERIENCE
-========================================================= */
-
-function addExperience() {
-
-    const container =
-        document.getElementById("experienceContainer");
-
-    const card =
-        document.createElement("div");
-
-    card.className =
-        "experience-card dynamic-card";
-
-    card.innerHTML = `
-
-        <div class="flex justify-between mb-4">
-
-            <h3 class="font-bold">
-                Experience / Activity
-            </h3>
-
-            <button onclick="removeElement(this)"
-                    class="text-red-600 text-sm">
-                Remove
-            </button>
-
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-4">
-
-            <div>
-
-                <label class="field-label">
-                    Experience Type
-                </label>
-
-                <select class="field-select experience-type">
-
-                    <option value="">
-                        Select Experience Type
-                    </option>
-
-                    <option>Work Experience</option>
-                    <option>Internship</option>
-                    <option>Freelance Work</option>
-                    <option>Project Experience</option>
-                    <option>Volunteer Work</option>
-                    <option>Training</option>
-                    <option>Workshop</option>
-                    <option>Leadership</option>
-                    <option>College Activity</option>
-                    <option>Event Management</option>
-                    <option>Teaching / Tutoring</option>
-                    <option>Content Creation</option>
-                    <option>Business / Self-Employment</option>
-                    <option>Other</option>
-
-                </select>
-
-            </div>
-
-            <div>
-
-                <label class="field-label">
-                    Title / Role
-                </label>
-
-                <input class="field-input experience-title"
-                       placeholder="Software Intern">
-
-            </div>
-
-            <div>
-
-                <label class="field-label">
-                    Organization / Platform
-                </label>
-
-                <input class="field-input experience-company"
-                       placeholder="ABC Organization">
-
-            </div>
-
-            <div>
-
-                <label class="field-label">
-                    Start Date
-                </label>
-
-                <input type="month"
-                       class="field-input experience-start">
-
-            </div>
-
-            <div>
-
-                <label class="field-label">
-                    End Date
-                </label>
-
-                <input type="month"
-                       class="field-input experience-end">
-
-            </div>
-
-        </div>
-
-        <div class="mt-4">
-
-            <label class="field-label">
-                Description / Responsibilities
-            </label>
-
-            <textarea class="field-textarea experience-description"
-                      placeholder="Describe your responsibilities, achievements, contribution, or activities..."></textarea>
-
-        </div>
-    `;
-
-    container.appendChild(card);
-
-    attachDynamicListeners();
-
-    updatePreview();
-}
-
-
-/* =========================================================
-   CERTIFICATIONS
-========================================================= */
-
-function addCertification() {
-
-    const container =
-        document.getElementById("certificationContainer");
-
-    const card =
-        document.createElement("div");
-
-    card.className =
-        "certification-card dynamic-card";
-
-    card.innerHTML = `
-
-        <div class="flex justify-between mb-3">
-
-            <h3 class="font-bold">
-                Certification
-            </h3>
-
-            <button onclick="removeElement(this)"
-                    class="text-red-600 text-sm">
-                Remove
-            </button>
-
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-3">
-
-            <input class="field-input certification-name"
-                   placeholder="Certificate Name">
-
-            <input class="field-input certification-org"
-                   placeholder="Issuing Organization">
-
-            <select class="field-select certification-year">
-                ${yearOptions()}
-            </select>
-
-        </div>
-    `;
-
-    container.appendChild(card);
-
-    attachDynamicListeners();
-
+    renderSkillOptions();
+    renderSelectedSkills();
     updatePreview();
 }
 
 
 /* =========================================================
    LANGUAGES
-========================================================= */
+   ========================================================= */
 
-let customLanguages = [];
+function renderLanguageOptions() {
+
+    const container =
+        document.getElementById("languageOptions");
+
+    container.innerHTML = "";
+
+    LANGUAGES.forEach(language => {
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.className = "skill-option";
+
+        if (selectedLanguages.includes(language)) {
+            button.classList.add("active");
+        }
+
+        button.textContent = language;
+
+        button.onclick = function () {
+
+            if (selectedLanguages.includes(language)) {
+
+                selectedLanguages =
+                    selectedLanguages.filter(
+                        item => item !== language
+                    );
+
+            } else {
+
+                selectedLanguages.push(language);
+            }
+
+            renderLanguageOptions();
+            renderSelectedLanguages();
+            updatePreview();
+        };
+
+        container.appendChild(button);
+    });
+}
+
+
+function renderSelectedLanguages() {
+
+    const container =
+        document.getElementById("selectedLanguages");
+
+    container.innerHTML = "";
+
+    selectedLanguages.forEach((language, index) => {
+
+        container.insertAdjacentHTML(
+            "beforeend",
+            `
+            <span class="chip">
+                ${escapeHtml(language)}
+
+                <button
+                    type="button"
+                    onclick="removeLanguage(${index})">
+                    ×
+                </button>
+            </span>
+            `
+        );
+    });
+}
+
+
+function removeLanguage(index) {
+
+    selectedLanguages.splice(index, 1);
+
+    renderLanguageOptions();
+    renderSelectedLanguages();
+    updatePreview();
+}
+
 
 function addCustomLanguage() {
 
@@ -2554,132 +2667,126 @@ function addCustomLanguage() {
 
     if (!value) return;
 
-    customLanguages.push(value);
+    if (!selectedLanguages.includes(value)) {
+        selectedLanguages.push(value);
+    }
 
     input.value = "";
 
-    renderCustomLanguages();
-
-    updatePreview();
-}
-
-function renderCustomLanguages() {
-
-    const box =
-        document.getElementById("customLanguagesList");
-
-    box.innerHTML = "";
-
-    customLanguages.forEach((language, index) => {
-
-        const tag =
-            document.createElement("span");
-
-        tag.className =
-            "bg-gray-100 border px-3 py-1 rounded-full text-sm";
-
-        tag.innerHTML = `
-            ${escapeHtml(language)}
-            <button onclick="removeCustomLanguage(${index})"
-                    class="ml-2 text-red-600">
-                ×
-            </button>
-        `;
-
-        box.appendChild(tag);
-    });
-}
-
-function removeCustomLanguage(index) {
-
-    customLanguages.splice(index, 1);
-
-    renderCustomLanguages();
-
+    renderLanguageOptions();
+    renderSelectedLanguages();
     updatePreview();
 }
 
 
 /* =========================================================
    PHOTO
-========================================================= */
+   ========================================================= */
 
-let photoData = "";
+document.getElementById("photoInput")
+    .addEventListener("change", function(event) {
 
-function handlePhoto(event) {
+        const file = event.target.files[0];
 
-    const file =
-        event.target.files[0];
+        if (!file) return;
 
-    if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            return;
+        }
 
-    const reader =
-        new FileReader();
+        const reader = new FileReader();
 
-    reader.onload = function(e) {
+        reader.onload = function(e) {
 
-        photoData = e.target.result;
+            const src = e.target.result;
 
-        document.getElementById("uploadedPhoto").src =
-            photoData;
+            document.getElementById("photoPreview").src = src;
 
-        document.getElementById("photoPreviewBox")
-            .classList.remove("hidden");
+            document
+                .getElementById("photoPreviewBox")
+                .classList.remove("hidden");
 
-        updatePreview();
-    };
+            document.getElementById("resumePhoto").src = src;
 
-    reader.readAsDataURL(file);
-}
+            document
+                .getElementById("resumePhotoContainer")
+                .classList.remove("hidden");
 
+            updatePreview();
+        };
 
-/* =========================================================
-   DYNAMIC INPUT LISTENERS
-========================================================= */
-
-function attachDynamicListeners() {
-
-    document.querySelectorAll(
-        "#educationContainer input, #educationContainer select, " +
-        "#projectContainer input, #projectContainer textarea, " +
-        "#experienceContainer input, #experienceContainer select, " +
-        "#experienceContainer textarea, " +
-        "#certificationContainer input, #certificationContainer select"
-    ).forEach(element => {
-
-        element.removeEventListener(
-            "input",
-            updatePreview
-        );
-
-        element.removeEventListener(
-            "change",
-            updatePreview
-        );
-
-        element.addEventListener(
-            "input",
-            updatePreview
-        );
-
-        element.addEventListener(
-            "change",
-            updatePreview
-        );
+        reader.readAsDataURL(file);
     });
+
+
+function removePhoto() {
+
+    document.getElementById("photoInput").value = "";
+
+    document
+        .getElementById("photoPreviewBox")
+        .classList.add("hidden");
+
+    document
+        .getElementById("resumePhotoContainer")
+        .classList.add("hidden");
+
+    document.getElementById("photoPreview").src = "";
+
+    document.getElementById("resumePhoto").src = "";
+
+    updatePreview();
 }
 
 
 /* =========================================================
-   UPDATE PREVIEW
-========================================================= */
+   CARD EVENTS
+   ========================================================= */
+
+function bindCardEvents(card) {
+
+    if (!card) return;
+
+    card.querySelectorAll("input, textarea, select")
+        .forEach(element => {
+
+            element.addEventListener(
+                "input",
+                updatePreview
+            );
+
+            element.addEventListener(
+                "change",
+                updatePreview
+            );
+        });
+}
+
+
+/* =========================================================
+   PREVIEW UPDATE
+   ========================================================= */
 
 function updatePreview() {
 
-    const fullName =
+    updatePersonalPreview();
+    updateSummaryPreview();
+    updateEducationPreview();
+    updateSkillsPreview();
+    updateProjectsPreview();
+    updateExperiencePreview();
+    updateCertificationPreview();
+    updateLanguagesPreview();
+    updateLinksPreview();
+}
+
+
+function updatePersonalPreview() {
+
+    const name =
         document.getElementById("fullName").value.trim();
 
-    const professionalTitle =
+    const title =
         document.getElementById("professionalTitle").value.trim();
 
     const email =
@@ -2688,405 +2795,237 @@ function updatePreview() {
     const phone =
         document.getElementById("phone").value.trim();
 
+    const city =
+        document.getElementById("city").value.trim();
+
     const state =
         document.getElementById("state").value.trim();
 
     const district =
         document.getElementById("district").value.trim();
 
-    const city =
-        document.getElementById("city").value.trim();
-
-    const postalCode =
-        document.getElementById("postalCode").value.trim();
+    const pincode =
+        document.getElementById("pincode").value.trim();
 
     document.getElementById("previewName").textContent =
-        fullName || "ABC XYZ";
+        name || "Your Name";
 
     document.getElementById("previewTitle").textContent =
-        professionalTitle;
+        title || "Professional Title";
 
-    const contactParts = [];
-
-    if (email) contactParts.push(email);
-    if (phone) contactParts.push(phone);
-
-    const locationParts = [];
-
-    if (city) locationParts.push(city);
-    if (district) locationParts.push(district);
-    if (state) locationParts.push(state);
-    if (postalCode) locationParts.push(postalCode);
-
-    if (locationParts.length) {
-        contactParts.push(locationParts.join(", "));
-    }
+    const contactParts = [
+        email,
+        phone,
+        city,
+        district,
+        state,
+        pincode
+    ].filter(Boolean);
 
     document.getElementById("previewContact").textContent =
-        contactParts.join(" • ");
+        contactParts.length
+            ? contactParts.join(" • ")
+            : "Email • Phone • City • State • District • PIN";
+}
 
 
-    /* PHOTO */
+function updateSummaryPreview() {
 
-    const photoBox =
-        document.getElementById("previewPhotoBox");
-
-    const previewPhoto =
-        document.getElementById("previewPhoto");
-
-    if (photoData) {
-
-        previewPhoto.src = photoData;
-
-        photoBox.classList.remove("hidden");
-
-    } else {
-
-        photoBox.classList.add("hidden");
-    }
-
-
-    /* SUMMARY */
-
-    const summary =
+    const value =
         document.getElementById("summary").value.trim();
 
-    togglePreviewSection(
-        "previewSummarySection",
-        Boolean(summary)
-    );
-
-    document.getElementById("previewSummary").textContent =
-        summary;
-
-
-    /* EDUCATION */
-
-    renderEducationPreview();
-
-
-    /* SKILLS */
-
-    renderSkillsPreview();
-
-
-    /* PROJECTS */
-
-    renderProjectsPreview();
-
-
-    /* EXPERIENCE */
-
-    renderExperiencePreview();
-
-
-    /* CERTIFICATIONS */
-
-    renderCertificationPreview();
-
-
-    /* LANGUAGES */
-
-    renderLanguagesPreview();
-
-
-    /* LINKS */
-
-    renderLinksPreview();
-}
-
-function togglePreviewSection(id, visible) {
-
     const section =
-        document.getElementById(id);
+        document.getElementById("summarySection");
 
-    if (visible) {
-        section.classList.remove("hidden");
-    } else {
+    const preview =
+        document.getElementById("previewSummary");
+
+    if (!value) {
+
         section.classList.add("hidden");
+
+        preview.textContent = "";
+
+        return;
     }
+
+    section.classList.remove("hidden");
+
+    preview.textContent = value;
 }
 
 
-/* =========================================================
-   EDUCATION PREVIEW
-========================================================= */
+function updateEducationPreview() {
 
-function renderEducationPreview() {
+    const cards =
+        document.querySelectorAll(".education-card");
 
     const container =
         document.getElementById("previewEducation");
 
-    const cards =
-        document.querySelectorAll(
-            "#educationContainer .education-card"
-        );
-
     container.innerHTML = "";
 
-    let hasEducation = false;
+    if (!cards.length) {
+
+        container.innerHTML =
+            `<div class="empty-preview">Add your education details.</div>`;
+
+        return;
+    }
 
     cards.forEach(card => {
 
-        const type =
-            card.querySelector(".education-type")?.value;
+        const qualification =
+            card.querySelector(
+                ".education-qualification"
+            ).value;
 
-        if (!type) return;
+        let customQualification =
+            card.querySelector(
+                ".education-custom-qualification"
+            ).value.trim();
 
-        let html = "";
+        const institute =
+            card.querySelector(
+                ".education-institute"
+            ).value.trim();
 
-        if (type === "10th" || type === "12th") {
+        const board =
+            card.querySelector(
+                ".education-board"
+            ).value.trim();
 
-            const school =
-                card.querySelector(".edu-school")?.value.trim();
+        const passingYear =
+            card.querySelector(
+                ".education-passing-year"
+            ).value;
 
-            const boardSelect =
-                card.querySelector(".edu-board");
+        const score =
+            card.querySelector(
+                ".education-score"
+            ).value.trim();
 
-            let board =
-                boardSelect?.value || "";
+        let finalQualification =
+            qualification === "Other"
+                ? customQualification
+                : qualification;
 
-            if (board === "Other") {
-
-                board =
-                    card.querySelector(".edu-other-board")?.value.trim();
-            }
-
-            const year =
-                card.querySelector(".edu-year")?.value;
-
-            const score =
-                card.querySelector(".edu-score")?.value.trim();
-
-            if (!school && !board && !year && !score) return;
-
-            hasEducation = true;
-
-            html = `
-
-                <div class="resume-item">
-
-                    <div class="resume-item-title">
-                        ${escapeHtml(type === "10th"
-                            ? "10th / Secondary"
-                            : "12th / Intermediate")}
-                    </div>
-
-                    ${school
-                        ? `<div class="resume-item-subtitle">${escapeHtml(school)}</div>`
-                        : ""}
-
-                    <div class="resume-item-text">
-
-                        ${board
-                            ? `Board: ${escapeHtml(board)}`
-                            : ""}
-
-                        ${year
-                            ? ` • ${escapeHtml(year)}`
-                            : ""}
-
-                        ${score
-                            ? ` • ${escapeHtml(score)}`
-                            : ""}
-
-                    </div>
-
-                </div>
-            `;
+        if (
+            !finalQualification &&
+            !institute &&
+            !board &&
+            !passingYear &&
+            !score
+        ) {
+            return;
         }
 
-        else if (
-            type === "Diploma" ||
-            type === "Other"
+        let html = `
+            <div class="resume-item">
+
+                <div class="resume-item-title">
+                    ${escapeHtml(finalQualification || "Qualification")}
+                </div>
+
+                <div class="resume-item-subtitle">
+                    ${escapeHtml(institute)}
+                    ${board ? " • " + escapeHtml(board) : ""}
+                    ${passingYear ? " • " + escapeHtml(passingYear) : ""}
+                    ${score ? " • " + escapeHtml(score) : ""}
+                </div>
+        `;
+
+        if (
+            qualification === "Graduation" ||
+            qualification === "Post Graduation"
         ) {
 
             const course =
-                card.querySelector(".edu-course")?.value.trim();
-
-            const institute =
-                card.querySelector(".edu-institute")?.value.trim();
-
-            const university =
-                card.querySelector(".edu-university")?.value.trim();
-
-            const year =
-                card.querySelector(".edu-year")?.value;
-
-            const score =
-                card.querySelector(".edu-score")?.value.trim();
-
-            if (
-                !course &&
-                !institute &&
-                !university &&
-                !year &&
-                !score
-            ) return;
-
-            hasEducation = true;
-
-            html = `
-
-                <div class="resume-item">
-
-                    <div class="resume-item-title">
-                        ${escapeHtml(course || type)}
-                    </div>
-
-                    ${institute
-                        ? `<div class="resume-item-subtitle">${escapeHtml(institute)}</div>`
-                        : ""}
-
-                    <div class="resume-item-text">
-
-                        ${university
-                            ? `${escapeHtml(university)}`
-                            : ""}
-
-                        ${year
-                            ? ` • ${escapeHtml(year)}`
-                            : ""}
-
-                        ${score
-                            ? ` • ${escapeHtml(score)}`
-                            : ""}
-
-                    </div>
-
-                </div>
-            `;
-        }
-
-        else if (
-            type === "Graduation" ||
-            type === "Post Graduation"
-        ) {
-
-            const course =
-                card.querySelector(".edu-course")?.value.trim();
-
-            const institute =
-                card.querySelector(".edu-institute")?.value.trim();
+                card.querySelector(
+                    ".education-course"
+                ).value.trim();
 
             const university =
-                card.querySelector(".edu-university")?.value.trim();
+                card.querySelector(
+                    ".education-university"
+                ).value.trim();
 
             const status =
-                card.querySelector(".edu-status")?.value;
+                card.querySelector(
+                    ".education-status"
+                ).value;
 
             const startYear =
-                card.querySelector(".edu-start-year")?.value;
+                card.querySelector(
+                    ".education-start-year"
+                ).value;
 
             const completionYear =
-                card.querySelector(".edu-completion-year")?.value;
+                card.querySelector(
+                    ".education-completion-year"
+                ).value;
 
-            let semesters = [];
+            const details = [
+                course,
+                university,
+                status,
+                startYear && completionYear
+                    ? `${startYear} - ${completionYear}`
+                    : startYear || completionYear
+            ].filter(Boolean);
 
-            for (let i = 1; i <= 8; i++) {
-
-                const cgpa =
-                    card.querySelector(
-                        `.semester-cgpa-${i}`
-                    )?.value.trim();
-
-                const sgpa =
-                    card.querySelector(
-                        `.semester-sgpa-${i}`
-                    )?.value.trim();
-
-                if (cgpa || sgpa) {
-
-                    semesters.push({
-                        number: i,
-                        cgpa,
-                        sgpa
-                    });
-                }
-            }
-
-            if (
-                !course &&
-                !institute &&
-                !university &&
-                !status &&
-                !startYear &&
-                !completionYear &&
-                semesters.length === 0
-            ) return;
-
-            hasEducation = true;
-
-            html += `
-
-                <div class="resume-item">
-
-                    <div class="resume-item-title">
-                        ${escapeHtml(course || type)}
-                    </div>
-
-                    ${institute
-                        ? `<div class="resume-item-subtitle">${escapeHtml(institute)}</div>`
-                        : ""}
-
-                    <div class="resume-item-text">
-
-                        ${university
-                            ? `${escapeHtml(university)}`
-                            : ""}
-
-                        ${status
-                            ? ` • ${escapeHtml(status)}`
-                            : ""}
-
-                        ${startYear
-                            ? ` • ${escapeHtml(startYear)}`
-                            : ""}
-
-                        ${completionYear
-                            ? ` - ${escapeHtml(completionYear)}`
-                            : ""}
-
-                    </div>
-
-            `;
-
-            if (semesters.length) {
+            if (details.length) {
 
                 html += `
-
-                    <div class="resume-item-text mt-1">
-
-                        <strong>Semester Performance:</strong>
-
-                        ${semesters.map(item => {
-
-                            const values = [];
-
-                            if (item.cgpa) {
-                                values.push(
-                                    `CGPA ${escapeHtml(item.cgpa)}`
-                                );
-                            }
-
-                            if (item.sgpa) {
-                                values.push(
-                                    `SGPA/SGP ${escapeHtml(item.sgpa)}`
-                                );
-                            }
-
-                            return `
-                                Semester ${item.number}: ${values.join(", ")}
-                            `;
-
-                        }).join(" • ")}
-
+                    <div class="resume-item-text">
+                        ${escapeHtml(details.join(" • "))}
                     </div>
                 `;
             }
 
-            html += `</div>`;
+
+            const semesters = [];
+
+            card.querySelectorAll(".semester-cgpa")
+                .forEach(input => {
+
+                    const semester =
+                        input.dataset.semester;
+
+                    const cgpa =
+                        input.value.trim();
+
+                    const sgpaInput =
+                        card.querySelector(
+                            `.semester-sgpa[data-semester="${semester}"]`
+                        );
+
+                    const sgpa =
+                        sgpaInput
+                            ? sgpaInput.value.trim()
+                            : "";
+
+                    if (cgpa || sgpa) {
+
+                        semesters.push(
+                            `Semester ${semester}:` +
+                            `${cgpa ? " CGPA " + cgpa : ""}` +
+                            `${sgpa ? " | SGPA " + sgpa : ""}`
+                        );
+                    }
+                });
+
+            if (semesters.length) {
+
+                html += `
+                    <div class="resume-item-text">
+                        ${semesters.map(escapeHtml).join("<br>")}
+                    </div>
+                `;
+            }
         }
+
+        html += `</div>`;
 
         container.insertAdjacentHTML(
             "beforeend",
@@ -3094,370 +3033,290 @@ function renderEducationPreview() {
         );
     });
 
-    togglePreviewSection(
-        "previewEducationSection",
-        hasEducation
-    );
+    if (!container.innerHTML.trim()) {
+
+        container.innerHTML =
+            `<div class="empty-preview">Add your education details.</div>`;
+    }
 }
 
 
-/* =========================================================
-   SKILLS PREVIEW
-========================================================= */
+function updateSkillsPreview() {
 
-function renderSkillsPreview() {
+    const section =
+        document.getElementById("skillsSection");
 
     const container =
         document.getElementById("previewSkills");
 
     container.innerHTML = "";
 
-    const selected =
-        Array.from(
-            document.querySelectorAll(".skill-option:checked")
-        ).map(input => input.value);
+    if (!selectedSkills.length) {
 
-    const allSkills =
-        [...selected, ...customSkills];
+        section.classList.add("hidden");
 
-    allSkills.forEach(skill => {
+        return;
+    }
 
-        const span =
-            document.createElement("span");
+    section.classList.remove("hidden");
 
-        span.className =
-            "skill-tag";
+    selectedSkills.forEach(skill => {
 
-        span.textContent =
-            skill;
-
-        container.appendChild(span);
+        container.insertAdjacentHTML(
+            "beforeend",
+            `
+            <span class="resume-skill">
+                ${escapeHtml(skill)}
+            </span>
+            `
+        );
     });
-
-    togglePreviewSection(
-        "previewSkillsSection",
-        allSkills.length > 0
-    );
 }
 
 
-/* =========================================================
-   PROJECT PREVIEW
-========================================================= */
+function updateProjectsPreview() {
 
-function renderProjectsPreview() {
+    const cards =
+        document.querySelectorAll(".project-card");
+
+    const section =
+        document.getElementById("projectsSection");
 
     const container =
         document.getElementById("previewProjects");
 
-    const cards =
-        document.querySelectorAll(
-            "#projectContainer .project-card"
-        );
-
     container.innerHTML = "";
 
-    let hasProjects = false;
+    let hasData = false;
 
     cards.forEach(card => {
 
         const name =
-            card.querySelector(".project-name")?.value.trim();
+            card.querySelector(".project-name")
+                .value.trim();
 
         const tech =
-            card.querySelector(".project-tech")?.value.trim();
+            card.querySelector(".project-tech")
+                .value.trim();
 
         const description =
-            card.querySelector(".project-description")?.value.trim();
+            card.querySelector(".project-description")
+                .value.trim();
 
-        const link =
-            card.querySelector(".project-link")?.value.trim();
+        if (!name && !tech && !description) return;
 
-        if (!name && !tech && !description && !link) return;
-
-        hasProjects = true;
+        hasData = true;
 
         container.insertAdjacentHTML(
             "beforeend",
             `
+            <div class="resume-item">
 
-                <div class="resume-item">
-
-                    ${name
-                        ? `<div class="resume-item-title">${escapeHtml(name)}</div>`
-                        : ""}
-
-                    ${tech
-                        ? `<div class="resume-item-subtitle">${escapeHtml(tech)}</div>`
-                        : ""}
-
-                    ${description
-                        ? `<div class="resume-item-text">${escapeHtml(description)}</div>`
-                        : ""}
-
-                    ${link
-                        ? `<div class="link-text">${escapeHtml(link)}</div>`
-                        : ""}
-
+                <div class="resume-item-title">
+                    ${escapeHtml(name || "Project")}
                 </div>
+
+                ${
+                    tech
+                        ? `<div class="resume-item-subtitle">
+                            ${escapeHtml(tech)}
+                           </div>`
+                        : ""
+                }
+
+                ${
+                    description
+                        ? `<div class="resume-item-text">
+                            ${escapeHtml(description)}
+                           </div>`
+                        : ""
+                }
+
+            </div>
             `
         );
     });
 
-    togglePreviewSection(
-        "previewProjectsSection",
-        hasProjects
+    section.classList.toggle(
+        "hidden",
+        !hasData
     );
 }
 
 
-/* =========================================================
-   EXPERIENCE PREVIEW
-========================================================= */
+function updateExperiencePreview() {
 
-function renderExperiencePreview() {
+    const cards =
+        document.querySelectorAll(".experience-card");
+
+    const section =
+        document.getElementById("experienceSection");
 
     const container =
         document.getElementById("previewExperience");
 
-    const cards =
-        document.querySelectorAll(
-            "#experienceContainer .experience-card"
-        );
-
     container.innerHTML = "";
 
-    let hasExperience = false;
+    let hasData = false;
 
     cards.forEach(card => {
 
         const type =
-            card.querySelector(".experience-type")?.value;
+            card.querySelector(".experience-type")
+                .value;
 
-        const title =
-            card.querySelector(".experience-title")?.value.trim();
+        const organization =
+            card.querySelector(".experience-organization")
+                .value.trim();
 
-        const company =
-            card.querySelector(".experience-company")?.value.trim();
+        const role =
+            card.querySelector(".experience-role")
+                .value.trim();
 
-        const start =
-            card.querySelector(".experience-start")?.value;
-
-        const end =
-            card.querySelector(".experience-end")?.value;
+        const duration =
+            card.querySelector(".experience-duration")
+                .value.trim();
 
         const description =
-            card.querySelector(".experience-description")?.value.trim();
+            card.querySelector(".experience-description")
+                .value.trim();
 
         if (
-            !type &&
-            !title &&
-            !company &&
-            !start &&
-            !end &&
+            !organization &&
+            !role &&
+            !duration &&
             !description
         ) return;
 
-        hasExperience = true;
-
-        let dates = "";
-
-        if (start) dates += formatMonth(start);
-
-        if (end) {
-            dates += ` - ${formatMonth(end)}`;
-        }
+        hasData = true;
 
         container.insertAdjacentHTML(
             "beforeend",
             `
+            <div class="resume-item">
 
-                <div class="resume-item">
-
-                    <div class="resume-item-title">
-
-                        ${escapeHtml(title || type || "Experience")}
-
-                    </div>
-
-                    <div class="resume-item-subtitle">
-
-                        ${type
-                            ? escapeHtml(type)
-                            : ""}
-
-                        ${company
-                            ? ` • ${escapeHtml(company)}`
-                            : ""}
-
-                        ${dates
-                            ? ` • ${escapeHtml(dates)}`
-                            : ""}
-
-                    </div>
-
-                    ${description
-                        ? `<div class="resume-item-text">${escapeHtml(description)}</div>`
-                        : ""}
-
+                <div class="resume-item-title">
+                    ${escapeHtml(role || type)}
                 </div>
+
+                <div class="resume-item-subtitle">
+                    ${escapeHtml(organization)}
+                    ${duration ? " • " + escapeHtml(duration) : ""}
+                    ${type ? " • " + escapeHtml(type) : ""}
+                </div>
+
+                ${
+                    description
+                        ? `<div class="resume-item-text">
+                            ${escapeHtml(description)}
+                           </div>`
+                        : ""
+                }
+
+            </div>
             `
         );
     });
 
-    togglePreviewSection(
-        "previewExperienceSection",
-        hasExperience
-    );
-}
-
-function formatMonth(value) {
-
-    if (!value) return "";
-
-    const parts =
-        value.split("-");
-
-    if (parts.length !== 2) return value;
-
-    const year =
-        Number(parts[0]);
-
-    const month =
-        Number(parts[1]);
-
-    const date =
-        new Date(year, month - 1, 1);
-
-    return date.toLocaleString(
-        "en-US",
-        {
-            month: "short",
-            year: "numeric"
-        }
+    section.classList.toggle(
+        "hidden",
+        !hasData
     );
 }
 
 
-/* =========================================================
-   CERTIFICATION PREVIEW
-========================================================= */
+function updateCertificationPreview() {
 
-function renderCertificationPreview() {
+    const cards =
+        document.querySelectorAll(".certification-card");
+
+    const section =
+        document.getElementById("certificationsSection");
 
     const container =
         document.getElementById("previewCertifications");
 
-    const cards =
-        document.querySelectorAll(
-            "#certificationContainer .certification-card"
-        );
-
     container.innerHTML = "";
 
-    let hasCertifications = false;
+    let hasData = false;
 
     cards.forEach(card => {
 
         const name =
-            card.querySelector(".certification-name")?.value.trim();
+            card.querySelector(".certification-name")
+                .value.trim();
 
-        const org =
-            card.querySelector(".certification-org")?.value.trim();
+        const organization =
+            card.querySelector(".certification-org")
+                .value.trim();
 
         const year =
-            card.querySelector(".certification-year")?.value;
+            card.querySelector(".certification-year")
+                .value;
 
-        if (!name && !org && !year) return;
+        if (!name && !organization && !year) return;
 
-        hasCertifications = true;
+        hasData = true;
 
         container.insertAdjacentHTML(
             "beforeend",
             `
+            <div class="resume-item">
 
-                <div class="resume-item">
-
-                    ${name
-                        ? `<div class="resume-item-title">${escapeHtml(name)}</div>`
-                        : ""}
-
-                    <div class="resume-item-text">
-
-                        ${org
-                            ? escapeHtml(org)
-                            : ""}
-
-                        ${year
-                            ? ` • ${escapeHtml(year)}`
-                            : ""}
-
-                    </div>
-
+                <div class="resume-item-title">
+                    ${escapeHtml(name || "Certification")}
                 </div>
+
+                <div class="resume-item-subtitle">
+                    ${escapeHtml(organization)}
+                    ${year ? " • " + escapeHtml(year) : ""}
+                </div>
+
+            </div>
             `
         );
     });
 
-    togglePreviewSection(
-        "previewCertificationsSection",
-        hasCertifications
+    section.classList.toggle(
+        "hidden",
+        !hasData
     );
 }
 
 
-/* =========================================================
-   LANGUAGE PREVIEW
-========================================================= */
+function updateLanguagesPreview() {
 
-function renderLanguagesPreview() {
+    const section =
+        document.getElementById("languagesSection");
 
     const container =
         document.getElementById("previewLanguages");
 
     container.innerHTML = "";
 
-    const selected =
-        Array.from(
-            document.querySelectorAll(
-                ".language-option:checked"
-            )
-        ).map(input => input.value);
+    if (!selectedLanguages.length) {
 
-    const allLanguages =
-        [...selected, ...customLanguages];
+        section.classList.add("hidden");
 
-    allLanguages.forEach(language => {
+        return;
+    }
 
-        const span =
-            document.createElement("span");
+    section.classList.remove("hidden");
 
-        span.className =
-            "skill-tag";
-
-        span.textContent =
-            language;
-
-        container.appendChild(span);
-    });
-
-    togglePreviewSection(
-        "previewLanguagesSection",
-        allLanguages.length > 0
-    );
+    container.innerHTML =
+        selectedLanguages
+            .map(language => escapeHtml(language))
+            .join(" • ");
 }
 
 
-/* =========================================================
-   LINKS PREVIEW
-========================================================= */
+function updateLinksPreview() {
 
-function renderLinksPreview() {
+    const section =
+        document.getElementById("linksSection");
 
     const container =
         document.getElementById("previewLinks");
-
-    container.innerHTML = "";
 
     const links = [
         {
@@ -3471,59 +3330,151 @@ function renderLinksPreview() {
         {
             name: "Portfolio",
             value: document.getElementById("portfolio").value.trim()
+        },
+        {
+            name: "Other",
+            value: document.getElementById("otherLink").value.trim()
         }
-    ];
+    ].filter(item => item.value);
 
-    const filled =
-        links.filter(link => link.value);
+    container.innerHTML = "";
 
-    filled.forEach(link => {
+    if (!links.length) {
+
+        section.classList.add("hidden");
+
+        return;
+    }
+
+    section.classList.remove("hidden");
+
+    links.forEach(link => {
 
         container.insertAdjacentHTML(
             "beforeend",
             `
-                <div class="link-text mb-1">
-                    <strong>${escapeHtml(link.name)}:</strong>
-                    ${escapeHtml(link.value)}
-                </div>
+            <div class="resume-item-text">
+                <strong>${escapeHtml(link.name)}:</strong>
+                ${escapeHtml(link.value)}
+            </div>
             `
         );
     });
+}
 
-    togglePreviewSection(
-        "previewLinksSection",
-        filled.length > 0
-    );
+
+/* =========================================================
+   PRINT / PDF
+   ========================================================= */
+
+function printResume() {
+
+    const name =
+        document.getElementById("fullName")
+            .value.trim();
+
+    if (!name) {
+
+        alert("Please enter your full name before printing.");
+
+        document
+            .getElementById("fullName")
+            .focus();
+
+        return;
+    }
+
+    window.print();
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+function resetResume() {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to clear the entire resume?"
+        );
+
+    if (!confirmed) return;
+
+    document
+        .querySelectorAll(
+            "#fullName, #email, #phone, #city, #pincode, #professionalTitle, #summary, #linkedin, #github, #portfolio, #otherLink"
+        )
+        .forEach(input => {
+            input.value = "";
+        });
+
+    document.getElementById("state").value = "";
+
+    document.getElementById("district").innerHTML =
+        `<option value="">Select District</option>`;
+
+    document.getElementById("district").disabled = true;
+
+    document.getElementById("educationContainer").innerHTML = "";
+    document.getElementById("projectsContainer").innerHTML = "";
+    document.getElementById("experienceContainer").innerHTML = "";
+    document.getElementById("certificationsContainer").innerHTML = "";
+
+    selectedSkills = [];
+    selectedLanguages = [];
+
+    removePhoto();
+
+    renderSkillOptions();
+    renderSelectedSkills();
+
+    renderLanguageOptions();
+    renderSelectedLanguages();
+
+    addEducation();
+
+    updatePreview();
 }
 
 
 /* =========================================================
    INITIALIZATION
-========================================================= */
+   ========================================================= */
 
-loadStates();
+document.addEventListener("DOMContentLoaded", function() {
 
-addEducation();
+    loadStates();
 
-attachDynamicListeners();
+    renderSkillOptions();
+    renderSelectedSkills();
 
-document.querySelectorAll(
-    "input, textarea, select"
-).forEach(element => {
+    renderLanguageOptions();
+    renderSelectedLanguages();
 
-    element.addEventListener(
-        "input",
-        updatePreview
-    );
+    addEducation();
 
-    element.addEventListener(
-        "change",
-        updatePreview
-    );
+    document
+        .getElementById("state")
+        .addEventListener(
+            "change",
+            loadDistricts
+        );
+
+    document
+        .querySelectorAll(
+            "#fullName, #email, #phone, #city, #pincode, #professionalTitle, #summary, #linkedin, #github, #portfolio, #otherLink"
+        )
+        .forEach(element => {
+
+            element.addEventListener(
+                "input",
+                updatePreview
+            );
+        });
+
+    updatePreview();
 });
-
-updatePreview();
-
 </script>
 
 </body>
