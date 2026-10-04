@@ -1,1155 +1,161 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Professional Photo Editor - Toolora</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-    <link rel="stylesheet" href="css/photo-editor.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>Toolora - Professional Photo Editor</title>
+<link rel="stylesheet" href="css/photo-editor.css">
 </head>
 
 <body>
-
-<div class="editor-app">
-
-    <!-- HEADER -->
-    <header class="editor-header">
-
-        <div class="header-left">
-            <a href="index.html" class="brand">Toolora</a>
-
-            <span class="header-divider"></span>
-
-            <span class="page-title">Professional Photo Editor</span>
-        </div>
-
-        <div class="header-actions">
-
-            <button id="uploadTopBtn" class="header-btn">
-                <i class="fa-solid fa-upload"></i>
-                <span>Open</span>
-            </button>
-
-            <button id="undoBtn" class="header-icon" title="Undo">
-                <i class="fa-solid fa-rotate-left"></i>
-            </button>
-
-            <button id="redoBtn" class="header-icon" title="Redo">
-                <i class="fa-solid fa-rotate-right"></i>
-            </button>
-
-            <button id="beforeAfterBtn" class="header-btn">
-                <i class="fa-solid fa-eye"></i>
-                <span>Before</span>
-            </button>
-
-            <a href="index.html" class="back-home">
-                <i class="fa-solid fa-arrow-left"></i>
-                Home
-            </a>
-
-        </div>
-
-    </header>
-
-
-    <!-- MAIN WORKSPACE -->
-    <main class="workspace">
-
-        <!-- PREVIEW AREA -->
-        <section class="preview-section">
-
-            <div class="preview-toolbar">
-
-                <div class="preview-info">
-                    <span id="imageName">No photo selected</span>
-                    <span id="imageDimensions"></span>
-                </div>
-
-                <div class="preview-actions">
-
-                    <button id="zoomOutBtn" class="small-icon">
-                        <i class="fa-solid fa-minus"></i>
-                    </button>
-
-                    <span id="zoomValue">Fit</span>
-
-                    <button id="zoomInBtn" class="small-icon">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-
-                    <button id="fitBtn" class="small-icon">
-                        <i class="fa-solid fa-expand"></i>
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div id="canvasStage" class="canvas-stage">
-
-                <div id="emptyState" class="empty-state">
-
-                    <div class="empty-icon">
-                        <i class="fa-regular fa-image"></i>
-                    </div>
-
-                    <h2>Start Editing</h2>
-
-                    <p>
-                        Upload a photo to begin professional editing.
-                    </p>
-
-                    <button id="uploadMainBtn" class="primary-btn">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        Upload Photo
-                    </button>
-
-                    <span class="supported-text">
-                        JPG, PNG, WebP
-                    </span>
-
-                </div>
-
-                <canvas id="photoCanvas"></canvas>
-
-                <canvas id="overlayCanvas"></canvas>
-
-                <div id="loadingOverlay" class="loading-overlay">
-                    <div class="loader"></div>
-                    <span>Processing...</span>
-                </div>
-
-            </div>
-
-
-            <div class="preview-bottom">
-
-                <div id="activeToolName">
-                    Ready
-                </div>
-
-                <div class="preview-status">
-                    <span id="historyStatus">Original</span>
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- EDITOR PANEL -->
-        <aside class="editor-panel">
-
-            <!-- TOOL NAVIGATION -->
-            <nav class="tool-navigation" id="toolNavigation">
-
-                <button class="tool-tab active" data-tool="light">
-                    <i class="fa-solid fa-sun"></i>
-                    <span>Light</span>
-                </button>
-
-                <button class="tool-tab" data-tool="color">
-                    <i class="fa-solid fa-palette"></i>
-                    <span>Color</span>
-                </button>
-
-                <button class="tool-tab" data-tool="effects">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Effects</span>
-                </button>
-
-                <button class="tool-tab" data-tool="detail">
-                    <i class="fa-solid fa-circle-half-stroke"></i>
-                    <span>Detail</span>
-                </button>
-
-                <button class="tool-tab" data-tool="crop">
-                    <i class="fa-solid fa-crop-simple"></i>
-                    <span>Crop</span>
-                </button>
-
-                <button class="tool-tab" data-tool="presets">
-                    <i class="fa-solid fa-sliders"></i>
-                    <span>Presets</span>
-                </button>
-
-                <button class="tool-tab" data-tool="profiles">
-                    <i class="fa-solid fa-layer-group"></i>
-                    <span>Profiles</span>
-                </button>
-
-                <button class="tool-tab" data-tool="mask">
-                    <i class="fa-solid fa-mask-face"></i>
-                    <span>Mask</span>
-                </button>
-
-                <button class="tool-tab" data-tool="remove">
-                    <i class="fa-solid fa-eraser"></i>
-                    <span>Remove</span>
-                </button>
-
-                <button class="tool-tab" data-tool="blur">
-                    <i class="fa-solid fa-droplet"></i>
-                    <span>Blur</span>
-                </button>
-
-                <button class="tool-tab" data-tool="optics">
-                    <i class="fa-solid fa-camera"></i>
-                    <span>Optics</span>
-                </button>
-
-            </nav>
-
-
-            <!-- TOOL CONTENT -->
-            <div class="tool-content">
-
-
-                <!-- LIGHT -->
-                <section class="tool-panel active" data-panel="light">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Light</h2>
-                            <p>Adjust overall tonal range</p>
-                        </div>
-
-                        <button class="reset-tool" data-reset="light">
-                            Reset
-                        </button>
-                    </div>
-
-                    <div class="histogram-wrap">
-                        <canvas id="histogramCanvas"></canvas>
-                    </div>
-
-                    <div class="slider-list">
-
-                        <div class="slider-row">
-                            <label>Exposure</label>
-                            <output id="exposureValue">0</output>
-                            <input type="range" id="exposure" min="-4" max="4" step="0.01" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Contrast</label>
-                            <output id="contrastValue">0</output>
-                            <input type="range" id="contrast" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Highlights</label>
-                            <output id="highlightsValue">0</output>
-                            <input type="range" id="highlights" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Shadows</label>
-                            <output id="shadowsValue">0</output>
-                            <input type="range" id="shadows" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Whites</label>
-                            <output id="whitesValue">0</output>
-                            <input type="range" id="whites" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Blacks</label>
-                            <output id="blacksValue">0</output>
-                            <input type="range" id="blacks" min="-100" max="100" value="0">
-                        </div>
-
-                    </div>
-
-                    <button id="autoAdjustBtn" class="secondary-wide-btn">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        Auto Light & Color
-                    </button>
-
-                </section>
-
-
-                <!-- COLOR -->
-                <section class="tool-panel" data-panel="color">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Color</h2>
-                            <p>White balance and color intensity</p>
-                        </div>
-
-                        <button class="reset-tool" data-reset="color">
-                            Reset
-                        </button>
-                    </div>
-
-                    <div class="slider-list">
-
-                        <div class="slider-row">
-                            <label>Temperature</label>
-                            <output id="temperatureValue">0</output>
-                            <input type="range" id="temperature" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Tint</label>
-                            <output id="tintValue">0</output>
-                            <input type="range" id="tint" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Vibrance</label>
-                            <output id="vibranceValue">0</output>
-                            <input type="range" id="vibrance" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Saturation</label>
-                            <output id="saturationValue">0</output>
-                            <input type="range" id="saturation" min="-100" max="100" value="0">
-                        </div>
-
-                    </div>
-
-
-                    <div class="subsection">
-
-                        <div class="subsection-title">
-                            Color Mixer
-                        </div>
-
-                        <div class="color-channel-tabs" id="colorChannelTabs">
-
-                            <button class="color-dot active" data-color="red">R</button>
-                            <button class="color-dot" data-color="orange">O</button>
-                            <button class="color-dot" data-color="yellow">Y</button>
-                            <button class="color-dot" data-color="green">G</button>
-                            <button class="color-dot" data-color="aqua">A</button>
-                            <button class="color-dot" data-color="blue">B</button>
-                            <button class="color-dot" data-color="purple">P</button>
-                            <button class="color-dot" data-color="magenta">M</button>
-
-                        </div>
-
-                        <div class="slider-list">
-
-                            <div class="slider-row">
-                                <label>Hue</label>
-                                <output id="mixerHueValue">0</output>
-                                <input type="range" id="mixerHue" min="-100" max="100" value="0">
-                            </div>
-
-                            <div class="slider-row">
-                                <label>Saturation</label>
-                                <output id="mixerSaturationValue">0</output>
-                                <input type="range" id="mixerSaturation" min="-100" max="100" value="0">
-                            </div>
-
-                            <div class="slider-row">
-                                <label>Luminance</label>
-                                <output id="mixerLuminanceValue">0</output>
-                                <input type="range" id="mixerLuminance" min="-100" max="100" value="0">
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="subsection">
-
-                        <div class="subsection-title">
-                            Color Grading
-                        </div>
-
-                        <div class="grading-row">
-
-                            <label>Shadows</label>
-
-                            <input type="range"
-                                   id="shadowHue"
-                                   min="0"
-                                   max="360"
-                                   value="220">
-
-                            <input type="range"
-                                   id="shadowSat"
-                                   min="0"
-                                   max="100"
-                                   value="0">
-
-                        </div>
-
-                        <div class="grading-row">
-
-                            <label>Midtones</label>
-
-                            <input type="range"
-                                   id="midHue"
-                                   min="0"
-                                   max="360"
-                                   value="45">
-
-                            <input type="range"
-                                   id="midSat"
-                                   min="0"
-                                   max="100"
-                                   value="0">
-
-                        </div>
-
-                        <div class="grading-row">
-
-                            <label>Highlights</label>
-
-                            <input type="range"
-                                   id="highlightHue"
-                                   min="0"
-                                   max="360"
-                                   value="45">
-
-                            <input type="range"
-                                   id="highlightSat"
-                                   min="0"
-                                   max="100"
-                                   value="0">
-
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Blending</label>
-                            <output id="gradingBlendingValue">50</output>
-                            <input type="range" id="gradingBlending" min="0" max="100" value="50">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Balance</label>
-                            <output id="gradingBalanceValue">0</output>
-                            <input type="range" id="gradingBalance" min="-100" max="100" value="0">
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- EFFECTS -->
-                <section class="tool-panel" data-panel="effects">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Effects</h2>
-                            <p>Texture, atmosphere and film effects</p>
-                        </div>
-
-                        <button class="reset-tool" data-reset="effects">
-                            Reset
-                        </button>
-                    </div>
-
-                    <div class="slider-list">
-
-                        <div class="slider-row">
-                            <label>Texture</label>
-                            <output id="textureValue">0</output>
-                            <input type="range" id="texture" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Clarity</label>
-                            <output id="clarityValue">0</output>
-                            <input type="range" id="clarity" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Dehaze</label>
-                            <output id="dehazeValue">0</output>
-                            <input type="range" id="dehaze" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Vignette</label>
-                            <output id="vignetteValue">0</output>
-                            <input type="range" id="vignette" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Midpoint</label>
-                            <output id="vignetteMidpointValue">50</output>
-                            <input type="range" id="vignetteMidpoint" min="0" max="100" value="50">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Feather</label>
-                            <output id="vignetteFeatherValue">50</output>
-                            <input type="range" id="vignetteFeather" min="0" max="100" value="50">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Roundness</label>
-                            <output id="vignetteRoundnessValue">0</output>
-                            <input type="range" id="vignetteRoundness" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Grain</label>
-                            <output id="grainValue">0</output>
-                            <input type="range" id="grain" min="0" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Grain Size</label>
-                            <output id="grainSizeValue">25</output>
-                            <input type="range" id="grainSize" min="0" max="100" value="25">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Roughness</label>
-                            <output id="grainRoughnessValue">50</output>
-                            <input type="range" id="grainRoughness" min="0" max="100" value="50">
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- DETAIL -->
-                <section class="tool-panel" data-panel="detail">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Detail</h2>
-                            <p>Sharpening and noise control</p>
-                        </div>
-
-                        <button class="reset-tool" data-reset="detail">
-                            Reset
-                        </button>
-                    </div>
-
-                    <div class="slider-list">
-
-                        <div class="slider-row">
-                            <label>Sharpening</label>
-                            <output id="sharpeningValue">0</output>
-                            <input type="range" id="sharpening" min="0" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Radius</label>
-                            <output id="radiusValue">1</output>
-                            <input type="range" id="radius" min="0.5" max="3" step="0.1" value="1">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Detail</label>
-                            <output id="detailValue">25</output>
-                            <input type="range" id="detail" min="0" max="100" value="25">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Masking</label>
-                            <output id="sharpenMaskingValue">0</output>
-                            <input type="range" id="sharpenMasking" min="0" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Noise Reduction</label>
-                            <output id="noiseReductionValue">0</output>
-                            <input type="range" id="noiseReduction" min="0" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Noise Detail</label>
-                            <output id="noiseDetailValue">50</output>
-                            <input type="range" id="noiseDetail" min="0" max="100" value="50">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Noise Contrast</label>
-                            <output id="noiseContrastValue">0</output>
-                            <input type="range" id="noiseContrast" min="0" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Color Noise</label>
-                            <output id="colorNoiseReductionValue">0</output>
-                            <input type="range" id="colorNoiseReduction" min="0" max="100" value="0">
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- CROP -->
-                <section class="tool-panel" data-panel="crop">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Crop & Transform</h2>
-                            <p>Composition and geometry</p>
-                        </div>
-
-                        <button class="reset-tool" data-reset="crop">
-                            Reset
-                        </button>
-                    </div>
-
-                    <div class="aspect-grid">
-
-                        <button data-aspect="free" class="aspect-btn active">
-                            Free
-                        </button>
-
-                        <button data-aspect="original" class="aspect-btn">
-                            Original
-                        </button>
-
-                        <button data-aspect="1:1" class="aspect-btn">
-                            1:1
-                        </button>
-
-                        <button data-aspect="4:5" class="aspect-btn">
-                            4:5
-                        </button>
-
-                        <button data-aspect="3:4" class="aspect-btn">
-                            3:4
-                        </button>
-
-                        <button data-aspect="4:3" class="aspect-btn">
-                            4:3
-                        </button>
-
-                        <button data-aspect="16:9" class="aspect-btn">
-                            16:9
-                        </button>
-
-                        <button data-aspect="9:16" class="aspect-btn">
-                            9:16
-                        </button>
-
-                    </div>
-
-
-                    <div class="transform-grid">
-
-                        <button id="rotateLeftBtn">
-                            <i class="fa-solid fa-rotate-left"></i>
-                            Rotate
-                        </button>
-
-                        <button id="rotateRightBtn">
-                            <i class="fa-solid fa-rotate-right"></i>
-                            Rotate
-                        </button>
-
-                        <button id="flipHBtn">
-                            <i class="fa-solid fa-arrows-left-right"></i>
-                            Flip H
-                        </button>
-
-                        <button id="flipVBtn">
-                            <i class="fa-solid fa-arrows-up-down"></i>
-                            Flip V
-                        </button>
-
-                    </div>
-
-
-                    <div class="slider-row">
-                        <label>Straighten</label>
-                        <output id="straightenValue">0°</output>
-                        <input type="range" id="straighten" min="-45" max="45" step="0.1" value="0">
-                    </div>
-
-
-                    <button id="applyCropBtn" class="primary-wide-btn">
-                        Apply Crop
-                    </button>
-
-                </section>
-
-
-                <!-- PRESETS -->
-                <section class="tool-panel" data-panel="presets">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Presets</h2>
-                            <p>One-click creative looks</p>
-                        </div>
-
-                        <button id="resetPresetBtn" class="reset-tool">
-                            Reset
-                        </button>
-                    </div>
-
-                    <div class="preset-grid">
-
-                        <button class="preset-card" data-preset="clean">
-                            <strong>Clean</strong>
-                            <span>Natural</span>
-                        </button>
-
-                        <button class="preset-card" data-preset="warm">
-                            <strong>Warm</strong>
-                            <span>Golden</span>
-                        </button>
-
-                        <button class="preset-card" data-preset="cool">
-                            <strong>Cool</strong>
-                            <span>Modern</span>
-                        </button>
-
-                        <button class="preset-card" data-preset="cinematic">
-                            <strong>Cinematic</strong>
-                            <span>Moody</span>
-                        </button>
-
-                        <button class="preset-card" data-preset="portrait">
-                            <strong>Portrait</strong>
-                            <span>Soft Skin</span>
-                        </button>
-
-                        <button class="preset-card" data-preset="matte">
-                            <strong>Matte</strong>
-                            <span>Fade</span>
-                        </button>
-
-                        <button class="preset-card" data-preset="vivid">
-                            <strong>Vivid</strong>
-                            <span>Color</span>
-                        </button>
-
-                        <button class="preset-card" data-preset="bw">
-                            <strong>B&W</strong>
-                            <span>Monochrome</span>
-                        </button>
-
-                    </div>
-
-
-                    <div class="slider-row preset-amount">
-
-                        <label>Amount</label>
-
-                        <output id="presetAmountValue">100</output>
-
-                        <input type="range"
-                               id="presetAmount"
-                               min="0"
-                               max="100"
-                               value="100">
-
-                    </div>
-
-                </section>
-
-
-                <!-- PROFILES -->
-                <section class="tool-panel" data-panel="profiles">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Profiles</h2>
-                            <p>Change the overall rendering character</p>
-                        </div>
-                    </div>
-
-                    <div class="profile-grid">
-
-                        <button class="profile-card active" data-profile="natural">
-                            Natural
-                        </button>
-
-                        <button class="profile-card" data-profile="neutral">
-                            Neutral
-                        </button>
-
-                        <button class="profile-card" data-profile="vivid">
-                            Vivid
-                        </button>
-
-                        <button class="profile-card" data-profile="modern">
-                            Modern
-                        </button>
-
-                        <button class="profile-card" data-profile="film">
-                            Film
-                        </button>
-
-                        <button class="profile-card" data-profile="monochrome">
-                            Monochrome
-                        </button>
-
-                    </div>
-
-                </section>
-
-
-                <!-- MASK -->
-                <section class="tool-panel" data-panel="mask">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Masking</h2>
-                            <p>Selective local adjustments</p>
-                        </div>
-
-                        <button id="clearMaskBtn" class="reset-tool">
-                            Clear
-                        </button>
-                    </div>
-
-
-                    <div class="notice-box">
-                        <i class="fa-solid fa-circle-info"></i>
-
-                        <span>
-                            Manual masking works directly in your browser.
-                            AI subject and sky detection can be connected later
-                            to an external vision model.
-                        </span>
-                    </div>
-
-
-                    <div class="mask-tools">
-
-                        <button class="mask-tool active" data-mask="brush">
-                            Brush
-                        </button>
-
-                        <button class="mask-tool" data-mask="linear">
-                            Linear
-                        </button>
-
-                        <button class="mask-tool" data-mask="radial">
-                            Radial
-                        </button>
-
-                        <button class="mask-tool" data-mask="color">
-                            Color Range
-                        </button>
-
-                        <button class="mask-tool" data-mask="luminance">
-                            Luminance
-                        </button>
-
-                    </div>
-
-
-                    <div id="brushControls">
-
-                        <div class="slider-row">
-                            <label>Brush Size</label>
-                            <output id="brushSizeValue">80</output>
-                            <input type="range" id="brushSize" min="5" max="300" value="80">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Feather</label>
-                            <output id="brushFeatherValue">50</output>
-                            <input type="range" id="brushFeather" min="0" max="100" value="50">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Flow</label>
-                            <output id="brushFlowValue">100</output>
-                            <input type="range" id="brushFlow" min="1" max="100" value="100">
-                        </div>
-
-                    </div>
-
-
-                    <div class="local-adjustments">
-
-                        <div class="subsection-title">
-                            Local Light
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Exposure</label>
-                            <output id="maskExposureValue">0</output>
-                            <input type="range" id="maskExposure" min="-4" max="4" step="0.01" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Contrast</label>
-                            <output id="maskContrastValue">0</output>
-                            <input type="range" id="maskContrast" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Highlights</label>
-                            <output id="maskHighlightsValue">0</output>
-                            <input type="range" id="maskHighlights" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Shadows</label>
-                            <output id="maskShadowsValue">0</output>
-                            <input type="range" id="maskShadows" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="subsection-title">
-                            Local Color
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Temperature</label>
-                            <output id="maskTemperatureValue">0</output>
-                            <input type="range" id="maskTemperature" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Tint</label>
-                            <output id="maskTintValue">0</output>
-                            <input type="range" id="maskTint" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Saturation</label>
-                            <output id="maskSaturationValue">0</output>
-                            <input type="range" id="maskSaturation" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="subsection-title">
-                            Local Effects
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Texture</label>
-                            <output id="maskTextureValue">0</output>
-                            <input type="range" id="maskTexture" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Clarity</label>
-                            <output id="maskClarityValue">0</output>
-                            <input type="range" id="maskClarity" min="-100" max="100" value="0">
-                        </div>
-
-                        <div class="slider-row">
-                            <label>Dehaze</label>
-                            <output id="maskDehazeValue">0</output>
-                            <input type="range" id="maskDehaze" min="-100" max="100" value="0">
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- REMOVE -->
-                <section class="tool-panel" data-panel="remove">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Remove</h2>
-                            <p>Brush-based object and blemish removal</p>
-                        </div>
-
-                        <button id="clearRemoveBtn" class="reset-tool">
-                            Clear
-                        </button>
-                    </div>
-
-                    <div class="notice-box">
-                        <i class="fa-solid fa-circle-info"></i>
-                        Paint over a small unwanted area and Toolora will
-                        use surrounding pixels for a browser-based heal effect.
-                    </div>
-
-                    <div class="slider-row">
-                        <label>Brush Size</label>
-                        <output id="removeSizeValue">50</output>
-                        <input type="range" id="removeSize" min="5" max="300" value="50">
-                    </div>
-
-                    <div class="slider-row">
-                        <label>Feather</label>
-                        <output id="removeFeatherValue">60</output>
-                        <input type="range" id="removeFeather" min="0" max="100" value="60">
-                    </div>
-
-                    <button id="applyRemoveBtn" class="primary-wide-btn">
-                        Apply Remove
-                    </button>
-
-                </section>
-
-
-                <!-- BLUR -->
-                <section class="tool-panel" data-panel="blur">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Lens Blur</h2>
-                            <p>Create a depth-inspired focus effect</p>
-                        </div>
-
-                        <button class="reset-tool" data-reset="blur">
-                            Reset
-                        </button>
-                    </div>
-
-                    <div class="slider-row">
-                        <label>Blur Amount</label>
-                        <output id="blurAmountValue">0</output>
-                        <input type="range" id="blurAmount" min="0" max="30" value="0">
-                    </div>
-
-                    <div class="slider-row">
-                        <label>Focus X</label>
-                        <output id="blurFocusXValue">50</output>
-                        <input type="range" id="blurFocusX" min="0" max="100" value="50">
-                    </div>
-
-                    <div class="slider-row">
-                        <label>Focus Y</label>
-                        <output id="blurFocusYValue">50</output>
-                        <input type="range" id="blurFocusY" min="0" max="100" value="50">
-                    </div>
-
-                    <div class="slider-row">
-                        <label>Focus Radius</label>
-                        <output id="blurFocusRadiusValue">35</output>
-                        <input type="range" id="blurFocusRadius" min="5" max="100" value="35">
-                    </div>
-
-                </section>
-
-
-                <!-- OPTICS -->
-                <section class="tool-panel" data-panel="optics">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Optics</h2>
-                            <p>Browser-safe lens corrections</p>
-                        </div>
-
-                        <button class="reset-tool" data-reset="optics">
-                            Reset
-                        </button>
-                    </div>
-
-                    <label class="toggle-row">
-                        <span>
-                            <strong>Lens Correction</strong>
-                            <small>Correct edge brightness and distortion</small>
-                        </span>
-
-                        <input type="checkbox" id="lensCorrection">
-                    </label>
-
-                    <label class="toggle-row">
-                        <span>
-                            <strong>Chromatic Aberration</strong>
-                            <small>Reduce visible color fringing</small>
-                        </span>
-
-                        <input type="checkbox" id="chromaticAberration">
-                    </label>
-
-                    <div class="slider-row">
-                        <label>Defringe</label>
-                        <output id="defringeValue">0</output>
-                        <input type="range" id="defringe" min="0" max="100" value="0">
-                    </div>
-
-                    <div class="slider-row">
-                        <label>Vignette Correction</label>
-                        <output id="lensVignetteValue">0</output>
-                        <input type="range" id="lensVignette" min="0" max="100" value="0">
-                    </div>
-
-                </section>
-
-
-                <!-- EXPORT -->
-                <section class="export-panel">
-
-                    <div class="panel-heading">
-                        <div>
-                            <h2>Export</h2>
-                            <p>Save your edited photo</p>
-                        </div>
-                    </div>
-
-                    <div class="export-grid">
-
-                        <label>
-                            Format
-
-                            <select id="exportFormat">
-                                <option value="image/jpeg">JPG</option>
-                                <option value="image/png">PNG</option>
-                                <option value="image/webp">WebP</option>
-                            </select>
-                        </label>
-
-                        <label>
-                            Quality
-
-                            <select id="exportQuality">
-                                <option value="0.95">Maximum</option>
-                                <option value="0.85" selected>High</option>
-                                <option value="0.75">Medium</option>
-                                <option value="0.60">Small File</option>
-                            </select>
-                        </label>
-
-                    </div>
-
-                    <button id="downloadBtn" class="download-btn">
-                        <i class="fa-solid fa-download"></i>
-                        Download Edited Photo
-                    </button>
-
-                    <button id="resetAllBtn" class="reset-all-btn">
-                        Reset All Edits
-                    </button>
-
-                </section>
-
-            </div>
-
-        </aside>
-
-    </main>
-
-
-    <input
-        type="file"
-        id="imageInput"
-        accept="image/jpeg,image/png,image/webp"
-        hidden
-    >
-
-
-    <footer class="editor-footer">
-        <span>Toolora Professional Photo Editor</span>
-        <span>Browser-based editing</span>
-    </footer>
-
-</div>
-
+<div class="app">
+
+<header class="topbar">
+  <a class="brand" href="index.html">Toolora</a>
+
+  <div class="actions">
+    <label class="topbtn" title="Open photo">
+      ⇧
+      <input id="fileInput" type="file" accept="image/*">
+    </label>
+
+    <button class="topbtn" id="undo" title="Undo">↶</button>
+    <button class="topbtn" id="redo" title="Redo">↷</button>
+    <button class="topbtn" id="before" title="Before / After">◉</button>
+
+    <a class="back" href="index.html">Back</a>
+  </div>
+</header>
+
+<main class="workspace">
+
+<section class="viewer">
+
+  <div class="viewerbar">
+    <div>
+      <b id="name">No photo</b>
+      <small id="meta">Open an image to start</small>
+    </div>
+
+    <div class="zoom">
+      <button id="zout">−</button>
+      <span id="zlabel">Fit</span>
+      <button id="zin">+</button>
+      <button id="fit">Fit</button>
+      <button id="full">⛶</button>
+    </div>
+  </div>
+
+  <div id="stage" class="stage">
+
+    <div id="empty" class="empty">
+      <div class="spark">✦</div>
+      <h2>Professional Photo Editor</h2>
+      <p>
+        Local browser editing. Your photo stays on this device.
+      </p>
+
+      <label class="openbtn">
+        Open Photo
+        <input id="emptyInput" type="file" accept="image/*">
+      </label>
+    </div>
+
+    <canvas id="canvas"></canvas>
+    <canvas id="overlay"></canvas>
+
+    <span id="badge">Before</span>
+  </div>
+
+  <div class="status">
+    <span id="status">Ready</span>
+    <span>Local processing</span>
+  </div>
+
+</section>
+
+<aside class="editor">
+
+  <div class="panelhead">
+    <div>
+      <small id="eyebrow">Adjust</small>
+      <h2 id="title">Light</h2>
+    </div>
+
+    <button id="reset" class="reset">Reset</button>
+  </div>
+
+  <div id="panel" class="panel"></div>
+
+  <nav class="tabs" id="tabs">
+
+    <button data-tool="light">
+      ☼
+      <span>Light</span>
+    </button>
+
+    <button data-tool="color">
+      ◐
+      <span>Color</span>
+    </button>
+
+    <button data-tool="effects">
+      ✧
+      <span>Effects</span>
+    </button>
+
+    <button data-tool="detail">
+      ◒
+      <span>Detail</span>
+    </button>
+
+    <button data-tool="crop">
+      ⌗
+      <span>Crop</span>
+    </button>
+
+    <button data-tool="presets">
+      ★
+      <span>Presets</span>
+    </button>
+
+    <button data-tool="profiles">
+      ◈
+      <span>Profiles</span>
+    </button>
+
+    <button data-tool="mask">
+      ◌
+      <span>Mask</span>
+    </button>
+
+    <button data-tool="retouch">
+      ⌫
+      <span>Retouch</span>
+    </button>
+
+    <button data-tool="blur">
+      ◍
+      <span>Blur</span>
+    </button>
+
+    <button data-tool="optics">
+      ◎
+      <span>Optics</span>
+    </button>
+
+    <button data-tool="export">
+      ⇩
+      <span>Export</span>
+    </button>
+
+  </nav>
+
+</aside>
+
+</main>
 
 <script src="js/photo-editor.js"></script>
-
 </body>
 </html>
