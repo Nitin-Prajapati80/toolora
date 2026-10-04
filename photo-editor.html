@@ -1,313 +1,244 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    >
+<title>Toolora - Professional Photo Editor</title>
 
-    <title>Toolora Photo Editor</title>
-
-    <link
-        rel="stylesheet"
-        href="css/photo-editor.css"
-    >
+<link rel="stylesheet" href="css/photo-editor.css">
 </head>
 
 <body>
 
-<div class="editor-app">
+<div class="app">
 
-    <!-- TOP BAR -->
-    <header class="topbar">
+<header class="topbar">
 
-        <div class="brand">
-            <a href="index.html">Toolora</a>
-        </div>
+  <a class="brand" href="index.html">Toolora</a>
 
-        <div class="top-actions">
+  <div class="actions">
 
-            <button
-                type="button"
-                id="openPhotoBtn"
-                class="top-button primary"
-            >
-                Open Photo
-            </button>
+    <button
+      class="topbtn"
+      id="openTop"
+      type="button"
+      title="Open photo">
+      Open
+    </button>
 
-            <button
-                type="button"
-                id="undoBtn"
-                class="top-button"
-                title="Undo"
-            >
-                Undo
-            </button>
-
-            <button
-                type="button"
-                id="redoBtn"
-                class="top-button"
-                title="Redo"
-            >
-                Redo
-            </button>
-
-            <button
-                type="button"
-                id="beforeBtn"
-                class="top-button"
-            >
-                Before
-            </button>
-
-            <a
-                href="index.html"
-                class="top-button back-button"
-            >
-                Back
-            </a>
-
-        </div>
-
-    </header>
-
-
-    <!-- MAIN WORKSPACE -->
-    <main class="workspace">
-
-        <!-- PHOTO AREA -->
-        <section class="preview-area">
-
-            <div class="preview-toolbar">
-
-                <div>
-                    <span id="photoName">
-                        No photo selected
-                    </span>
-
-                    <span
-                        id="photoSize"
-                        class="photo-size"
-                    ></span>
-                </div>
-
-                <div class="preview-actions">
-
-                    <button
-                        type="button"
-                        id="zoomOutBtn"
-                    >
-                        −
-                    </button>
-
-                    <span id="zoomValue">
-                        Fit
-                    </span>
-
-                    <button
-                        type="button"
-                        id="zoomInBtn"
-                    >
-                        +
-                    </button>
-
-                    <button
-                        type="button"
-                        id="fitBtn"
-                    >
-                        Fit
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <!-- FIXED PHOTO VIEW -->
-            <div
-                id="photoStage"
-                class="photo-stage"
-            >
-
-                <div
-                    id="emptyState"
-                    class="empty-state"
-                >
-
-                    <div class="empty-icon">
-                        +
-                    </div>
-
-                    <h2>
-                        Edit your photo
-                    </h2>
-
-                    <p>
-                        Select a photo to start editing.
-                    </p>
-
-                    <button
-                        type="button"
-                        id="emptyOpenBtn"
-                        class="open-photo-large"
-                    >
-                        Open Photo
-                    </button>
-
-                </div>
-
-
-                <canvas
-                    id="previewCanvas"
-                    class="preview-canvas"
-                ></canvas>
-
-                <div
-                    id="beforeLabel"
-                    class="before-label"
-                >
-                    BEFORE
-                </div>
-
-            </div>
-
-
-            <div
-                id="statusBar"
-                class="status-bar"
-            >
-                Ready
-            </div>
-
-        </section>
-
-
-        <!-- EDITOR AREA -->
-        <section class="editor-area">
-
-            <!-- CONTROL PANEL -->
-            <div
-                id="controlPanel"
-                class="control-panel"
-            >
-
-                <div class="panel-empty">
-                    <h3>
-                        Photo Editor
-                    </h3>
-
-                    <p>
-                        Open a photo and choose an editing tool below.
-                    </p>
-                </div>
-
-            </div>
-
-
-            <!-- BOTTOM TOOL BAR -->
-            <nav
-                id="toolBar"
-                class="tool-bar"
-            >
-
-                <button
-                    type="button"
-                    class="tool-button active"
-                    data-tool="light"
-                >
-                    <span>☀</span>
-                    <small>Light</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="tool-button"
-                    data-tool="color"
-                >
-                    <span>◉</span>
-                    <small>Color</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="tool-button"
-                    data-tool="effects"
-                >
-                    <span>✦</span>
-                    <small>Effects</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="tool-button"
-                    data-tool="detail"
-                >
-                    <span>◇</span>
-                    <small>Detail</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="tool-button"
-                    data-tool="crop"
-                >
-                    <span>⌗</span>
-                    <small>Crop</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="tool-button"
-                    data-tool="presets"
-                >
-                    <span>▦</span>
-                    <small>Presets</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="tool-button"
-                    data-tool="mask"
-                >
-                    <span>◌</span>
-                    <small>Mask</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="tool-button"
-                    data-tool="blur"
-                >
-                    <span>◒</span>
-                    <small>Blur</small>
-                </button>
-
-                <button
-                    type="button"
-                    class="tool-button"
-                    data-tool="export"
-                >
-                    <span>⇩</span>
-                    <small>Export</small>
-                </button>
-
-            </nav>
-
-        </section>
-
-    </main>
-
-
-    <!-- HIDDEN FILE INPUT -->
     <input
-        id="photoInput"
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-        hidden
-    >
+      id="fileInput"
+      class="file-hidden"
+      type="file"
+      accept="image/jpeg,image/png,image/webp,image/gif,image/avif">
+
+    <button
+      class="topbtn"
+      id="undo"
+      type="button"
+      title="Undo">
+      ↶
+    </button>
+
+    <button
+      class="topbtn"
+      id="redo"
+      type="button"
+      title="Redo">
+      ↷
+    </button>
+
+    <button
+      class="topbtn"
+      id="before"
+      type="button"
+      title="Before / After">
+      Before
+    </button>
+
+    <a
+      class="back"
+      href="index.html">
+      Back
+    </a>
+
+  </div>
+
+</header>
+
+
+<main class="workspace">
+
+
+<section class="viewer">
+
+  <div class="viewerbar">
+
+    <div>
+      <b id="name">No photo</b>
+      <small id="meta">Open an image to start</small>
+    </div>
+
+    <div class="zoom">
+
+      <button id="zout" type="button">−</button>
+
+      <span id="zlabel">100%</span>
+
+      <button id="zin" type="button">+</button>
+
+      <button id="fit" type="button">Fit</button>
+
+      <button id="full" type="button">⛶</button>
+
+    </div>
+
+  </div>
+
+
+  <div id="stage" class="stage">
+
+    <div id="empty" class="empty">
+
+      <div class="spark">✦</div>
+
+      <h2>Professional Photo Editor</h2>
+
+      <p>
+        Local browser editing. Your photo stays on this device.
+      </p>
+
+      <button
+        class="openbtn"
+        id="openEmpty"
+        type="button">
+        Open Photo
+      </button>
+
+    </div>
+
+
+    <canvas id="canvas"></canvas>
+
+    <canvas id="overlay"></canvas>
+
+    <span id="badge">Before</span>
+
+  </div>
+
+
+  <div class="status">
+
+    <span id="status">Ready</span>
+
+    <span>Local processing</span>
+
+  </div>
+
+</section>
+
+
+
+<aside class="editor">
+
+  <div class="panelhead">
+
+    <div>
+
+      <small id="eyebrow">Adjust</small>
+
+      <h2 id="title">Light</h2>
+
+    </div>
+
+    <button
+      id="reset"
+      class="reset"
+      type="button">
+      Reset
+    </button>
+
+  </div>
+
+
+  <div
+    id="panel"
+    class="panel">
+  </div>
+
+
+  <nav
+    class="tabs"
+    id="tabs"
+    aria-label="Editing tools">
+
+    <button data-tool="light" type="button">
+      ☼
+      <span>Light</span>
+    </button>
+
+    <button data-tool="color" type="button">
+      ◐
+      <span>Color</span>
+    </button>
+
+    <button data-tool="effects" type="button">
+      ✧
+      <span>Effects</span>
+    </button>
+
+    <button data-tool="detail" type="button">
+      ◒
+      <span>Detail</span>
+    </button>
+
+    <button data-tool="crop" type="button">
+      ⌗
+      <span>Crop</span>
+    </button>
+
+    <button data-tool="presets" type="button">
+      ★
+      <span>Presets</span>
+    </button>
+
+    <button data-tool="profiles" type="button">
+      ◈
+      <span>Profiles</span>
+    </button>
+
+    <button data-tool="mask" type="button">
+      ◌
+      <span>Mask</span>
+    </button>
+
+    <button data-tool="retouch" type="button">
+      ⌫
+      <span>Retouch</span>
+    </button>
+
+    <button data-tool="blur" type="button">
+      ◍
+      <span>Blur</span>
+    </button>
+
+    <button data-tool="optics" type="button">
+      ◎
+      <span>Optics</span>
+    </button>
+
+    <button data-tool="export" type="button">
+      ⇩
+      <span>Export</span>
+    </button>
+
+  </nav>
+
+</aside>
+
+</main>
 
 </div>
 
