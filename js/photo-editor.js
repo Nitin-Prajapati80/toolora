@@ -1,31 +1,112 @@
-(() => {
-  "use strict";
+"use strict";
 
-  const $ = (id) => document.getElementById(id);
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+/*
+    Toolora Photo Editor
+    Browser-based photo editing engine.
+    No external libraries required.
+*/
 
-  const canvas = $("canvas");
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-  const overlay = $("overlay");
-  const overlayCtx = overlay.getContext("2d");
+/* =========================================================
+   ELEMENTS
+   ========================================================= */
 
-  const sourceCanvas = document.createElement("canvas");
-  const sourceCtx = sourceCanvas.getContext("2d", {
+const photoInput = document.getElementById("photoInput");
+const openPhotoBtn = document.getElementById("openPhotoBtn");
+const emptyOpenBtn = document.getElementById("emptyOpenBtn");
+
+const canvas = document.getElementById("previewCanvas");
+const ctx = canvas.getContext("2d", {
     willReadFrequently: true
-  });
+});
 
-  let image = null;
-  let fileName = "";
-  let renderQueued = false;
-  let zoom = 1;
-  let activeTool = "light";
-  let showBefore = false;
+const photoStage = document.getElementById("photoStage");
 
-  let history = [];
-  let future = [];
+const controlPanel =
+    document.getElementById("controlPanel");
 
-  const S = {
+const toolButtons =
+    document.querySelectorAll(".tool-button");
+
+const emptyState =
+    document.getElementById("emptyState");
+
+const beforeLabel =
+    document.getElementById("beforeLabel");
+
+const photoName =
+    document.getElementById("photoName");
+
+const photoSize =
+    document.getElementById("photoSize");
+
+const statusBar =
+    document.getElementById("statusBar");
+
+const zoomValue =
+    document.getElementById("zoomValue");
+
+const undoBtn =
+    document.getElementById("undoBtn");
+
+const redoBtn =
+    document.getElementById("redoBtn");
+
+const beforeBtn =
+    document.getElementById("beforeBtn");
+
+const zoomInBtn =
+    document.getElementById("zoomInBtn");
+
+const zoomOutBtn =
+    document.getElementById("zoomOutBtn");
+
+const fitBtn =
+    document.getElementById("fitBtn");
+
+
+/* =========================================================
+   IMAGE CANVASES
+   ========================================================= */
+
+const sourceCanvas =
+    document.createElement("canvas");
+
+const sourceCtx =
+    sourceCanvas.getContext("2d", {
+        willReadFrequently: true
+    });
+
+
+/* =========================================================
+   APPLICATION STATE
+   ========================================================= */
+
+let imageLoaded = false;
+
+let originalFileName = "";
+
+let originalWidth = 0;
+let originalHeight = 0;
+
+let zoom = 1;
+
+let beforeMode = false;
+
+let activeTool = "light";
+
+let renderPending = false;
+
+let history = [];
+let future = [];
+
+
+/* =========================================================
+   EDIT STATE
+   ========================================================= */
+
+const state = {
+
     exposure: 0,
     contrast: 0,
     highlights: 0,
@@ -33,7 +114,7 @@
     whites: 0,
     blacks: 0,
 
-    temp: 0,
+    temperature: 0,
     tint: 0,
     vibrance: 0,
     saturation: 0,
@@ -42,35 +123,21 @@
     clarity: 0,
     dehaze: 0,
     vignette: 0,
-    midpoint: 50,
-    feather: 50,
-    roundness: 0,
 
     grain: 0,
-    grainSize: 25,
-    grainRough: 50,
 
-    sharp: 0,
-    radius: 1,
-    noise: 0,
-    colorNoise: 0,
+    sharpening: 0,
+    noiseReduction: 0,
 
-    ratio: "original",
-    rotate: 0,
+    rotation: 0,
     straighten: 0,
+
     flipX: false,
     flipY: false,
 
-    profile: "natural",
-    preset: "none",
+    aspectRatio: "original",
+
     presetAmount: 100,
-
-    blur: 0,
-    blurX: 50,
-    blurY: 50,
-
-    lensVignette: 0,
-    defringe: 0,
 
     maskType: "radial",
     maskAmount: 0,
@@ -78,2247 +145,3144 @@
     maskContrast: 0,
     maskSaturation: 0,
 
-    retouchSize: 30,
+    blurAmount: 0,
+    blurX: 50,
+    blurY: 50
+};
 
-    gradeShadow: 0,
-    gradeMidtone: 0,
-    gradeHighlight: 0,
-    gradeBlend: 50,
-    gradeBalance: 0
-  };
 
-  const colors = [
-    "red",
-    "orange",
-    "yellow",
-    "green",
-    "aqua",
-    "blue",
-    "purple",
-    "magenta"
-  ];
+/* =========================================================
+   DEFAULT STATE
+   ========================================================= */
 
-  colors.forEach((color) => {
-    S["h_" + color] = 0;
-    S["s_" + color] = 0;
-    S["l_" + color] = 0;
-  });
-
-  /* =========================================================
-     IMAGE UPLOAD
-     ========================================================= */
-
-  function handleImageFile(file) {
-    if (!file) return;
-
-    if (!file.type || !file.type.startsWith("image/")) {
-      alert("Please select a valid image file.");
-      return;
-    }
-
-    const url = URL.createObjectURL(file);
-    const newImage = new Image();
-
-    newImage.onload = function () {
-      URL.revokeObjectURL(url);
-
-      image = newImage;
-      fileName = file.name;
-
-      const maxSize = 1400;
-
-      const longestSide = Math.max(
-        newImage.naturalWidth,
-        newImage.naturalHeight
-      );
-
-      const scale = Math.min(1, maxSize / longestSide);
-
-      sourceCanvas.width = Math.max(
-        1,
-        Math.round(newImage.naturalWidth * scale)
-      );
-
-      sourceCanvas.height = Math.max(
-        1,
-        Math.round(newImage.naturalHeight * scale)
-      );
-
-      sourceCtx.clearRect(
-        0,
-        0,
-        sourceCanvas.width,
-        sourceCanvas.height
-      );
-
-      sourceCtx.drawImage(
-        newImage,
-        0,
-        0,
-        sourceCanvas.width,
-        sourceCanvas.height
-      );
-
-      const nameElement = $("name");
-      const metaElement = $("meta");
-      const emptyElement = $("empty");
-      const canvasElement = $("canvas");
-      const overlayElement = $("overlay");
-      const badgeElement = $("badge");
-
-      if (nameElement) {
-        nameElement.textContent = file.name;
-      }
-
-      if (metaElement) {
-        metaElement.textContent =
-          `${newImage.naturalWidth} × ${newImage.naturalHeight}px`;
-      }
-
-      if (emptyElement) {
-        emptyElement.style.display = "none";
-      }
-
-      if (canvasElement) {
-        canvasElement.style.display = "block";
-      }
-
-      if (overlayElement) {
-        overlayElement.style.display = "block";
-      }
-
-      showBefore = false;
-
-      if (badgeElement) {
-        badgeElement.style.display = "none";
-      }
-
-      resetState(false);
-      render();
-    };
-
-    newImage.onerror = function () {
-      URL.revokeObjectURL(url);
-
-      alert(
-        "The selected image could not be opened. Please try another image."
-      );
-    };
-
-    newImage.src = url;
-  }
-
-  function openFilePicker() {
-    const input = $("fileInput");
-
-    if (!input) {
-      alert("Image upload control is unavailable.");
-      return;
-    }
-
-    input.value = "";
-    input.click();
-  }
-
-  const fileInput = $("fileInput");
-
-  if (fileInput) {
-    fileInput.addEventListener("change", function (event) {
-      const file =
-        event.target.files && event.target.files.length
-          ? event.target.files[0]
-          : null;
-
-      handleImageFile(file);
-
-      event.target.value = "";
-    });
-  }
-
-  const emptyInput = $("emptyInput");
-
-  if (emptyInput) {
-    emptyInput.addEventListener("change", function (event) {
-      const file =
-        event.target.files && event.target.files.length
-          ? event.target.files[0]
-          : null;
-
-      handleImageFile(file);
-
-      event.target.value = "";
-    });
-  }
-
-  /* =========================================================
-     OPEN PHOTO BUTTON
-     ========================================================= */
-
-  const uploadButtons = document.querySelectorAll(
-    '[data-action="upload"], #uploadBtn, #openPhoto, .upload-button'
-  );
-
-  uploadButtons.forEach((button) => {
-    button.addEventListener("click", function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      openFilePicker();
-    });
-  });
-
-  /* =========================================================
-     COLOR HELPERS
-     ========================================================= */
-
-  function rgbToHsv(r, g, b) {
-    r /= 255;
-    g /= 255;
-    b /= 255;
-
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-
-    const d = max - min;
-
-    let h = 0;
-
-    if (d !== 0) {
-      if (max === r) {
-        h = ((g - b) / d) % 6;
-      } else if (max === g) {
-        h = (b - r) / d + 2;
-      } else {
-        h = (r - g) / d + 4;
-      }
-
-      h *= 60;
-
-      if (h < 0) {
-        h += 360;
-      }
-    }
-
-    const s = max === 0 ? 0 : d / max;
+function getDefaultState() {
 
     return {
-      h,
-      s,
-      v: max
+        exposure: 0,
+        contrast: 0,
+        highlights: 0,
+        shadows: 0,
+        whites: 0,
+        blacks: 0,
+
+        temperature: 0,
+        tint: 0,
+        vibrance: 0,
+        saturation: 0,
+
+        texture: 0,
+        clarity: 0,
+        dehaze: 0,
+        vignette: 0,
+
+        grain: 0,
+
+        sharpening: 0,
+        noiseReduction: 0,
+
+        rotation: 0,
+        straighten: 0,
+
+        flipX: false,
+        flipY: false,
+
+        aspectRatio: "original",
+
+        presetAmount: 100,
+
+        maskType: "radial",
+        maskAmount: 0,
+        maskExposure: 0,
+        maskContrast: 0,
+        maskSaturation: 0,
+
+        blurAmount: 0,
+        blurX: 50,
+        blurY: 50
     };
-  }
+}
 
-  function hsvToRgb(h, s, v) {
-    const c = v * s;
-    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-    const m = v - c;
 
-    let r = 0;
-    let g = 0;
-    let b = 0;
+/* =========================================================
+   UTILITY
+   ========================================================= */
 
-    if (h < 60) {
-      r = c;
-      g = x;
-    } else if (h < 120) {
-      r = x;
-      g = c;
-    } else if (h < 180) {
-      g = c;
-      b = x;
-    } else if (h < 240) {
-      g = x;
-      b = c;
-    } else if (h < 300) {
-      r = x;
-      b = c;
-    } else {
-      r = c;
-      b = x;
-    }
+function clamp(value, min, max) {
+    return Math.max(
+        min,
+        Math.min(max, value)
+    );
+}
 
-    return [
-      Math.round((r + m) * 255),
-      Math.round((g + m) * 255),
-      Math.round((b + m) * 255)
-    ];
-  }
 
-  function applyTemperature(r, g, b, value) {
-    const amount = value / 100;
+function copyState() {
+    return JSON.parse(
+        JSON.stringify(state)
+    );
+}
 
-    r += amount * 25;
-    b -= amount * 25;
 
-    return [
-      clamp(r, 0, 255),
-      clamp(g, 0, 255),
-      clamp(b, 0, 255)
-    ];
-  }
+function restoreState(saved) {
 
-  /* =========================================================
-     PRESETS
-     ========================================================= */
+    Object.keys(state).forEach((key) => {
 
-  const presets = {
-    clean: {
-      exposure: 4,
-      contrast: 4,
-      saturation: 2,
-      clarity: 4
-    },
+        if (saved[key] !== undefined) {
+            state[key] = saved[key];
+        }
 
-    warm: {
-      exposure: 3,
-      temperature: 18,
-      contrast: 3,
-      saturation: 5
-    },
-
-    cool: {
-      temperature: -18,
-      contrast: 4,
-      saturation: 2
-    },
-
-    cinematic: {
-      contrast: 15,
-      highlights: -12,
-      shadows: 8,
-      saturation: -5,
-      clarity: 10,
-      vignette: 18
-    },
-
-    matte: {
-      contrast: -8,
-      blacks: 12,
-      saturation: -5,
-      grain: 10
-    },
-
-    vivid: {
-      contrast: 10,
-      saturation: 18,
-      vibrance: 22,
-      clarity: 8
-    },
-
-    portrait: {
-      exposure: 3,
-      highlights: -10,
-      shadows: 10,
-      texture: -8,
-      clarity: -4,
-      saturation: 2
-    },
-
-    bw: {
-      saturation: -100,
-      contrast: 12,
-      clarity: 8
-    }
-  };
-
-  function applyPreset(name) {
-    if (!presets[name]) return;
-
-    const preset = presets[name];
-
-    Object.keys(preset).forEach((key) => {
-      if (key in S) {
-        S[key] = preset[key];
-      }
     });
+}
 
-    S.preset = name;
-    S.presetAmount = 100;
+
+/* =========================================================
+   OPEN PHOTO
+   ========================================================= */
+
+function openPhotoPicker() {
+
+    if (!photoInput) {
+        alert(
+            "Photo upload is unavailable."
+        );
+
+        return;
+    }
+
+    photoInput.value = "";
+
+    photoInput.click();
+}
+
+
+if (openPhotoBtn) {
+
+    openPhotoBtn.addEventListener(
+        "click",
+        openPhotoPicker
+    );
+}
+
+
+if (emptyOpenBtn) {
+
+    emptyOpenBtn.addEventListener(
+        "click",
+        openPhotoPicker
+    );
+}
+
+
+if (photoStage) {
+
+    photoStage.addEventListener(
+        "dblclick",
+        openPhotoPicker
+    );
+}
+
+
+/* =========================================================
+   PHOTO FILE
+   ========================================================= */
+
+if (photoInput) {
+
+    photoInput.addEventListener(
+        "change",
+        function (event) {
+
+            const file =
+                event.target.files &&
+                event.target.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            if (
+                !file.type ||
+                !file.type.startsWith(
+                    "image/"
+                )
+            ) {
+
+                alert(
+                    "Please select a valid image file."
+                );
+
+                return;
+            }
+
+            loadPhoto(file);
+        }
+    );
+}
+
+
+/* =========================================================
+   LOAD PHOTO
+   ========================================================= */
+
+function loadPhoto(file) {
+
+    const objectURL =
+        URL.createObjectURL(file);
+
+    const image =
+        new Image();
+
+    image.onload = function () {
+
+        URL.revokeObjectURL(
+            objectURL
+        );
+
+        originalFileName =
+            file.name;
+
+        originalWidth =
+            image.naturalWidth;
+
+        originalHeight =
+            image.naturalHeight;
+
+        /*
+            Keep a reasonably sized working copy.
+            This prevents very large phone photos
+            from making every slider slow.
+        */
+
+        const maximumWorkingSize =
+            1800;
+
+        const longestSide =
+            Math.max(
+                originalWidth,
+                originalHeight
+            );
+
+        const scale =
+            Math.min(
+                1,
+                maximumWorkingSize /
+                longestSide
+            );
+
+        sourceCanvas.width =
+            Math.max(
+                1,
+                Math.round(
+                    originalWidth * scale
+                )
+            );
+
+        sourceCanvas.height =
+            Math.max(
+                1,
+                Math.round(
+                    originalHeight * scale
+                )
+            );
+
+        sourceCtx.clearRect(
+            0,
+            0,
+            sourceCanvas.width,
+            sourceCanvas.height
+        );
+
+        sourceCtx.drawImage(
+            image,
+            0,
+            0,
+            sourceCanvas.width,
+            sourceCanvas.height
+        );
+
+        imageLoaded = true;
+
+        photoName.textContent =
+            file.name;
+
+        photoSize.textContent =
+            `${originalWidth} × ${originalHeight}px`;
+
+        emptyState.style.display =
+            "none";
+
+        canvas.style.display =
+            "block";
+
+        beforeMode = false;
+
+        beforeLabel.style.display =
+            "none";
+
+        history = [];
+        future = [];
+
+        resetEditing();
+
+        fitPhoto();
+
+        render();
+    };
+
+
+    image.onerror = function () {
+
+        URL.revokeObjectURL(
+            objectURL
+        );
+
+        alert(
+            "This image could not be opened. Please select another photo."
+        );
+    };
+
+
+    image.src = objectURL;
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+function resetEditing() {
+
+    const defaults =
+        getDefaultState();
+
+    restoreState(defaults);
+
+    history = [];
+    future = [];
+
+    zoom = 1;
+
+    updateZoomLabel();
+
+    updateAllControls();
+}
+
+
+/* =========================================================
+   HISTORY
+   ========================================================= */
+
+function saveHistory() {
+
+    history.push(
+        copyState()
+    );
+
+    if (history.length > 40) {
+        history.shift();
+    }
+
+    future = [];
+}
+
+
+function undo() {
+
+    if (!history.length) {
+        return;
+    }
+
+    future.push(
+        copyState()
+    );
+
+    const previous =
+        history.pop();
+
+    restoreState(previous);
+
+    updateAllControls();
 
     render();
-  }
+}
 
-  /* =========================================================
-     PROFILE
-     ========================================================= */
 
-  function applyProfile(r, g, b) {
-    const profile = S.profile;
+function redo() {
 
-    if (profile === "neutral") {
-      return [r, g, b];
+    if (!future.length) {
+        return;
     }
 
-    if (profile === "vivid") {
-      r = (r - 128) * 1.08 + 128;
-      g = (g - 128) * 1.08 + 128;
-      b = (b - 128) * 1.08 + 128;
+    history.push(
+        copyState()
+    );
+
+    const next =
+        future.pop();
+
+    restoreState(next);
+
+    updateAllControls();
+
+    render();
+}
+
+
+undoBtn.addEventListener(
+    "click",
+    undo
+);
+
+
+redoBtn.addEventListener(
+    "click",
+    redo
+);
+
+
+/* =========================================================
+   BEFORE
+   ========================================================= */
+
+beforeBtn.addEventListener(
+    "click",
+    function () {
+
+        if (!imageLoaded) {
+            return;
+        }
+
+        beforeMode =
+            !beforeMode;
+
+        beforeLabel.style.display =
+            beforeMode
+                ? "block"
+                : "none";
+
+        render();
     }
+);
 
-    if (profile === "modern") {
-      r = (r - 128) * 1.05 + 128;
-      g = (g - 128) * 1.05 + 128;
-      b = (b - 128) * 1.05 + 128;
-    }
 
-    if (profile === "film") {
-      r = r * 0.96 + 6;
-      g = g * 0.97 + 5;
-      b = b * 0.95 + 7;
-    }
+/* =========================================================
+   COLOR PROCESSING
+   ========================================================= */
 
-    if (profile === "monochrome") {
-      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+function processImageData(imageData) {
 
-      r = gray;
-      g = gray;
-      b = gray;
-    }
+    const data =
+        imageData.data;
 
-    return [
-      clamp(r, 0, 255),
-      clamp(g, 0, 255),
-      clamp(b, 0, 255)
-    ];
-  }
+    const exposure =
+        Math.pow(
+            2,
+            state.exposure / 100
+        );
 
-  /* =========================================================
-     PIXEL PROCESSING
-     ========================================================= */
+    const contrast =
+        (state.contrast + 100) /
+        100;
 
-  function processPixels(imageData) {
-    const data = imageData.data;
+    const saturation =
+        1 +
+        state.saturation / 100;
 
-    const exposureFactor = Math.pow(2, S.exposure / 100);
+    const vibrance =
+        state.vibrance / 100;
 
-    const contrastFactor =
-      (259 * (S.contrast + 255)) /
-      (255 * (259 - S.contrast));
+    const temperature =
+        state.temperature / 100;
 
-    for (let i = 0; i < data.length; i += 4) {
-      let r = data[i];
-      let g = data[i + 1];
-      let b = data[i + 2];
+    const tint =
+        state.tint / 100;
 
-      /* Exposure */
-      r *= exposureFactor;
-      g *= exposureFactor;
-      b *= exposureFactor;
+    for (
+        let i = 0;
+        i < data.length;
+        i += 4
+    ) {
 
-      /* Highlights / Shadows */
-      const luminance =
-        0.2126 * r +
-        0.7152 * g +
-        0.0722 * b;
+        let r = data[i];
+        let g = data[i + 1];
+        let b = data[i + 2];
 
-      const shadowAmount =
-        ((255 - luminance) / 255) *
-        (S.shadows / 100);
 
-      const highlightAmount =
-        (luminance / 255) *
-        (S.highlights / 100);
+        /* Exposure */
 
-      r += 255 * shadowAmount;
-      g += 255 * shadowAmount;
-      b += 255 * shadowAmount;
+        r *= exposure;
+        g *= exposure;
+        b *= exposure;
 
-      r -= 255 * highlightAmount;
-      g -= 255 * highlightAmount;
-      b -= 255 * highlightAmount;
 
-      /* Contrast */
-      r = contrastFactor * (r - 128) + 128;
-      g = contrastFactor * (g - 128) + 128;
-      b = contrastFactor * (b - 128) + 128;
+        /* Contrast */
 
-      /* Whites / Blacks */
-      const whiteAmount = S.whites / 100;
-      const blackAmount = S.blacks / 100;
+        r =
+            128 +
+            (r - 128) *
+            contrast;
 
-      r += whiteAmount * 30;
-      g += whiteAmount * 30;
-      b += whiteAmount * 30;
+        g =
+            128 +
+            (g - 128) *
+            contrast;
 
-      r += blackAmount * 25;
-      g += blackAmount * 25;
-      b += blackAmount * 25;
+        b =
+            128 +
+            (b - 128) *
+            contrast;
 
-      /* Temperature */
-      [r, g, b] = applyTemperature(
-        r,
-        g,
-        b,
-        S.temp
-      );
 
-      /* Tint */
-      const tintAmount = S.tint / 100;
+        /* Highlights */
 
-      r += tintAmount * 8;
-      b += tintAmount * 8;
-      g -= tintAmount * 10;
+        const brightness =
+            (
+                0.299 * r +
+                0.587 * g +
+                0.114 * b
+            ) / 255;
 
-      /* Saturation */
-      const gray =
-        0.299 * r +
-        0.587 * g +
-        0.114 * b;
+        const highlightWeight =
+            brightness *
+            brightness;
 
-      const saturationFactor =
-        1 + S.saturation / 100;
+        const highlightValue =
+            state.highlights /
+            100 *
+            highlightWeight *
+            55;
 
-      r = gray + (r - gray) * saturationFactor;
-      g = gray + (g - gray) * saturationFactor;
-      b = gray + (b - gray) * saturationFactor;
+        r += highlightValue;
+        g += highlightValue;
+        b += highlightValue;
 
-      /* Vibrance */
-      const maxChannel = Math.max(r, g, b);
-      const minChannel = Math.min(r, g, b);
 
-      const currentSat =
-        maxChannel === 0
-          ? 0
-          : (maxChannel - minChannel) / maxChannel;
+        /* Shadows */
 
-      const vibranceAmount =
-        (S.vibrance / 100) *
-        (1 - currentSat);
+        const shadowWeight =
+            1 - brightness;
 
-      r = gray + (r - gray) * (1 + vibranceAmount);
-      g = gray + (g - gray) * (1 + vibranceAmount);
-      b = gray + (b - gray) * (1 + vibranceAmount);
+        const shadowValue =
+            state.shadows /
+            100 *
+            shadowWeight *
+            55;
 
-      /* Texture */
-      if (S.texture !== 0) {
-        const textureFactor =
-          1 + S.texture / 300;
+        r += shadowValue;
+        g += shadowValue;
+        b += shadowValue;
 
-        r = gray + (r - gray) * textureFactor;
-        g = gray + (g - gray) * textureFactor;
-        b = gray + (b - gray) * textureFactor;
-      }
 
-      /* Clarity */
-      if (S.clarity !== 0) {
-        const clarityFactor =
-          1 + S.clarity / 200;
+        /* Whites */
 
-        r = gray + (r - gray) * clarityFactor;
-        g = gray + (g - gray) * clarityFactor;
-        b = gray + (b - gray) * clarityFactor;
-      }
+        const whiteValue =
+            state.whites /
+            100 *
+            25;
 
-      /* Dehaze */
-      if (S.dehaze !== 0) {
-        const dehazeFactor =
-          1 + S.dehaze / 180;
+        r += whiteValue;
+        g += whiteValue;
+        b += whiteValue;
 
-        r = 128 + (r - 128) * dehazeFactor;
-        g = 128 + (g - 128) * dehazeFactor;
-        b = 128 + (b - 128) * dehazeFactor;
-      }
 
-      /* Profile */
-      [r, g, b] = applyProfile(r, g, b);
+        /* Blacks */
 
-      data[i] = clamp(r, 0, 255);
-      data[i + 1] = clamp(g, 0, 255);
-      data[i + 2] = clamp(b, 0, 255);
+        const blackValue =
+            state.blacks /
+            100 *
+            20;
+
+        r += blackValue;
+        g += blackValue;
+        b += blackValue;
+
+
+        /* Temperature */
+
+        r +=
+            temperature * 25;
+
+        b -=
+            temperature * 25;
+
+
+        /* Tint */
+
+        r +=
+            tint * 7;
+
+        g -=
+            tint * 12;
+
+        b +=
+            tint * 7;
+
+
+        /* Saturation */
+
+        const gray =
+            0.299 * r +
+            0.587 * g +
+            0.114 * b;
+
+        r =
+            gray +
+            (r - gray) *
+            saturation;
+
+        g =
+            gray +
+            (g - gray) *
+            saturation;
+
+        b =
+            gray +
+            (b - gray) *
+            saturation;
+
+
+        /* Vibrance */
+
+        const max =
+            Math.max(r, g, b);
+
+        const min =
+            Math.min(r, g, b);
+
+        const currentSaturation =
+            max === 0
+                ? 0
+                : (max - min) / max;
+
+        const vibranceFactor =
+            1 +
+            vibrance *
+            (1 - currentSaturation);
+
+        r =
+            gray +
+            (r - gray) *
+            vibranceFactor;
+
+        g =
+            gray +
+            (g - gray) *
+            vibranceFactor;
+
+        b =
+            gray +
+            (b - gray) *
+            vibranceFactor;
+
+
+        /* Texture */
+
+        if (state.texture !== 0) {
+
+            const factor =
+                1 +
+                state.texture /
+                250;
+
+            r =
+                gray +
+                (r - gray) *
+                factor;
+
+            g =
+                gray +
+                (g - gray) *
+                factor;
+
+            b =
+                gray +
+                (b - gray) *
+                factor;
+        }
+
+
+        /* Clarity */
+
+        if (state.clarity !== 0) {
+
+            const factor =
+                1 +
+                state.clarity /
+                220;
+
+            r =
+                128 +
+                (r - 128) *
+                factor;
+
+            g =
+                128 +
+                (g - 128) *
+                factor;
+
+            b =
+                128 +
+                (b - 128) *
+                factor;
+        }
+
+
+        /* Dehaze */
+
+        if (state.dehaze !== 0) {
+
+            const factor =
+                1 +
+                state.dehaze /
+                180;
+
+            r =
+                128 +
+                (r - 128) *
+                factor;
+
+            g =
+                128 +
+                (g - 128) *
+                factor;
+
+            b =
+                128 +
+                (b - 128) *
+                factor;
+        }
+
+
+        data[i] =
+            clamp(r, 0, 255);
+
+        data[i + 1] =
+            clamp(g, 0, 255);
+
+        data[i + 2] =
+            clamp(b, 0, 255);
     }
 
     return imageData;
-  }
+}
 
-  /* =========================================================
-     VIGNETTE
-     ========================================================= */
 
-  function applyVignette(context, width, height) {
-    if (S.vignette === 0) return;
+/* =========================================================
+   MASK
+   ========================================================= */
 
-    const amount = Math.abs(S.vignette) / 100;
+function applyMask(context, width, height) {
 
-    const gradient = context.createRadialGradient(
-      width / 2,
-      height / 2,
-      Math.min(width, height) * 0.15,
-      width / 2,
-      height / 2,
-      Math.max(width, height) * 0.75
+    if (
+        state.maskAmount === 0
+    ) {
+        return;
+    }
+
+    const imageData =
+        context.getImageData(
+            0,
+            0,
+            width,
+            height
+        );
+
+    const data =
+        imageData.data;
+
+    const amount =
+        state.maskAmount / 100;
+
+    for (
+        let y = 0;
+        y < height;
+        y++
+    ) {
+
+        for (
+            let x = 0;
+            x < width;
+            x++
+        ) {
+
+            let mask = 0;
+
+            if (
+                state.maskType ===
+                "radial"
+            ) {
+
+                const dx =
+                    (x - width / 2) /
+                    (width / 2);
+
+                const dy =
+                    (y - height / 2) /
+                    (height / 2);
+
+                const distance =
+                    Math.sqrt(
+                        dx * dx +
+                        dy * dy
+                    );
+
+                mask =
+                    clamp(
+                        1 - distance,
+                        0,
+                        1
+                    );
+
+            } else {
+
+                mask =
+                    clamp(
+                        1 -
+                        y / height,
+                        0,
+                        1
+                    );
+            }
+
+            mask *= amount;
+
+            const index =
+                (y * width + x) * 4;
+
+
+            /* Exposure */
+
+            const exposureFactor =
+                Math.pow(
+                    2,
+                    (
+                        state.maskExposure /
+                        100
+                    ) *
+                    mask
+                );
+
+            data[index] =
+                clamp(
+                    data[index] *
+                    exposureFactor,
+                    0,
+                    255
+                );
+
+            data[index + 1] =
+                clamp(
+                    data[index + 1] *
+                    exposureFactor,
+                    0,
+                    255
+                );
+
+            data[index + 2] =
+                clamp(
+                    data[index + 2] *
+                    exposureFactor,
+                    0,
+                    255
+                );
+
+
+            /* Saturation */
+
+            const gray =
+                0.299 *
+                data[index] +
+                0.587 *
+                data[index + 1] +
+                0.114 *
+                data[index + 2];
+
+            const satFactor =
+                1 +
+                (
+                    state.maskSaturation /
+                    100
+                ) *
+                mask;
+
+            data[index] =
+                clamp(
+                    gray +
+                    (
+                        data[index] -
+                        gray
+                    ) *
+                    satFactor,
+                    0,
+                    255
+                );
+
+            data[index + 1] =
+                clamp(
+                    gray +
+                    (
+                        data[index + 1] -
+                        gray
+                    ) *
+                    satFactor,
+                    0,
+                    255
+                );
+
+            data[index + 2] =
+                clamp(
+                    gray +
+                    (
+                        data[index + 2] -
+                        gray
+                    ) *
+                    satFactor,
+                    0,
+                    255
+                );
+        }
+    }
+
+    context.putImageData(
+        imageData,
+        0,
+        0
     );
+}
 
-    if (S.vignette > 0) {
-      gradient.addColorStop(
-        0,
-        "rgba(0,0,0,0)"
-      );
 
-      gradient.addColorStop(
-        1,
-        `rgba(0,0,0,${amount * 0.7})`
-      );
+/* =========================================================
+   VIGNETTE
+   ========================================================= */
+
+function applyVignette(
+    context,
+    width,
+    height
+) {
+
+    if (
+        state.vignette === 0
+    ) {
+        return;
+    }
+
+    const amount =
+        Math.abs(
+            state.vignette
+        ) / 100;
+
+    const gradient =
+        context.createRadialGradient(
+            width / 2,
+            height / 2,
+            Math.min(
+                width,
+                height
+            ) * 0.18,
+
+            width / 2,
+            height / 2,
+            Math.max(
+                width,
+                height
+            ) * 0.72
+        );
+
+    if (
+        state.vignette > 0
+    ) {
+
+        gradient.addColorStop(
+            0,
+            "rgba(0,0,0,0)"
+        );
+
+        gradient.addColorStop(
+            1,
+            `rgba(0,0,0,${amount * 0.75})`
+        );
+
     } else {
-      gradient.addColorStop(
-        0,
-        `rgba(255,255,255,${amount * 0.35})`
-      );
 
-      gradient.addColorStop(
-        1,
-        "rgba(0,0,0,0)"
-      );
+        gradient.addColorStop(
+            0,
+            `rgba(255,255,255,${amount * 0.25})`
+        );
+
+        gradient.addColorStop(
+            1,
+            "rgba(255,255,255,0)"
+        );
     }
 
     context.save();
 
-    context.fillStyle = gradient;
+    context.fillStyle =
+        gradient;
 
     context.fillRect(
-      0,
-      0,
-      width,
-      height
+        0,
+        0,
+        width,
+        height
     );
 
     context.restore();
-  }
+}
 
-  /* =========================================================
-     GRAIN
-     ========================================================= */
 
-  function applyGrain(context, width, height) {
-    if (S.grain <= 0) return;
+/* =========================================================
+   GRAIN
+   ========================================================= */
 
-    const imageData = context.getImageData(
-      0,
-      0,
-      width,
-      height
-    );
+function applyGrain(
+    context,
+    width,
+    height
+) {
 
-    const data = imageData.data;
+    if (state.grain <= 0) {
+        return;
+    }
 
-    const amount = S.grain * 0.8;
+    const imageData =
+        context.getImageData(
+            0,
+            0,
+            width,
+            height
+        );
 
-    for (let i = 0; i < data.length; i += 4) {
-      const random =
-        (Math.random() - 0.5) * amount;
+    const data =
+        imageData.data;
 
-      data[i] = clamp(
-        data[i] + random,
-        0,
-        255
-      );
+    const amount =
+        state.grain * 0.55;
 
-      data[i + 1] = clamp(
-        data[i + 1] + random,
-        0,
-        255
-      );
+    for (
+        let i = 0;
+        i < data.length;
+        i += 4
+    ) {
 
-      data[i + 2] = clamp(
-        data[i + 2] + random,
-        0,
-        255
-      );
+        const random =
+            (
+                Math.random() -
+                0.5
+            ) *
+            amount;
+
+        data[i] =
+            clamp(
+                data[i] + random,
+                0,
+                255
+            );
+
+        data[i + 1] =
+            clamp(
+                data[i + 1] + random,
+                0,
+                255
+            );
+
+        data[i + 2] =
+            clamp(
+                data[i + 2] + random,
+                0,
+                255
+            );
     }
 
     context.putImageData(
-      imageData,
-      0,
-      0
+        imageData,
+        0,
+        0
     );
-  }
+}
 
-  /* =========================================================
-     BLUR
-     ========================================================= */
 
-  function applyBlur(context, width, height) {
-    if (S.blur <= 0) return;
+/* =========================================================
+   SHARPEN
+   ========================================================= */
 
-    const tempCanvas =
-      document.createElement("canvas");
+function applySharpen(
+    context,
+    width,
+    height
+) {
 
-    tempCanvas.width = width;
-    tempCanvas.height = height;
+    if (
+        state.sharpening <= 0
+    ) {
+        return;
+    }
 
-    const tempCtx =
-      tempCanvas.getContext("2d");
+    const imageData =
+        context.getImageData(
+            0,
+            0,
+            width,
+            height
+        );
 
-    tempCtx.filter =
-      `blur(${Math.max(1, S.blur / 8)}px)`;
+    const original =
+        new Uint8ClampedArray(
+            imageData.data
+        );
 
-    tempCtx.drawImage(
-      context.canvas,
-      0,
-      0
+    const data =
+        imageData.data;
+
+    const strength =
+        state.sharpening / 100;
+
+    for (
+        let y = 1;
+        y < height - 1;
+        y++
+    ) {
+
+        for (
+            let x = 1;
+            x < width - 1;
+            x++
+        ) {
+
+            const index =
+                (y * width + x) * 4;
+
+            const top =
+                ((y - 1) * width + x) *
+                4;
+
+            const bottom =
+                ((y + 1) * width + x) *
+                4;
+
+            const left =
+                (y * width + x - 1) *
+                4;
+
+            const right =
+                (y * width + x + 1) *
+                4;
+
+            for (
+                let channel = 0;
+                channel < 3;
+                channel++
+            ) {
+
+                const sharpened =
+                    original[index + channel] * 5 -
+                    original[top + channel] -
+                    original[bottom + channel] -
+                    original[left + channel] -
+                    original[right + channel];
+
+                data[index + channel] =
+                    clamp(
+                        original[index + channel] +
+                        (
+                            sharpened -
+                            original[index + channel]
+                        ) *
+                        strength,
+                        0,
+                        255
+                    );
+            }
+        }
+    }
+
+    context.putImageData(
+        imageData,
+        0,
+        0
+    );
+}
+
+
+/* =========================================================
+   BLUR
+   ========================================================= */
+
+function applyBlur(
+    context,
+    width,
+    height
+) {
+
+    if (
+        state.blurAmount <= 0
+    ) {
+        return;
+    }
+
+    const amount =
+        state.blurAmount /
+        14;
+
+    context.save();
+
+    context.filter =
+        `blur(${Math.max(
+            0.5,
+            amount
+        )}px)`;
+
+    const copy =
+        document.createElement(
+            "canvas"
+        );
+
+    copy.width = width;
+    copy.height = height;
+
+    const copyCtx =
+        copy.getContext("2d");
+
+    copyCtx.drawImage(
+        context.canvas,
+        0,
+        0
     );
 
     context.clearRect(
-      0,
-      0,
-      width,
-      height
+        0,
+        0,
+        width,
+        height
     );
 
     context.drawImage(
-      tempCanvas,
-      0,
-      0
+        copy,
+        0,
+        0
     );
-  }
 
-  /* =========================================================
-     SHARPEN
-     ========================================================= */
+    context.restore();
+}
 
-  function applySharpen(context, width, height) {
-    if (S.sharp <= 0) return;
 
-    const imageData =
-      context.getImageData(
-        0,
-        0,
-        width,
-        height
-      );
+/* =========================================================
+   GEOMETRY
+   ========================================================= */
 
-    const source =
-      new Uint8ClampedArray(
-        imageData.data
-      );
+function getRotation() {
 
-    const data =
-      imageData.data;
+    return (
+        state.rotation +
+        state.straighten
+    ) *
+    Math.PI /
+    180;
+}
 
-    const strength =
-      S.sharp / 100;
 
-    for (
-      let y = 1;
-      y < height - 1;
-      y++
-    ) {
-      for (
-        let x = 1;
-        x < width - 1;
-        x++
-      ) {
-        const i =
-          (y * width + x) * 4;
+function getRotatedSize() {
 
-        const top =
-          ((y - 1) * width + x) * 4;
+    const width =
+        sourceCanvas.width;
 
-        const bottom =
-          ((y + 1) * width + x) * 4;
-
-        const left =
-          (y * width + x - 1) * 4;
-
-        const right =
-          (y * width + x + 1) * 4;
-
-        for (let c = 0; c < 3; c++) {
-          const value =
-            source[i + c] * 5 -
-            source[top + c] -
-            source[bottom + c] -
-            source[left + c] -
-            source[right + c];
-
-          data[i + c] =
-            clamp(
-              source[i + c] +
-                (value - source[i + c]) *
-                  strength,
-              0,
-              255
-            );
-        }
-      }
-    }
-
-    context.putImageData(
-      imageData,
-      0,
-      0
-    );
-  }
-
-  /* =========================================================
-     MASK
-     ========================================================= */
-
-  function applyMask(context, width, height) {
-    if (S.maskAmount === 0) return;
-
-    const imageData =
-      context.getImageData(
-        0,
-        0,
-        width,
-        height
-      );
-
-    const data =
-      imageData.data;
-
-    const amount =
-      S.maskAmount / 100;
-
-    for (
-      let y = 0;
-      y < height;
-      y++
-    ) {
-      for (
-        let x = 0;
-        x < width;
-        x++
-      ) {
-        let mask = 0;
-
-        if (S.maskType === "radial") {
-          const dx =
-            (x - width / 2) /
-            (width / 2);
-
-          const dy =
-            (y - height / 2) /
-            (height / 2);
-
-          const distance =
-            Math.sqrt(
-              dx * dx +
-              dy * dy
-            );
-
-          mask =
-            clamp(
-              1 - distance,
-              0,
-              1
-            );
-        } else if (
-          S.maskType === "linear"
-        ) {
-          mask =
-            clamp(
-              1 - y / height,
-              0,
-              1
-            );
-        } else {
-          mask =
-            1 -
-            Math.abs(
-              y / height - 0.5
-            ) * 2;
-        }
-
-        mask *= amount;
-
-        const i =
-          (y * width + x) * 4;
-
-        const localExposure =
-          Math.pow(
-            2,
-            (S.maskExposure / 100) *
-              mask
-          );
-
-        data[i] =
-          clamp(
-            data[i] *
-              localExposure,
-            0,
-            255
-          );
-
-        data[i + 1] =
-          clamp(
-            data[i + 1] *
-              localExposure,
-            0,
-            255
-          );
-
-        data[i + 2] =
-          clamp(
-            data[i + 2] *
-              localExposure,
-            0,
-            255
-          );
-      }
-    }
-
-    context.putImageData(
-      imageData,
-      0,
-      0
-    );
-  }
-
-  /* =========================================================
-     GEOMETRY
-     ========================================================= */
-
-  function getGeometry() {
-    let width = sourceCanvas.width;
-    let height = sourceCanvas.height;
+    const height =
+        sourceCanvas.height;
 
     const angle =
-      (S.rotate + S.straighten) *
-      Math.PI /
-      180;
+        getRotation();
 
     const cos =
-      Math.abs(Math.cos(angle));
+        Math.abs(
+            Math.cos(angle)
+        );
 
     const sin =
-      Math.abs(Math.sin(angle));
-
-    const rotatedWidth =
-      Math.ceil(
-        width * cos +
-        height * sin
-      );
-
-    const rotatedHeight =
-      Math.ceil(
-        width * sin +
-        height * cos
-      );
+        Math.abs(
+            Math.sin(angle)
+        );
 
     return {
-      width: rotatedWidth,
-      height: rotatedHeight,
-      angle
+        width: Math.max(
+            1,
+            Math.ceil(
+                width * cos +
+                height * sin
+            )
+        ),
+
+        height: Math.max(
+            1,
+            Math.ceil(
+                width * sin +
+                height * cos
+            )
+        )
     };
-  }
+}
 
-  /* =========================================================
-     RENDER
-     ========================================================= */
 
-  function render() {
-    if (!image) return;
+/* =========================================================
+   RENDER
+   ========================================================= */
 
-    if (renderQueued) return;
+function requestRender() {
 
-    renderQueued = true;
+    if (!imageLoaded) {
+        return;
+    }
 
-    requestAnimationFrame(() => {
-      renderQueued = false;
+    if (renderPending) {
+        return;
+    }
 
-      renderNow();
-    });
-  }
+    renderPending = true;
 
-  function renderNow() {
-    if (!image) return;
+    requestAnimationFrame(
+        function () {
 
-    const geometry =
-      getGeometry();
+            renderPending =
+                false;
 
-    const workingCanvas =
-      document.createElement("canvas");
+            renderNow();
+        }
+    );
+}
 
-    workingCanvas.width =
-      geometry.width;
 
-    workingCanvas.height =
-      geometry.height;
+function render() {
+    requestRender();
+}
 
-    const workingCtx =
-      workingCanvas.getContext("2d", {
-        willReadFrequently: true
-      });
 
-    workingCtx.save();
+function renderNow() {
 
-    workingCtx.translate(
-      geometry.width / 2,
-      geometry.height / 2
+    if (!imageLoaded) {
+        return;
+    }
+
+    const size =
+        getRotatedSize();
+
+    const workCanvas =
+        document.createElement(
+            "canvas"
+        );
+
+    workCanvas.width =
+        size.width;
+
+    workCanvas.height =
+        size.height;
+
+    const workCtx =
+        workCanvas.getContext(
+            "2d",
+            {
+                willReadFrequently: true
+            }
+        );
+
+
+    /* Geometry */
+
+    workCtx.save();
+
+    workCtx.translate(
+        size.width / 2,
+        size.height / 2
     );
 
-    workingCtx.rotate(
-      geometry.angle
+    workCtx.rotate(
+        getRotation()
     );
 
-    workingCtx.scale(
-      S.flipX ? -1 : 1,
-      S.flipY ? -1 : 1
+    workCtx.scale(
+        state.flipX
+            ? -1
+            : 1,
+
+        state.flipY
+            ? -1
+            : 1
     );
 
-    workingCtx.drawImage(
-      sourceCanvas,
-      -sourceCanvas.width / 2,
-      -sourceCanvas.height / 2
+    workCtx.drawImage(
+        sourceCanvas,
+
+        -sourceCanvas.width / 2,
+        -sourceCanvas.height / 2
     );
 
-    workingCtx.restore();
+    workCtx.restore();
+
+
+    /* Before */
+
+    if (beforeMode) {
+
+        drawCanvasToPreview(
+            sourceCanvas
+        );
+
+        statusBar.textContent =
+            "Original photo";
+
+        return;
+    }
+
+
+    /* Pixel adjustments */
 
     let imageData =
-      workingCtx.getImageData(
-        0,
-        0,
-        geometry.width,
-        geometry.height
-      );
+        workCtx.getImageData(
+            0,
+            0,
+            size.width,
+            size.height
+        );
 
     imageData =
-      processPixels(imageData);
+        processImageData(
+            imageData
+        );
 
-    workingCtx.putImageData(
-      imageData,
-      0,
-      0
+    workCtx.putImageData(
+        imageData,
+        0,
+        0
     );
+
+
+    /* Local mask */
 
     applyMask(
-      workingCtx,
-      geometry.width,
-      geometry.height
+        workCtx,
+        size.width,
+        size.height
     );
+
+
+    /* Sharpen */
 
     applySharpen(
-      workingCtx,
-      geometry.width,
-      geometry.height
+        workCtx,
+        size.width,
+        size.height
     );
+
+
+    /* Blur */
 
     applyBlur(
-      workingCtx,
-      geometry.width,
-      geometry.height
+        workCtx,
+        size.width,
+        size.height
     );
+
+
+    /* Vignette */
 
     applyVignette(
-      workingCtx,
-      geometry.width,
-      geometry.height
+        workCtx,
+        size.width,
+        size.height
     );
+
+
+    /* Grain */
 
     applyGrain(
-      workingCtx,
-      geometry.width,
-      geometry.height
+        workCtx,
+        size.width,
+        size.height
     );
 
-    drawPreview(
-      workingCanvas,
-      geometry.width,
-      geometry.height
+
+    drawCanvasToPreview(
+        workCanvas
     );
-  }
 
-  function drawPreview(
-    workingCanvas,
-    width,
-    height
-  ) {
-    const viewer =
-      document.querySelector(".stage");
+    statusBar.textContent =
+        `${size.width} × ${size.height}px`;
+}
 
-    if (!viewer) return;
 
-    const maxWidth =
-      Math.max(
-        100,
-        viewer.clientWidth || 600
-      );
+/* =========================================================
+   PREVIEW DRAW
+   ========================================================= */
 
-    const maxHeight =
-      Math.max(
-        100,
-        viewer.clientHeight || 500
-      );
+function drawCanvasToPreview(
+    source
+) {
+
+    const availableWidth =
+        Math.max(
+            100,
+            photoStage.clientWidth - 24
+        );
+
+    const availableHeight =
+        Math.max(
+            100,
+            photoStage.clientHeight - 24
+        );
 
     const scale =
-      Math.min(
-        maxWidth / width,
-        maxHeight / height,
-        1
-      );
+        Math.min(
+            availableWidth /
+            source.width,
 
-    const outputWidth =
-      Math.max(
-        1,
-        Math.round(width * scale)
-      );
+            availableHeight /
+            source.height,
 
-    const outputHeight =
-      Math.max(
-        1,
-        Math.round(height * scale)
-      );
+            1
+        );
+
+    const width =
+        Math.max(
+            1,
+            Math.round(
+                source.width * scale
+            )
+        );
+
+    const height =
+        Math.max(
+            1,
+            Math.round(
+                source.height * scale
+            )
+        );
 
     canvas.width =
-      outputWidth;
+        width;
 
     canvas.height =
-      outputHeight;
-
-    overlay.width =
-      outputWidth;
-
-    overlay.height =
-      outputHeight;
+        height;
 
     ctx.clearRect(
-      0,
-      0,
-      outputWidth,
-      outputHeight
+        0,
+        0,
+        width,
+        height
     );
 
-    if (showBefore) {
-      ctx.drawImage(
-        sourceCanvas,
+    ctx.drawImage(
+        source,
         0,
         0,
-        outputWidth,
-        outputHeight
-      );
-    } else {
-      ctx.drawImage(
-        workingCanvas,
-        0,
-        0,
-        outputWidth,
-        outputHeight
-      );
-    }
+        width,
+        height
+    );
 
     canvas.style.width =
-      outputWidth + "px";
+        `${width}px`;
 
     canvas.style.height =
-      outputHeight + "px";
+        `${height}px`;
 
-    overlay.style.width =
-      outputWidth + "px";
+    applyZoomTransform();
+}
 
-    overlay.style.height =
-      outputHeight + "px";
 
-    updateStatus(
-      width,
-      height
-    );
-  }
+/* =========================================================
+   ZOOM
+   ========================================================= */
 
-  /* =========================================================
-     STATUS
-     ========================================================= */
+function applyZoomTransform() {
 
-  function updateStatus(width, height) {
-    const status =
-      $("status");
+    canvas.style.transform =
+        `scale(${zoom})`;
 
-    if (!status) return;
+    updateZoomLabel();
+}
 
-    status.textContent =
-      `${width} × ${height}px`;
-  }
 
-  /* =========================================================
-     STATE RESET
-     ========================================================= */
+function updateZoomLabel() {
 
-  function resetState(saveHistory = true) {
-    if (saveHistory) {
-      pushHistory();
+    if (zoom === 1) {
+
+        zoomValue.textContent =
+            "Fit";
+
+        return;
     }
 
-    const defaults = {
-      exposure: 0,
-      contrast: 0,
-      highlights: 0,
-      shadows: 0,
-      whites: 0,
-      blacks: 0,
+    zoomValue.textContent =
+        `${Math.round(
+            zoom * 100
+        )}%`;
+}
 
-      temp: 0,
-      tint: 0,
-      vibrance: 0,
-      saturation: 0,
 
-      texture: 0,
-      clarity: 0,
-      dehaze: 0,
-      vignette: 0,
-      midpoint: 50,
-      feather: 50,
-      roundness: 0,
+function fitPhoto() {
 
-      grain: 0,
-      grainSize: 25,
-      grainRough: 50,
+    zoom = 1;
 
-      sharp: 0,
-      radius: 1,
-      noise: 0,
-      colorNoise: 0,
-
-      ratio: "original",
-      rotate: 0,
-      straighten: 0,
-      flipX: false,
-      flipY: false,
-
-      profile: "natural",
-      preset: "none",
-      presetAmount: 100,
-
-      blur: 0,
-      blurX: 50,
-      blurY: 50,
-
-      lensVignette: 0,
-      defringe: 0,
-
-      maskType: "radial",
-      maskAmount: 0,
-      maskExposure: 0,
-      maskContrast: 0,
-      maskSaturation: 0,
-
-      retouchSize: 30,
-
-      gradeShadow: 0,
-      gradeMidtone: 0,
-      gradeHighlight: 0,
-      gradeBlend: 50,
-      gradeBalance: 0
-    };
-
-    Object.assign(S, defaults);
-
-    colors.forEach((color) => {
-      S["h_" + color] = 0;
-      S["s_" + color] = 0;
-      S["l_" + color] = 0;
-    });
-
-    updateAllControls();
-  }
-
-  /* =========================================================
-     HISTORY
-     ========================================================= */
-
-  function cloneState() {
-    return JSON.parse(
-      JSON.stringify(S)
-    );
-  }
-
-  function pushHistory() {
-    history.push(cloneState());
-
-    if (history.length > 30) {
-      history.shift();
-    }
-
-    future = [];
-  }
-
-  function undo() {
-    if (!history.length) return;
-
-    future.push(cloneState());
-
-    const previous =
-      history.pop();
-
-    Object.assign(
-      S,
-      previous
-    );
-
-    updateAllControls();
+    applyZoomTransform();
 
     render();
-  }
+}
 
-  function redo() {
-    if (!future.length) return;
 
-    history.push(cloneState());
+zoomInBtn.addEventListener(
+    "click",
+    function () {
 
-    const next =
-      future.pop();
-
-    Object.assign(
-      S,
-      next
-    );
-
-    updateAllControls();
-
-    render();
-  }
-
-  /* =========================================================
-     CONTROLS
-     ========================================================= */
-
-  function updateAllControls() {
-    document
-      .querySelectorAll(
-        "[data-key]"
-      )
-      .forEach((element) => {
-        const key =
-          element.dataset.key;
-
-        if (!(key in S)) return;
-
-        if (
-          element.type === "range" ||
-          element.type === "number"
-        ) {
-          element.value = S[key];
+        if (!imageLoaded) {
+            return;
         }
 
-        if (
-          element.tagName === "SELECT"
-        ) {
-          element.value = S[key];
-        }
+        zoom =
+            clamp(
+                zoom + 0.1,
+                0.5,
+                2.5
+            );
 
-        const valueElement =
-          document.querySelector(
-            `[data-value-for="${key}"]`
-          );
-
-        if (valueElement) {
-          valueElement.textContent =
-            formatValue(S[key]);
-        }
-      });
-  }
-
-  function formatValue(value) {
-    if (typeof value === "number") {
-      if (Number.isInteger(value)) {
-        return String(value);
-      }
-
-      return value.toFixed(1);
+        applyZoomTransform();
     }
+);
 
-    return String(value);
-  }
 
-  function bindControls() {
-    document
-      .querySelectorAll(
-        "[data-key]"
-      )
-      .forEach((element) => {
-        element.addEventListener(
-          "pointerdown",
-          () => {
-            pushHistory();
-          },
-          { once: true }
-        );
+zoomOutBtn.addEventListener(
+    "click",
+    function () {
 
-        element.addEventListener(
-          "input",
-          function () {
-            const key =
-              this.dataset.key;
+        if (!imageLoaded) {
+            return;
+        }
 
-            if (!(key in S)) return;
+        zoom =
+            clamp(
+                zoom - 0.1,
+                0.5,
+                2.5
+            );
 
-            let value;
+        applyZoomTransform();
+    }
+);
 
-            if (
-              this.type === "range" ||
-              this.type === "number"
-            ) {
-              value =
-                parseFloat(
-                  this.value
-                );
-            } else {
-              value =
-                this.value;
-            }
 
-            if (
-              Number.isNaN(value)
-            ) {
-              return;
-            }
+fitBtn.addEventListener(
+    "click",
+    fitPhoto
+);
 
-            S[key] = value;
 
-            const valueElement =
-              document.querySelector(
-                `[data-value-for="${key}"]`
-              );
+/* =========================================================
+   SLIDER CREATOR
+   ========================================================= */
 
-            if (valueElement) {
-              valueElement.textContent =
-                formatValue(value);
-            }
-
-            render();
-          }
-        );
-      });
-  }
-
-  /* =========================================================
-     TOOL PANEL
-     ========================================================= */
-
-  const panelTemplates = {
-    light: `
-      <section>
-        <h3>Light</h3>
-        ${slider("Exposure", "exposure", -100, 100)}
-        ${slider("Contrast", "contrast", -100, 100)}
-        ${slider("Highlights", "highlights", -100, 100)}
-        ${slider("Shadows", "shadows", -100, 100)}
-        ${slider("Whites", "whites", -100, 100)}
-        ${slider("Blacks", "blacks", -100, 100)}
-      </section>
-    `,
-
-    color: `
-      <section>
-        <h3>Color</h3>
-        ${slider("Temperature", "temp", -100, 100)}
-        ${slider("Tint", "tint", -100, 100)}
-        ${slider("Vibrance", "vibrance", -100, 100)}
-        ${slider("Saturation", "saturation", -100, 100)}
-
-        <h3>Color Grading</h3>
-        ${slider("Shadows", "gradeShadow", -100, 100)}
-        ${slider("Midtones", "gradeMidtone", -100, 100)}
-        ${slider("Highlights", "gradeHighlight", -100, 100)}
-        ${slider("Blending", "gradeBlend", 0, 100)}
-        ${slider("Balance", "gradeBalance", -100, 100)}
-      </section>
-    `,
-
-    effects: `
-      <section>
-        <h3>Effects</h3>
-        ${slider("Texture", "texture", -100, 100)}
-        ${slider("Clarity", "clarity", -100, 100)}
-        ${slider("Dehaze", "dehaze", -100, 100)}
-        ${slider("Vignette", "vignette", -100, 100)}
-        ${slider("Midpoint", "midpoint", 0, 100)}
-        ${slider("Feather", "feather", 0, 100)}
-        ${slider("Roundness", "roundness", -100, 100)}
-        ${slider("Grain", "grain", 0, 100)}
-        ${slider("Grain Size", "grainSize", 0, 100)}
-        ${slider("Roughness", "grainRough", 0, 100)}
-      </section>
-    `,
-
-    detail: `
-      <section>
-        <h3>Detail</h3>
-        ${slider("Sharpening", "sharp", 0, 100)}
-        ${slider("Radius", "radius", 0, 3, 0.1)}
-        ${slider("Noise Reduction", "noise", 0, 100)}
-        ${slider("Color Noise Reduction", "colorNoise", 0, 100)}
-      </section>
-    `,
-
-    crop: `
-      <section>
-        <h3>Crop & Geometry</h3>
-
-        <label>Aspect Ratio</label>
-        <select data-key="ratio">
-          <option value="original">Original</option>
-          <option value="1:1">1:1</option>
-          <option value="4:5">4:5</option>
-          <option value="5:4">5:4</option>
-          <option value="4:3">4:3</option>
-          <option value="3:4">3:4</option>
-          <option value="16:9">16:9</option>
-          <option value="9:16">9:16</option>
-        </select>
-
-        ${slider("Straighten", "straighten", -45, 45)}
-        
-        <button class="tool-action" data-action="rotate-left">
-          Rotate Left
-        </button>
-
-        <button class="tool-action" data-action="rotate-right">
-          Rotate Right
-        </button>
-
-        <button class="tool-action" data-action="flip-x">
-          Flip Horizontal
-        </button>
-
-        <button class="tool-action" data-action="flip-y">
-          Flip Vertical
-        </button>
-      </section>
-    `,
-
-    presets: `
-      <section>
-        <h3>Presets</h3>
-
-        <div class="preset-grid">
-          <button data-preset="clean">Clean</button>
-          <button data-preset="warm">Warm</button>
-          <button data-preset="cool">Cool</button>
-          <button data-preset="cinematic">Cinematic</button>
-          <button data-preset="matte">Matte</button>
-          <button data-preset="vivid">Vivid</button>
-          <button data-preset="portrait">Portrait</button>
-          <button data-preset="bw">B&W</button>
-        </div>
-
-        ${slider("Preset Amount", "presetAmount", 0, 100)}
-      </section>
-    `,
-
-    profiles: `
-      <section>
-        <h3>Profiles</h3>
-
-        <select data-key="profile">
-          <option value="natural">Natural</option>
-          <option value="neutral">Neutral</option>
-          <option value="vivid">Vivid</option>
-          <option value="modern">Modern</option>
-          <option value="film">Film</option>
-          <option value="monochrome">Monochrome</option>
-        </select>
-      </section>
-    `,
-
-    mask: `
-      <section>
-        <h3>Mask</h3>
-
-        <label>Mask Type</label>
-
-        <select data-key="maskType">
-          <option value="radial">Radial</option>
-          <option value="linear">Linear</option>
-          <option value="brush">Brush</option>
-        </select>
-
-        ${slider("Mask Amount", "maskAmount", 0, 100)}
-        ${slider("Local Exposure", "maskExposure", -100, 100)}
-        ${slider("Local Contrast", "maskContrast", -100, 100)}
-        ${slider("Local Saturation", "maskSaturation", -100, 100)}
-      </section>
-    `,
-
-    retouch: `
-      <section>
-        <h3>Retouch</h3>
-
-        ${slider("Brush Size", "retouchSize", 5, 100)}
-
-        <button class="tool-action" data-action="retouch">
-          Enable Retouch Brush
-        </button>
-      </section>
-    `,
-
-    blur: `
-      <section>
-        <h3>Lens Blur</h3>
-
-        ${slider("Blur Amount", "blur", 0, 100)}
-        ${slider("Focus X", "blurX", 0, 100)}
-        ${slider("Focus Y", "blurY", 0, 100)}
-      </section>
-    `,
-
-    optics: `
-      <section>
-        <h3>Optics</h3>
-
-        ${slider("Lens Vignette", "lensVignette", -100, 100)}
-        ${slider("Defringe", "defringe", 0, 100)}
-
-        <p class="tool-note">
-          Browser-based optics controls provide lightweight corrections.
-        </p>
-      </section>
-    `,
-
-    export: `
-      <section>
-        <h3>Export</h3>
-
-        <label>Format</label>
-
-        <select id="exportFormat">
-          <option value="image/jpeg">JPG</option>
-          <option value="image/png">PNG</option>
-          <option value="image/webp">WebP</option>
-        </select>
-
-        ${slider("Quality", "exportQuality", 50, 100)}
-
-        <label>Maximum Long Edge</label>
-
-        <select id="exportSize">
-          <option value="original">Original</option>
-          <option value="4000">4000px</option>
-          <option value="3000">3000px</option>
-          <option value="2500">2500px</option>
-          <option value="2000">2000px</option>
-          <option value="1600">1600px</option>
-          <option value="1200">1200px</option>
-        </select>
-
-        <button class="export-button" data-action="export">
-          Export Photo
-        </button>
-      </section>
-    `
-  };
-
-  function slider(
+function createSlider(
     label,
     key,
     min,
     max,
     step = 1
-  ) {
+) {
+
     return `
-      <div class="control">
-        <div class="control-head">
-          <label>${label}</label>
-          <span data-value-for="${key}">
-            ${formatValue(
-              key in S
-                ? S[key]
-                : 0
+        <div class="slider-control">
+
+            <div class="slider-header">
+
+                <label>
+                    ${label}
+                </label>
+
+                <span
+                    class="slider-value"
+                    data-value="${key}"
+                >
+                    ${state[key]}
+                </span>
+
+            </div>
+
+            <input
+                type="range"
+                data-key="${key}"
+                min="${min}"
+                max="${max}"
+                step="${step}"
+                value="${state[key]}"
+            >
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   PANEL CONTENT
+   ========================================================= */
+
+function lightPanel() {
+
+    return `
+
+        <div class="editor-section">
+
+            <h3 class="section-title">
+                Light
+            </h3>
+
+            ${createSlider(
+                "Exposure",
+                "exposure",
+                -100,
+                100
             )}
-          </span>
+
+            ${createSlider(
+                "Contrast",
+                "contrast",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Highlights",
+                "highlights",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Shadows",
+                "shadows",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Whites",
+                "whites",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Blacks",
+                "blacks",
+                -100,
+                100
+            )}
+
         </div>
 
-        <input
-          type="range"
-          data-key="${key}"
-          min="${min}"
-          max="${max}"
-          step="${step}"
-          value="${
-            key in S
-              ? S[key]
-              : 0
-          }"
-        />
-      </div>
+        <div class="editor-info">
+            Light controls change the overall brightness and tonal range of your photo.
+        </div>
     `;
-  }
+}
 
-  function showPanel(tool) {
+
+function colorPanel() {
+
+    return `
+
+        <div class="editor-section">
+
+            <h3 class="section-title">
+                Color
+            </h3>
+
+            ${createSlider(
+                "Temperature",
+                "temperature",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Tint",
+                "tint",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Vibrance",
+                "vibrance",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Saturation",
+                "saturation",
+                -100,
+                100
+            )}
+
+        </div>
+
+        <div class="editor-info">
+            Temperature and tint change the color mood. Vibrance and saturation control color intensity.
+        </div>
+    `;
+}
+
+
+function effectsPanel() {
+
+    return `
+
+        <div class="editor-section">
+
+            <h3 class="section-title">
+                Effects
+            </h3>
+
+            ${createSlider(
+                "Texture",
+                "texture",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Clarity",
+                "clarity",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Dehaze",
+                "dehaze",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Vignette",
+                "vignette",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Grain",
+                "grain",
+                0,
+                100
+            )}
+
+        </div>
+
+        <div class="editor-info">
+            Use effects carefully for a natural result. Negative vignette creates a subtle brightening effect.
+        </div>
+    `;
+}
+
+
+function detailPanel() {
+
+    return `
+
+        <div class="editor-section">
+
+            <h3 class="section-title">
+                Detail
+            </h3>
+
+            ${createSlider(
+                "Sharpening",
+                "sharpening",
+                0,
+                100
+            )}
+
+            ${createSlider(
+                "Noise Reduction",
+                "noiseReduction",
+                0,
+                100
+            )}
+
+        </div>
+
+        <div class="editor-info">
+            Sharpening improves edge definition. Noise reduction is designed for photos with visible digital noise.
+        </div>
+    `;
+}
+
+
+function cropPanel() {
+
+    return `
+
+        <div class="editor-section">
+
+            <h3 class="section-title">
+                Crop & Geometry
+            </h3>
+
+            <label class="field-label">
+                Aspect Ratio
+            </label>
+
+            <select
+                class="editor-select"
+                data-select="aspectRatio"
+            >
+                <option value="original">
+                    Original
+                </option>
+
+                <option value="1:1">
+                    1:1 Square
+                </option>
+
+                <option value="4:5">
+                    4:5 Portrait
+                </option>
+
+                <option value="5:4">
+                    5:4 Landscape
+                </option>
+
+                <option value="4:3">
+                    4:3
+                </option>
+
+                <option value="3:4">
+                    3:4
+                </option>
+
+                <option value="16:9">
+                    16:9
+                </option>
+
+                <option value="9:16">
+                    9:16
+                </option>
+            </select>
+
+            ${createSlider(
+                "Straighten",
+                "straighten",
+                -45,
+                45,
+                0.5
+            )}
+
+            <button
+                type="button"
+                class="action-button"
+                data-action="rotate-left"
+            >
+                Rotate Left
+            </button>
+
+            <button
+                type="button"
+                class="action-button"
+                data-action="rotate-right"
+            >
+                Rotate Right
+            </button>
+
+            <button
+                type="button"
+                class="action-button"
+                data-action="flip-x"
+            >
+                Flip Horizontal
+            </button>
+
+            <button
+                type="button"
+                class="action-button"
+                data-action="flip-y"
+            >
+                Flip Vertical
+            </button>
+
+        </div>
+    `;
+}
+
+
+function presetsPanel() {
+
+    return `
+
+        <div class="editor-section">
+
+            <h3 class="section-title">
+                Presets
+            </h3>
+
+            <div class="preset-grid">
+
+                <button
+                    type="button"
+                    class="preset-button"
+                    data-preset="clean"
+                >
+                    Clean
+                </button>
+
+                <button
+                    type="button"
+                    class="preset-button"
+                    data-preset="warm"
+                >
+                    Warm
+                </button>
+
+                <button
+                    type="button"
+                    class="preset-button"
+                    data-preset="cool"
+                >
+                    Cool
+                </button>
+
+                <button
+                    type="button"
+                    class="preset-button"
+                    data-preset="cinematic"
+                >
+                    Cinematic
+                </button>
+
+                <button
+                    type="button"
+                    class="preset-button"
+                    data-preset="matte"
+                >
+                    Matte
+                </button>
+
+                <button
+                    type="button"
+                    class="preset-button"
+                    data-preset="vivid"
+                >
+                    Vivid
+                </button>
+
+                <button
+                    type="button"
+                    class="preset-button"
+                    data-preset="portrait"
+                >
+                    Portrait
+                </button>
+
+                <button
+                    type="button"
+                    class="preset-button"
+                    data-preset="blackwhite"
+                >
+                    B&W
+                </button>
+
+            </div>
+
+            ${createSlider(
+                "Preset Amount",
+                "presetAmount",
+                0,
+                100
+            )}
+
+        </div>
+    `;
+}
+
+
+function maskPanel() {
+
+    return `
+
+        <div class="editor-section">
+
+            <h3 class="section-title">
+                Local Mask
+            </h3>
+
+            <label class="field-label">
+                Mask Type
+            </label>
+
+            <select
+                class="editor-select"
+                data-select="maskType"
+            >
+
+                <option value="radial">
+                    Radial
+                </option>
+
+                <option value="linear">
+                    Linear
+                </option>
+
+            </select>
+
+            ${createSlider(
+                "Mask Amount",
+                "maskAmount",
+                0,
+                100
+            )}
+
+            ${createSlider(
+                "Mask Exposure",
+                "maskExposure",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Mask Contrast",
+                "maskContrast",
+                -100,
+                100
+            )}
+
+            ${createSlider(
+                "Mask Saturation",
+                "maskSaturation",
+                -100,
+                100
+            )}
+
+        </div>
+
+        <div class="editor-info">
+            This browser-based mask provides radial and linear local adjustments. It is not AI subject detection.
+        </div>
+    `;
+}
+
+
+function blurPanel() {
+
+    return `
+
+        <div class="editor-section">
+
+            <h3 class="section-title">
+                Lens Blur
+            </h3>
+
+            ${createSlider(
+                "Blur Amount",
+                "blurAmount",
+                0,
+                100
+            )}
+
+            ${createSlider(
+                "Focus Position",
+                "blurX",
+                0,
+                100
+            )}
+
+            ${createSlider(
+                "Focus Height",
+                "blurY",
+                0,
+                100
+            )}
+
+        </div>
+
+        <div class="editor-info">
+            Browser-based blur provides a lightweight depth-style effect. It does not perform AI depth detection.
+        </div>
+    `;
+}
+
+
+function exportPanel() {
+
+    return `
+
+        <div class="editor-section">
+
+            <h3 class="section-title">
+                Export
+            </h3>
+
+            <div class="export-card">
+
+                <label class="field-label">
+                    Format
+                </label>
+
+                <select
+                    id="exportFormat"
+                    class="editor-select"
+                >
+
+                    <option value="image/jpeg">
+                        JPG
+                    </option>
+
+                    <option value="image/png">
+                        PNG
+                    </option>
+
+                    <option value="image/webp">
+                        WebP
+                    </option>
+
+                </select>
+
+
+                <label class="field-label">
+                    Maximum Long Edge
+                </label>
+
+                <select
+                    id="exportSize"
+                    class="editor-select"
+                >
+
+                    <option value="original">
+                        Original Working Size
+                    </option>
+
+                    <option value="4000">
+                        4000px
+                    </option>
+
+                    <option value="3000">
+                        3000px
+                    </option>
+
+                    <option value="2500">
+                        2500px
+                    </option>
+
+                    <option value="2000">
+                        2000px
+                    </option>
+
+                    <option value="1600">
+                        1600px
+                    </option>
+
+                    <option value="1200">
+                        1200px
+                    </option>
+
+                </select>
+
+
+                <label class="field-label">
+                    JPG / WebP Quality
+                </label>
+
+                <input
+                    id="exportQuality"
+                    type="range"
+                    min="50"
+                    max="100"
+                    value="92"
+                >
+
+                <button
+                    type="button"
+                    class="action-button primary"
+                    id="exportBtn"
+                >
+                    Export Photo
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="editor-info">
+            Photo processing happens locally in your browser. Your photo is not uploaded to a server by this editor.
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   PANEL SELECTOR
+   ========================================================= */
+
+function showTool(tool) {
+
     activeTool = tool;
 
-    const panel =
-      $("panel");
+    toolButtons.forEach(
+        (button) => {
 
-    if (!panel) return;
-
-    panel.innerHTML =
-      panelTemplates[tool] ||
-      "";
-
-    bindControls();
-    bindPanelActions();
-    updateAllControls();
-  }
-
-  function bindPanelActions() {
-    document
-      .querySelectorAll(
-        "[data-preset]"
-      )
-      .forEach((button) => {
-        button.addEventListener(
-          "click",
-          () => {
-            pushHistory();
-
-            applyPreset(
-              button.dataset.preset
+            button.classList.toggle(
+                "active",
+                button.dataset.tool === tool
             );
-          }
-        );
-      });
+        }
+    );
 
-    document
-      .querySelectorAll(
-        ".tool-action"
-      )
-      .forEach((button) => {
+
+    if (tool === "light") {
+        controlPanel.innerHTML =
+            lightPanel();
+    }
+
+    else if (tool === "color") {
+        controlPanel.innerHTML =
+            colorPanel();
+    }
+
+    else if (tool === "effects") {
+        controlPanel.innerHTML =
+            effectsPanel();
+    }
+
+    else if (tool === "detail") {
+        controlPanel.innerHTML =
+            detailPanel();
+    }
+
+    else if (tool === "crop") {
+        controlPanel.innerHTML =
+            cropPanel();
+    }
+
+    else if (tool === "presets") {
+        controlPanel.innerHTML =
+            presetsPanel();
+    }
+
+    else if (tool === "mask") {
+        controlPanel.innerHTML =
+            maskPanel();
+    }
+
+    else if (tool === "blur") {
+        controlPanel.innerHTML =
+            blurPanel();
+    }
+
+    else if (tool === "export") {
+        controlPanel.innerHTML =
+            exportPanel();
+    }
+
+
+    bindPanelControls();
+
+    controlPanel.scrollTop = 0;
+}
+
+
+toolButtons.forEach(
+    (button) => {
+
         button.addEventListener(
-          "click",
-          () => {
-            const action =
-              button.dataset.action;
+            "click",
+            function () {
 
-            if (
-              action === "rotate-left"
-            ) {
-              pushHistory();
-              S.rotate -= 90;
-              render();
+                showTool(
+                    this.dataset.tool
+                );
             }
-
-            if (
-              action === "rotate-right"
-            ) {
-              pushHistory();
-              S.rotate += 90;
-              render();
-            }
-
-            if (
-              action === "flip-x"
-            ) {
-              pushHistory();
-              S.flipX = !S.flipX;
-              render();
-            }
-
-            if (
-              action === "flip-y"
-            ) {
-              pushHistory();
-              S.flipY = !S.flipY;
-              render();
-            }
-          }
         );
-      });
+    }
+);
+
+
+/* =========================================================
+   PANEL CONTROLS
+   ========================================================= */
+
+function bindPanelControls() {
+
+    const sliders =
+        controlPanel.querySelectorAll(
+            'input[type="range"][data-key]'
+        );
+
+
+    sliders.forEach(
+        (slider) => {
+
+            slider.addEventListener(
+                "pointerdown",
+                function () {
+
+                    saveHistory();
+                },
+                {
+                    once: true
+                }
+            );
+
+
+            slider.addEventListener(
+                "input",
+                function () {
+
+                    const key =
+                        this.dataset.key;
+
+                    state[key] =
+                        Number(
+                            this.value
+                        );
+
+                    const value =
+                        controlPanel.querySelector(
+                            `[data-value="${key}"]`
+                        );
+
+                    if (value) {
+
+                        value.textContent =
+                            Number(
+                                this.value
+                            ).toFixed(
+                                this.step &&
+                                Number(
+                                    this.step
+                                ) < 1
+                                    ? 1
+                                    : 0
+                            );
+                    }
+
+                    requestRender();
+                }
+            );
+        }
+    );
+
+
+    const selects =
+        controlPanel.querySelectorAll(
+            "[data-select]"
+        );
+
+
+    selects.forEach(
+        (select) => {
+
+            select.value =
+                state[
+                    select.dataset.select
+                ];
+
+            select.addEventListener(
+                "change",
+                function () {
+
+                    saveHistory();
+
+                    state[
+                        this.dataset.select
+                    ] =
+                        this.value;
+
+                    requestRender();
+                }
+            );
+        }
+    );
+
+
+    const actionButtons =
+        controlPanel.querySelectorAll(
+            "[data-action]"
+        );
+
+
+    actionButtons.forEach(
+        (button) => {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    saveHistory();
+
+                    const action =
+                        this.dataset.action;
+
+
+                    if (
+                        action ===
+                        "rotate-left"
+                    ) {
+
+                        state.rotation -= 90;
+                    }
+
+
+                    if (
+                        action ===
+                        "rotate-right"
+                    ) {
+
+                        state.rotation += 90;
+                    }
+
+
+                    if (
+                        action ===
+                        "flip-x"
+                    ) {
+
+                        state.flipX =
+                            !state.flipX;
+                    }
+
+
+                    if (
+                        action ===
+                        "flip-y"
+                    ) {
+
+                        state.flipY =
+                            !state.flipY;
+                    }
+
+
+                    requestRender();
+                }
+            );
+        }
+    );
+
+
+    const presetButtons =
+        controlPanel.querySelectorAll(
+            "[data-preset]"
+        );
+
+
+    presetButtons.forEach(
+        (button) => {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    saveHistory();
+
+                    applyPreset(
+                        this.dataset.preset
+                    );
+
+                    requestRender();
+                }
+            );
+        }
+    );
+
 
     const exportButton =
-      document.querySelector(
-        '[data-action="export"]'
-      );
+        document.getElementById(
+            "exportBtn"
+        );
+
 
     if (exportButton) {
-      exportButton.addEventListener(
-        "click",
-        exportPhoto
-      );
-    }
-  }
 
-  /* =========================================================
-     EXPORT
-     ========================================================= */
-
-  function exportPhoto() {
-    if (!image) {
-      alert("Please select a photo first.");
-      return;
+        exportButton.addEventListener(
+            "click",
+            exportPhoto
+        );
     }
+
+
+    updateAllControls();
+}
+
+
+/* =========================================================
+   UPDATE CONTROLS
+   ========================================================= */
+
+function updateAllControls() {
+
+    const sliders =
+        controlPanel.querySelectorAll(
+            'input[type="range"][data-key]'
+        );
+
+
+    sliders.forEach(
+        (slider) => {
+
+            const key =
+                slider.dataset.key;
+
+            if (
+                state[key] ===
+                undefined
+            ) {
+                return;
+            }
+
+            slider.value =
+                state[key];
+
+            const value =
+                controlPanel.querySelector(
+                    `[data-value="${key}"]`
+                );
+
+            if (value) {
+                value.textContent =
+                    state[key];
+            }
+        }
+    );
+
+
+    const selects =
+        controlPanel.querySelectorAll(
+            "[data-select]"
+        );
+
+
+    selects.forEach(
+        (select) => {
+
+            const key =
+                select.dataset.select;
+
+            select.value =
+                state[key];
+        }
+    );
+}
+
+
+/* =========================================================
+   PRESETS
+   ========================================================= */
+
+const presets = {
+
+    clean: {
+        exposure: 4,
+        contrast: 4,
+        highlights: -3,
+        shadows: 4,
+        saturation: 3,
+        clarity: 3
+    },
+
+    warm: {
+        exposure: 4,
+        temperature: 20,
+        contrast: 3,
+        saturation: 5
+    },
+
+    cool: {
+        temperature: -18,
+        contrast: 4,
+        saturation: 2
+    },
+
+    cinematic: {
+        exposure: 2,
+        contrast: 18,
+        highlights: -18,
+        shadows: 10,
+        saturation: -6,
+        clarity: 12,
+        dehaze: 8,
+        vignette: 20
+    },
+
+    matte: {
+        contrast: -12,
+        shadows: 8,
+        blacks: 15,
+        saturation: -7,
+        grain: 8
+    },
+
+    vivid: {
+        contrast: 10,
+        vibrance: 28,
+        saturation: 10,
+        clarity: 8
+    },
+
+    portrait: {
+        exposure: 3,
+        highlights: -12,
+        shadows: 10,
+        texture: -8,
+        clarity: -5,
+        saturation: 3
+    },
+
+    blackwhite: {
+        saturation: -100,
+        contrast: 12,
+        clarity: 8
+    }
+};
+
+
+function applyPreset(name) {
+
+    const preset =
+        presets[name];
+
+    if (!preset) {
+        return;
+    }
+
+    const amount =
+        state.presetAmount /
+        100;
+
+    const defaults =
+        getDefaultState();
+
+    Object.keys(preset).forEach(
+        (key) => {
+
+            const target =
+                preset[key];
+
+            const start =
+                defaults[key] !==
+                undefined
+                    ? defaults[key]
+                    : 0;
+
+            state[key] =
+                start +
+                (
+                    target -
+                    start
+                ) *
+                amount;
+        }
+    );
+
+    updateAllControls();
+}
+
+
+/* =========================================================
+   EXPORT
+   ========================================================= */
+
+function exportPhoto() {
+
+    if (!imageLoaded) {
+
+        alert(
+            "Please open a photo first."
+        );
+
+        return;
+    }
+
+
+    const formatElement =
+        document.getElementById(
+            "exportFormat"
+        );
+
+    const sizeElement =
+        document.getElementById(
+            "exportSize"
+        );
+
+    const qualityElement =
+        document.getElementById(
+            "exportQuality"
+        );
+
 
     const format =
-      $("exportFormat")
-        ? $("exportFormat").value
-        : "image/jpeg";
+        formatElement
+            ? formatElement.value
+            : "image/jpeg";
 
-    const qualityControl =
-      $("exportQuality");
 
     const quality =
-      qualityControl
-        ? Number(
-            qualityControl.value
-          ) / 100
-        : 0.92;
+        qualityElement
+            ? Number(
+                qualityElement.value
+            ) / 100
+            : 0.92;
 
-    const sizeControl =
-      $("exportSize");
 
-    const selectedSize =
-      sizeControl
-        ? sizeControl.value
-        : "original";
+    const requestedSize =
+        sizeElement
+            ? sizeElement.value
+            : "original";
+
 
     const geometry =
-      getGeometry();
+        getRotatedSize();
 
-    const exportCanvas =
-      document.createElement("canvas");
 
     let width =
-      geometry.width;
+        geometry.width;
 
     let height =
-      geometry.height;
+        geometry.height;
+
 
     if (
-      selectedSize !==
-      "original"
+        requestedSize !==
+        "original"
     ) {
-      const maxEdge =
-        Number(selectedSize);
 
-      const scale =
-        Math.min(
-          1,
-          maxEdge /
+        const maximum =
+            Number(
+                requestedSize
+            );
+
+        const scale =
+            Math.min(
+                1,
+                maximum /
+                Math.max(
+                    width,
+                    height
+                )
+            );
+
+        width =
             Math.max(
-              width,
-              height
-            )
-        );
+                1,
+                Math.round(
+                    width * scale
+                )
+            );
 
-      width =
-        Math.max(
-          1,
-          Math.round(
-            width * scale
-          )
-        );
-
-      height =
-        Math.max(
-          1,
-          Math.round(
-            height * scale
-          )
-        );
+        height =
+            Math.max(
+                1,
+                Math.round(
+                    height * scale
+                )
+            );
     }
 
-    exportCanvas.width =
-      width;
 
-    exportCanvas.height =
-      height;
+    const output =
+        document.createElement(
+            "canvas"
+        );
 
-    const exportCtx =
-      exportCanvas.getContext(
-        "2d",
-        {
-          willReadFrequently: true
-        }
-      );
+    output.width =
+        width;
 
-    exportCtx.save();
+    output.height =
+        height;
 
-    exportCtx.translate(
-      width / 2,
-      height / 2
-    );
 
-    exportCtx.rotate(
-      geometry.angle
-    );
+    const outputCtx =
+        output.getContext(
+            "2d",
+            {
+                willReadFrequently: true
+            }
+        );
 
-    exportCtx.scale(
-      S.flipX ? -1 : 1,
-      S.flipY ? -1 : 1
-    );
 
     const scale =
-      Math.min(
-        width / geometry.width,
-        height / geometry.height
-      );
+        Math.min(
+            width /
+            geometry.width,
 
-    exportCtx.drawImage(
-      sourceCanvas,
-      -sourceCanvas.width *
+            height /
+            geometry.height
+        );
+
+
+    outputCtx.save();
+
+    outputCtx.translate(
+        width / 2,
+        height / 2
+    );
+
+    outputCtx.rotate(
+        getRotation()
+    );
+
+    outputCtx.scale(
+        state.flipX
+            ? -1
+            : 1,
+
+        state.flipY
+            ? -1
+            : 1
+    );
+
+
+    outputCtx.drawImage(
+        sourceCanvas,
+
+        -sourceCanvas.width *
         scale /
         2,
-      -sourceCanvas.height *
+
+        -sourceCanvas.height *
         scale /
         2,
-      sourceCanvas.width *
+
+        sourceCanvas.width *
         scale,
-      sourceCanvas.height *
+
+        sourceCanvas.height *
         scale
     );
 
-    exportCtx.restore();
+
+    outputCtx.restore();
+
 
     let imageData =
-      exportCtx.getImageData(
-        0,
-        0,
-        width,
-        height
-      );
+        outputCtx.getImageData(
+            0,
+            0,
+            width,
+            height
+        );
+
 
     imageData =
-      processPixels(
-        imageData
-      );
+        processImageData(
+            imageData
+        );
 
-    exportCtx.putImageData(
-      imageData,
-      0,
-      0
+
+    outputCtx.putImageData(
+        imageData,
+        0,
+        0
     );
+
 
     applyMask(
-      exportCtx,
-      width,
-      height
+        outputCtx,
+        width,
+        height
     );
+
 
     applySharpen(
-      exportCtx,
-      width,
-      height
+        outputCtx,
+        width,
+        height
     );
+
 
     applyBlur(
-      exportCtx,
-      width,
-      height
+        outputCtx,
+        width,
+        height
     );
+
 
     applyVignette(
-      exportCtx,
-      width,
-      height
+        outputCtx,
+        width,
+        height
     );
+
 
     applyGrain(
-      exportCtx,
-      width,
-      height
+        outputCtx,
+        width,
+        height
     );
 
-    exportCanvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          alert(
-            "Export failed. Please try again."
-          );
-          return;
-        }
 
-        const extension =
-          format ===
-          "image/png"
-            ? "png"
-            : format ===
-              "image/webp"
-              ? "webp"
-              : "jpg";
+    output.toBlob(
+        function (blob) {
 
-        const baseName =
-          fileName
-            ? fileName.replace(
-                /\.[^/.]+$/,
-                ""
-              )
-            : "toolora-photo";
+            if (!blob) {
 
-        const downloadName =
-          `${baseName}-edited.${extension}`;
+                alert(
+                    "Export failed. Please try again."
+                );
 
-        const url =
-          URL.createObjectURL(
-            blob
-          );
+                return;
+            }
 
-        const link =
-          document.createElement(
-            "a"
-          );
 
-        link.href = url;
-        link.download =
-          downloadName;
+            let extension =
+                "jpg";
 
-        document.body.appendChild(
-          link
-        );
+            if (
+                format ===
+                "image/png"
+            ) {
+                extension =
+                    "png";
+            }
 
-        link.click();
+            if (
+                format ===
+                "image/webp"
+            ) {
+                extension =
+                    "webp";
+            }
 
-        link.remove();
 
-        setTimeout(() => {
-          URL.revokeObjectURL(
-            url
-          );
-        }, 1000);
-      },
-      format,
-      quality
+            const baseName =
+                originalFileName
+                    ? originalFileName
+                        .replace(
+                            /\.[^/.]+$/,
+                            ""
+                        )
+                    : "toolora-photo";
+
+
+            const downloadName =
+                `${baseName}-edited.${extension}`;
+
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+            link.href =
+                url;
+
+            link.download =
+                downloadName;
+
+
+            document.body.appendChild(
+                link
+            );
+
+            link.click();
+
+            link.remove();
+
+
+            setTimeout(
+                function () {
+
+                    URL.revokeObjectURL(
+                        url
+                    );
+
+                },
+                1000
+            );
+
+        },
+        format,
+        quality
     );
-  }
+}
 
-  /* =========================================================
-     TOP BAR ACTIONS
-     ========================================================= */
 
-  const undoButton =
-    $("undoBtn");
+/* =========================================================
+   KEYBOARD SHORTCUTS
+   ========================================================= */
 
-  if (undoButton) {
-    undoButton.addEventListener(
-      "click",
-      undo
-    );
-  }
-
-  const redoButton =
-    $("redoBtn");
-
-  if (redoButton) {
-    redoButton.addEventListener(
-      "click",
-      redo
-    );
-  }
-
-  const beforeButton =
-    $("beforeBtn");
-
-  if (beforeButton) {
-    beforeButton.addEventListener(
-      "click",
-      () => {
-        showBefore =
-          !showBefore;
-
-        const badge =
-          $("badge");
-
-        if (badge) {
-          badge.style.display =
-            showBefore
-              ? "block"
-              : "none";
-        }
-
-        render();
-      }
-    );
-  }
-
-  /* =========================================================
-     ZOOM
-     ========================================================= */
-
-  const zoomIn =
-    $("zoomIn");
-
-  if (zoomIn) {
-    zoomIn.addEventListener(
-      "click",
-      () => {
-        zoom =
-          clamp(
-            zoom + 0.1,
-            0.5,
-            3
-          );
-
-        canvas.style.transform =
-          `scale(${zoom})`;
-
-        overlay.style.transform =
-          `scale(${zoom})`;
-      }
-    );
-  }
-
-  const zoomOut =
-    $("zoomOut");
-
-  if (zoomOut) {
-    zoomOut.addEventListener(
-      "click",
-      () => {
-        zoom =
-          clamp(
-            zoom - 0.1,
-            0.5,
-            3
-          );
-
-        canvas.style.transform =
-          `scale(${zoom})`;
-
-        overlay.style.transform =
-          `scale(${zoom})`;
-      }
-    );
-  }
-
-  const fitButton =
-    $("fitBtn");
-
-  if (fitButton) {
-    fitButton.addEventListener(
-      "click",
-      () => {
-        zoom = 1;
-
-        canvas.style.transform =
-          "scale(1)";
-
-        overlay.style.transform =
-          "scale(1)";
-      }
-    );
-  }
-
-  /* =========================================================
-     FULLSCREEN
-     ========================================================= */
-
-  const fullscreenButton =
-    $("fullscreenBtn");
-
-  if (fullscreenButton) {
-    fullscreenButton.addEventListener(
-      "click",
-      async () => {
-        try {
-          if (
-            !document.fullscreenElement
-          ) {
-            await document.documentElement.requestFullscreen();
-          } else {
-            await document.exitFullscreen();
-          }
-        } catch (error) {
-          console.warn(
-            "Fullscreen unavailable.",
-            error
-          );
-        }
-      }
-    );
-  }
-
-  /* =========================================================
-     TABS
-     ========================================================= */
-
-  const tabs =
-    document.querySelectorAll(
-      "#tabs [data-tool]"
-    );
-
-  tabs.forEach((tab) => {
-    tab.addEventListener(
-      "click",
-      () => {
-        tabs.forEach((item) => {
-          item.classList.remove(
-            "active"
-          );
-        });
-
-        tab.classList.add(
-          "active"
-        );
-
-        showPanel(
-          tab.dataset.tool
-        );
-      }
-    );
-  });
-
-  /* =========================================================
-     KEYBOARD
-     ========================================================= */
-
-  document.addEventListener(
+document.addEventListener(
     "keydown",
-    (event) => {
-      if (
-        (event.ctrlKey ||
-          event.metaKey) &&
-        event.key.toLowerCase() ===
-          "z"
-      ) {
-        event.preventDefault();
+    function (event) {
 
-        if (event.shiftKey) {
-          redo();
-        } else {
-          undo();
+        if (
+            (
+                event.ctrlKey ||
+                event.metaKey
+            ) &&
+            event.key.toLowerCase() ===
+            "z"
+        ) {
+
+            event.preventDefault();
+
+            if (event.shiftKey) {
+                redo();
+            } else {
+                undo();
+            }
         }
-      }
 
-      if (
-        (event.ctrlKey ||
-          event.metaKey) &&
-        event.key.toLowerCase() ===
-          "y"
-      ) {
-        event.preventDefault();
-        redo();
-      }
+
+        if (
+            (
+                event.ctrlKey ||
+                event.metaKey
+            ) &&
+            event.key.toLowerCase() ===
+            "y"
+        ) {
+
+            event.preventDefault();
+
+            redo();
+        }
     }
-  );
+);
 
-  /* =========================================================
-     RESIZE
-     ========================================================= */
 
-  let resizeTimer = null;
+/* =========================================================
+   RESIZE
+   ========================================================= */
 
-  window.addEventListener(
+let resizeTimer = null;
+
+window.addEventListener(
     "resize",
-    () => {
-      clearTimeout(
-        resizeTimer
-      );
+    function () {
 
-      resizeTimer =
-        setTimeout(
-          () => {
-            render();
-          },
-          120
+        clearTimeout(
+            resizeTimer
         );
+
+        resizeTimer =
+            setTimeout(
+                function () {
+
+                    if (
+                        imageLoaded
+                    ) {
+                        render();
+                    }
+
+                },
+                120
+            );
     }
-  );
+);
 
-  /* =========================================================
-     INITIALIZE
-     ========================================================= */
 
-  function init() {
-    const firstTab =
-      document.querySelector(
-        '#tabs [data-tool="light"]'
-      );
+/* =========================================================
+   INITIAL TOOL
+   ========================================================= */
 
-    if (firstTab) {
-      firstTab.classList.add(
-        "active"
-      );
-    }
-
-    showPanel("light");
-  }
-
-  init();
-})();
+showTool("light");
