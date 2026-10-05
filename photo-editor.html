@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0d10">
 <title>Toolora - Professional Photo Editor</title>
-<link rel="stylesheet" href="./css/photo-editor.css?v=5">
+
+<link rel="stylesheet" href="./css/photo-editor.css?v=6">
 </head>
 
 <body>
+
 <div class="app">
 
   <header class="topbar">
@@ -22,14 +24,21 @@
       <a class="back-link" href="index.html">Back</a>
     </div>
 
-    <input id="fileInput" class="file-input" type="file" accept="image/*">
+    <input
+      id="fileInput"
+      class="file-input"
+      type="file"
+      accept="image/*"
+    >
   </header>
+
 
   <main class="workspace">
 
     <section class="viewer">
 
       <div class="viewer-head">
+
         <div class="photo-info">
           <strong id="name">No photo</strong>
           <span id="meta">Open an image to start</span>
@@ -42,22 +51,29 @@
           <button id="fit" type="button">Fit</button>
           <button id="full" type="button" aria-label="Fullscreen">⛶</button>
         </div>
+
       </div>
+
 
       <div id="stage" class="stage">
 
         <div id="empty" class="empty-state">
           <div class="empty-icon">✦</div>
           <h1>Professional Photo Editor</h1>
-          <p>Edit photos directly in your browser. Your image stays on this device.</p>
-          <button id="openEmpty" class="primary-btn" type="button">Open Photo</button>
+          <p>
+            Edit photos directly in your browser.
+            Your image stays on this device.
+          </p>
+          <button id="openEmpty" class="primary-btn" type="button">
+            Open Photo
+          </button>
         </div>
 
         <canvas id="canvas"></canvas>
         <canvas id="overlay"></canvas>
 
         <div id="pickerBadge" class="picker-badge">
-          Click a color in the photo
+          Tap a color in the photo
         </div>
 
         <div id="beforeBadge" class="before-badge">
@@ -66,6 +82,7 @@
 
       </div>
 
+
       <div class="status-bar">
         <span id="status">Ready</span>
         <span>Local processing</span>
@@ -73,9 +90,11 @@
 
     </section>
 
+
     <aside class="editor">
 
       <div class="panel-head">
+
         <div>
           <span id="eyebrow">Adjust</span>
           <h2 id="title">Light</h2>
@@ -84,9 +103,12 @@
         <button id="reset" class="reset-btn" type="button">
           Reset
         </button>
+
       </div>
 
+
       <div id="panel" class="control-panel"></div>
+
 
       <nav id="tabs" class="tool-tabs" aria-label="Editing tools">
 
@@ -153,6 +175,8 @@
 
 </div>
 
-<script src="./js/photo-editor.js?v=5"></script>
+
+<script src="./js/photo-editor.js?v=6"></script>
+
 </body>
 </html>
