@@ -15,14 +15,8 @@ const sx = src.getContext('2d', { willReadFrequently: true });
 
 let img = null;
 let fileName = '';
-
 let renderQueued = false;
-let rendering = false;
-
 let zoom = 1;
-let panX = 0;
-let panY = 0;
-
 let active = 'light';
 let showBefore = false;
 
@@ -31,8 +25,11 @@ let future = [];
 
 let retouch = [];
 
-const pointers = new Map();
-let gesture = null;
+let pickMode = false;
+let drawingTool = false;
+let draggingText = null;
+let dragDX = 0;
+let dragDY = 0;
 
 const S = {
   exposure: 0,
@@ -96,7 +93,29 @@ const S = {
   gradeHigh: 0,
   gradeHighSat: 0,
   gradeBlend: 50,
-  gradeBalance: 0
+  gradeBalance: 0,
+
+  /* TEXT */
+  textSize: 48,
+  textOpacity: 100,
+
+  /* DRAW */
+  drawSize: 8,
+  drawOpacity: 100,
+
+  /* COLOR SELECT */
+  selectiveR: 0,
+  selectiveG: 0,
+  selectiveB: 0,
+  selectiveRange: 35,
+  selectiveHue: 0,
+  selectiveSat: 0,
+  selectiveLight: 0,
+
+  /* OVERLAY LAYERS */
+  textLayers: [],
+  drawLayers: [],
+  selectedTextId: null
 };
 
 const colors = [
@@ -128,7 +147,13 @@ const names = {
   retouch: ['Retouch', 'Spot Blur'],
   blur: ['Effects', 'Blur'],
   optics: ['Lens', 'Optics'],
-  export: ['Output', 'Export']
+  export: ['Output', 'Export'],
+
+  /* FIXED TOOLS */
+  text: ['Overlay', 'Text'],
+  draw: ['Overlay', 'Draw'],
+  selective: ['Color', 'Color Select'],
+  layers: ['Manage', 'Layers']
 };
 
 
@@ -153,6 +178,7 @@ function push() {
 function restore(state) {
   Object.assign(S, state);
   retouch = [];
+
   render();
   panel();
 }
@@ -170,7 +196,9 @@ function fmt(value) {
   }
 
   return `${value > 0 ? '+' : ''}${
-    Number.isInteger(value) ? value : value.toFixed(1)
+    Number.isInteger(value)
+      ? value
+      : value.toFixed(1)
   }`;
 }
 
@@ -179,7 +207,9 @@ function control(key, label, min, max, step = 1) {
     <div class="control">
       <div class="ch">
         <span>${label}</span>
-        <span class="val" id="v_${key}">${fmt(S[key])}</span>
+        <span class="val" id="v_${key}">
+          ${fmt(S[key])}
+        </span>
       </div>
 
       <input
@@ -201,43 +231,48 @@ function control(key, label, min, max, step = 1) {
 
 function bind() {
 
-  document.querySelectorAll('#panel input[data-k]').forEach(input => {
+  document
+    .querySelectorAll('#panel input[data-k]')
+    .forEach(input => {
 
-    input.addEventListener('input', () => {
+      input.addEventListener('input', () => {
 
-      const key = input.dataset.k;
-      S[key] = Number(input.value);
+        const key = input.dataset.k;
 
-      const value = $('v_' + key);
+        S[key] = Number(input.value);
 
-      if (value) {
-        value.textContent = fmt(input.value);
-      }
+        const value = $('v_' + key);
 
-      schedule();
+        if (value) {
+          value.textContent = fmt(input.value);
+        }
+
+        schedule();
+      });
+
+      input.addEventListener('change', () => {
+        push();
+      });
     });
 
-    input.addEventListener('change', () => {
-      push();
+
+  document
+    .querySelectorAll('#panel [data-mix]')
+    .forEach(input => {
+
+      input.addEventListener('input', () => {
+
+        const key = input.dataset.mix;
+
+        S[key] = Number(input.value);
+
+        schedule();
+      });
+
+      input.addEventListener('change', () => {
+        push();
+      });
     });
-  });
-
-
-  document.querySelectorAll('#panel [data-mix]').forEach(input => {
-
-    input.addEventListener('input', () => {
-
-      const key = input.dataset.mix;
-
-      S[key] = Number(input.value);
-
-      schedule();
-    });
-
-    input.addEventListener('change', () => {
-      push();
-    });
-  });
 }
 
 
@@ -249,18 +284,24 @@ function panel() {
 
   const p = $('panel');
 
-  $('eyebrow').textContent = names[active][0];
-  $('title').textContent = names[active][1];
+  $('eyebrow').textContent =
+    names[active][0];
+
+  $('title').textContent =
+    names[active][1];
 
   let h = '';
 
 
-  /* LIGHT */
+  /* =======================================================
+     EXISTING LIGHT
+  ======================================================= */
 
   if (active === 'light') {
 
     h = `
       <div class="section">
+
         <h3>Tone</h3>
 
         ${control('exposure', 'Exposure', -100, 100)}
@@ -269,40 +310,50 @@ function panel() {
         ${control('shadows', 'Shadows', -100, 100)}
         ${control('whites', 'Whites', -100, 100)}
         ${control('blacks', 'Blacks', -100, 100)}
+
       </div>
 
       <div class="section">
-        <button class="btn" id="auto" style="width:100%">
+
+        <button
+          class="btn"
+          id="auto"
+          style="width:100%"
+        >
           Auto Tone
         </button>
 
-        <p class="note" style="margin-top:8px">
-          Auto uses a quick balanced correction.
-        </p>
       </div>
     `;
   }
 
 
-  /* COLOR */
+  /* =======================================================
+     EXISTING COLOR
+  ======================================================= */
 
   if (active === 'color') {
 
     h = `
       <div class="section">
+
         <h3>White Balance</h3>
 
         ${control('temp', 'Temperature', -100, 100)}
         ${control('tint', 'Tint', -100, 100)}
         ${control('vibrance', 'Vibrance', -100, 100)}
         ${control('saturation', 'Saturation', -100, 100)}
+
       </div>
 
       <div class="section">
+
         <h3>Color Mixer</h3>
 
         ${colors.map(color => `
+
           <div class="mixer">
+
             <span>
               ${color[0].toUpperCase() + color.slice(1)}
             </span>
@@ -333,39 +384,25 @@ function panel() {
               value="${S['l_' + color]}"
               title="Luminance"
             >
+
           </div>
+
         `).join('')}
 
-        <p class="note">
-          Each color row contains Hue, Saturation and Luminance.
-        </p>
-      </div>
-
-      <div class="section">
-        <h3>Color Grading</h3>
-
-        ${control('gradeShadow', 'Shadow Color', 0, 360)}
-        ${control('gradeShadowSat', 'Shadow Strength', 0, 100)}
-
-        ${control('gradeMid', 'Midtone Color', 0, 360)}
-        ${control('gradeMidSat', 'Midtone Strength', 0, 100)}
-
-        ${control('gradeHigh', 'Highlight Color', 0, 360)}
-        ${control('gradeHighSat', 'Highlight Strength', 0, 100)}
-
-        ${control('gradeBlend', 'Blending', 0, 100)}
-        ${control('gradeBalance', 'Balance', -100, 100)}
       </div>
     `;
   }
 
 
-  /* EFFECTS */
+  /* =======================================================
+     EXISTING EFFECTS
+  ======================================================= */
 
   if (active === 'effects') {
 
     h = `
       <div class="section">
+
         <h3>Effects</h3>
 
         ${control('texture', 'Texture', -100, 100)}
@@ -375,41 +412,46 @@ function panel() {
         ${control('midpoint', 'Midpoint', 0, 100)}
         ${control('feather', 'Feather', 0, 100)}
         ${control('roundness', 'Roundness', -100, 100)}
+
       </div>
 
       <div class="section">
+
         <h3>Grain</h3>
 
         ${control('grain', 'Amount', 0, 100)}
         ${control('grainSize', 'Size', 0, 100)}
         ${control('grainRough', 'Roughness', 0, 100)}
+
       </div>
     `;
   }
 
 
-  /* DETAIL */
+  /* =======================================================
+     EXISTING DETAIL
+  ======================================================= */
 
   if (active === 'detail') {
 
     h = `
       <div class="section">
+
         <h3>Detail</h3>
 
         ${control('sharp', 'Sharpening', 0, 100)}
-        ${control('radius', 'Radius', 0.5, 3, 0.1)}
+        ${control('radius', 'Radius', .5, 3, .1)}
         ${control('noise', 'Noise Reduction', 0, 100)}
         ${control('colorNoise', 'Color Noise', 0, 100)}
-      </div>
 
-      <p class="note">
-        Preview processing is optimized for mobile performance.
-      </p>
+      </div>
     `;
   }
 
 
-  /* CROP */
+  /* =======================================================
+     EXISTING CROP
+  ======================================================= */
 
   if (active === 'crop') {
 
@@ -423,23 +465,67 @@ function panel() {
         </div>
 
         <select class="select" id="ratio">
-          <option value="original">Original</option>
-          <option value="1:1">1 : 1</option>
-          <option value="4:5">4 : 5</option>
-          <option value="3:4">3 : 4</option>
-          <option value="4:3">4 : 3</option>
-          <option value="16:9">16 : 9</option>
-          <option value="9:16">9 : 16</option>
-          <option value="2:3">2 : 3</option>
+
+          <option value="original">
+            Original
+          </option>
+
+          <option value="1:1">
+            1 : 1
+          </option>
+
+          <option value="4:5">
+            4 : 5
+          </option>
+
+          <option value="3:4">
+            3 : 4
+          </option>
+
+          <option value="4:3">
+            4 : 3
+          </option>
+
+          <option value="16:9">
+            16 : 9
+          </option>
+
+          <option value="9:16">
+            9 : 16
+          </option>
+
+          <option value="2:3">
+            2 : 3
+          </option>
+
         </select>
 
-        ${control('straighten', 'Straighten', -10, 10, 0.1)}
+        ${control(
+          'straighten',
+          'Straighten',
+          -10,
+          10,
+          .1
+        )}
 
         <div class="grid2">
-          <button class="btn" id="rl">Rotate Left</button>
-          <button class="btn" id="rr">Rotate Right</button>
-          <button class="btn" id="fx">Flip Horizontal</button>
-          <button class="btn" id="fy">Flip Vertical</button>
+
+          <button class="btn" id="rl">
+            Rotate Left
+          </button>
+
+          <button class="btn" id="rr">
+            Rotate Right
+          </button>
+
+          <button class="btn" id="fx">
+            Flip Horizontal
+          </button>
+
+          <button class="btn" id="fy">
+            Flip Vertical
+          </button>
+
         </div>
 
       </div>
@@ -447,7 +533,9 @@ function panel() {
   }
 
 
-  /* PRESETS */
+  /* =======================================================
+     EXISTING PRESETS
+  ======================================================= */
 
   if (active === 'presets') {
 
@@ -458,176 +546,388 @@ function panel() {
 
         <div class="presets">
 
-          ${[
-            ['clean', 'Clean', 'Balanced'],
-            ['warm', 'Warm', 'Soft warm'],
-            ['cool', 'Cool', 'Clean cool'],
-            ['cinematic', 'Cinematic', 'Moody'],
-            ['matte', 'Matte', 'Soft film'],
-            ['vivid', 'Vivid', 'Color punch'],
-            ['portrait', 'Portrait', 'Soft portrait'],
-            ['bw', 'B&W', 'Monochrome']
-          ].map(x => `
-            <button class="preset" data-preset="${x[0]}">
-              <b>${x[1]}</b>
-              <small>${x[2]}</small>
-            </button>
-          `).join('')}
+          <button class="preset" data-preset="clean">
+            <b>Clean</b>
+            <small>Balanced</small>
+          </button>
+
+          <button class="preset" data-preset="warm">
+            <b>Warm</b>
+            <small>Soft warm</small>
+          </button>
+
+          <button class="preset" data-preset="cool">
+            <b>Cool</b>
+            <small>Clean cool</small>
+          </button>
+
+          <button class="preset" data-preset="cinematic">
+            <b>Cinematic</b>
+            <small>Moody</small>
+          </button>
+
+          <button class="preset" data-preset="matte">
+            <b>Matte</b>
+            <small>Soft film</small>
+          </button>
+
+          <button class="preset" data-preset="vivid">
+            <b>Vivid</b>
+            <small>Color punch</small>
+          </button>
+
+          <button class="preset" data-preset="portrait">
+            <b>Portrait</b>
+            <small>Soft portrait</small>
+          </button>
+
+          <button class="preset" data-preset="bw">
+            <b>B&W</b>
+            <small>Monochrome</small>
+          </button>
 
         </div>
 
       </div>
 
-      ${control('presetAmount', 'Preset Amount', 0, 100)}
+      ${control(
+        'presetAmount',
+        'Preset Amount',
+        0,
+        100
+      )}
     `;
   }
 
 
-  /* PROFILES */
+  /* =======================================================
+     TEXT — FIXED
+  ======================================================= */
 
-  if (active === 'profiles') {
+  if (active === 'text') {
 
     h = `
       <div class="section">
 
-        <h3>Profiles</h3>
+        <h3>Text</h3>
+
+        <div class="control">
+
+          <div class="ch">
+            <span>Text</span>
+          </div>
+
+          <textarea
+            id="textValue"
+            class="select"
+            rows="3"
+            placeholder="Enter text"
+          ></textarea>
+
+        </div>
+
+
+        <div class="control">
+
+          <div class="ch">
+            <span>Font</span>
+          </div>
+
+          <select
+            id="textFont"
+            class="select"
+          >
+
+            <option>Arial</option>
+            <option>Georgia</option>
+            <option>Verdana</option>
+            <option>Trebuchet MS</option>
+            <option>Courier New</option>
+            <option>Impact</option>
+            <option>Times New Roman</option>
+            <option>Tahoma</option>
+            <option>Palatino Linotype</option>
+
+          </select>
+
+        </div>
+
+
+        ${control(
+          'textSize',
+          'Font Size',
+          10,
+          200
+        )}
+
 
         <div class="grid2">
 
-          ${[
-            ['natural', 'Natural'],
-            ['neutral', 'Neutral'],
-            ['vivid', 'Vivid'],
-            ['modern', 'Modern'],
-            ['film', 'Film'],
-            ['mono', 'Monochrome']
-          ].map(x => `
-            <button
-              class="btn ${S.profile === x[0] ? 'active' : ''}"
-              data-profile="${x[0]}"
+          <button
+            class="btn"
+            id="textBold"
+          >
+            Bold
+          </button>
+
+          <button
+            class="btn"
+            id="textItalic"
+          >
+            Italic
+          </button>
+
+          <button
+            class="btn"
+            id="textLeft"
+          >
+            Left
+          </button>
+
+          <button
+            class="btn"
+            id="textCenter"
+          >
+            Center
+          </button>
+
+        </div>
+
+
+        <div class="grid2">
+
+          <label class="colorhead">
+            Text Color
+
+            <input
+              id="textColor"
+              type="color"
+              value="#ffffff"
+              style="width:100%;height:36px"
             >
-              ${x[1]}
-            </button>
-          `).join('')}
+
+          </label>
+
+
+          <label class="colorhead">
+            Stroke Color
+
+            <input
+              id="textStroke"
+              type="color"
+              value="#000000"
+              style="width:100%;height:36px"
+            >
+
+          </label>
+
+        </div>
+
+
+        ${control(
+          'textOpacity',
+          'Opacity',
+          0,
+          100
+        )}
+
+
+        <div class="grid2">
+
+          <button
+            class="btn"
+            id="addText"
+          >
+            Add Text
+          </button>
+
+          <button
+            class="btn danger"
+            id="deleteText"
+          >
+            Delete
+          </button>
+
+        </div>
+
+
+        <button
+          class="btn"
+          id="clearText"
+          style="width:100%"
+        >
+          Clear Text
+        </button>
+
+      </div>
+    `;
+  }
+
+
+  /* =======================================================
+     DRAW — FIXED
+  ======================================================= */
+
+  if (active === 'draw') {
+
+    h = `
+      <div class="section">
+
+        <h3>Draw</h3>
+
+        ${control(
+          'drawSize',
+          'Brush Size',
+          1,
+          100
+        )}
+
+        ${control(
+          'drawOpacity',
+          'Opacity',
+          0,
+          100
+        )}
+
+
+        <label class="colorhead">
+
+          Brush Color
+
+          <input
+            id="drawColor"
+            type="color"
+            value="#ffffff"
+            style="width:100%;height:36px"
+          >
+
+        </label>
+
+
+        <div class="grid2">
+
+          <button
+            class="btn"
+            id="clearDraw"
+          >
+            Clear Drawing
+          </button>
+
+          <button
+            class="btn"
+            id="undoDraw"
+          >
+            Remove Last
+          </button>
 
         </div>
 
       </div>
-
-      <p class="note">
-        Profiles change the rendering character without permanently changing the base image.
-      </p>
     `;
   }
 
 
-  /* MASK */
+  /* =======================================================
+     COLOR SELECT — FIXED
+  ======================================================= */
 
-  if (active === 'mask') {
+  if (active === 'selective') {
 
     h = `
       <div class="section">
 
-        <h3>Local Mask</h3>
+        <h3>Color Select</h3>
 
-        <div class="grid3">
+        <button
+          class="btn"
+          id="pickColor"
+          style="width:100%"
+        >
+          Pick Color From Photo
+        </button>
 
-          <button class="btn mask ${S.maskType === 'radial' ? 'active' : ''}" data-type="radial">
-            Radial
-          </button>
 
-          <button class="btn mask ${S.maskType === 'linear' ? 'active' : ''}" data-type="linear">
-            Linear
-          </button>
-
-          <button class="btn mask ${S.maskType === 'brush' ? 'active' : ''}" data-type="brush">
-            Brush
-          </button>
-
+        <div
+          id="pickedColor"
+          class="colorhead"
+          style="margin-top:10px"
+        >
+          No color selected
         </div>
 
-        ${control('maskAmount', 'Mask Amount', 0, 100)}
-        ${control('maskExposure', 'Local Exposure', -100, 100)}
-        ${control('maskContrast', 'Local Contrast', -100, 100)}
-        ${control('maskSaturation', 'Local Saturation', -100, 100)}
 
-        <button class="btn" id="maskClear" style="width:100%">
-          Clear Mask
+        ${control(
+          'selectiveRange',
+          'Color Range',
+          1,
+          100
+        )}
+
+        ${control(
+          'selectiveHue',
+          'Hue',
+          -100,
+          100
+        )}
+
+        ${control(
+          'selectiveSat',
+          'Saturation',
+          -100,
+          100
+        )}
+
+        ${control(
+          'selectiveLight',
+          'Lightness',
+          -100,
+          100
+        )}
+
+
+        <button
+          class="btn"
+          id="clearColorSelect"
+          style="width:100%"
+        >
+          Clear Color Selection
         </button>
 
       </div>
-
-      <p class="note">
-        Radial and linear masks are browser-side masks. AI subject and sky detection is not faked.
-      </p>
     `;
   }
 
 
-  /* RETOUCH */
+  /* =======================================================
+     LAYERS — FIXED
+  ======================================================= */
 
-  if (active === 'retouch') {
+  if (active === 'layers') {
 
     h = `
       <div class="section">
 
-        <h3>Spot Blur Retouch</h3>
+        <h3>Layers</h3>
 
-        ${control('retouchSize', 'Brush Size', 5, 100)}
+        <div id="layerList"></div>
 
-        <button class="btn" id="retouchClear" style="width:100%">
-          Clear Retouch
+
+        <button
+          class="btn"
+          id="clearLayers"
+          style="width:100%;margin-top:8px"
+        >
+          Clear All Layers
         </button>
 
       </div>
-
-      <p class="note">
-        Paint over an unwanted area to blur it locally.
-      </p>
     `;
   }
 
 
-  /* BLUR */
-
-  if (active === 'blur') {
-
-    h = `
-      <div class="section">
-
-        <h3>Lens-style Blur</h3>
-
-        ${control('blur', 'Blur Amount', 0, 100)}
-        ${control('blurX', 'Focus X', 0, 100)}
-        ${control('blurY', 'Focus Y', 0, 100)}
-
-      </div>
-    `;
-  }
-
-
-  /* OPTICS */
-
-  if (active === 'optics') {
-
-    h = `
-      <div class="section">
-
-        <h3>Optics</h3>
-
-        ${control('lensVignette', 'Lens Vignette', -100, 100)}
-        ${control('defringe', 'Defringe', 0, 100)}
-
-      </div>
-
-      <p class="note">
-        Browser-safe optical compensation.
-      </p>
-    `;
-  }
-
-
-  /* EXPORT */
+  /* =======================================================
+     EXISTING EXPORT
+  ======================================================= */
 
   if (active === 'export') {
 
@@ -641,39 +941,105 @@ function panel() {
           <div class="grid2">
 
             <div>
-              <div class="colorhead">Format</div>
 
-              <select class="select" id="format">
-                <option value="image/jpeg">JPG</option>
-                <option value="image/png">PNG</option>
-                <option value="image/webp">WebP</option>
+              <div class="colorhead">
+                Format
+              </div>
+
+              <select
+                class="select"
+                id="format"
+              >
+
+                <option value="image/jpeg">
+                  JPG
+                </option>
+
+                <option value="image/png">
+                  PNG
+                </option>
+
+                <option value="image/webp">
+                  WebP
+                </option>
+
               </select>
+
             </div>
 
-            <div>
-              <div class="colorhead">Quality</div>
 
-              <select class="select" id="quality">
-                <option value=".7">Standard</option>
-                <option value=".85" selected>High</option>
-                <option value=".95">Maximum</option>
+            <div>
+
+              <div class="colorhead">
+                Quality
+              </div>
+
+              <select
+                class="select"
+                id="quality"
+              >
+
+                <option value=".7">
+                  Standard
+                </option>
+
+                <option
+                  value=".85"
+                  selected
+                >
+                  High
+                </option>
+
+                <option value=".95">
+                  Maximum
+                </option>
+
               </select>
+
             </div>
 
           </div>
 
-          <div class="colorhead" style="margin-top:10px">
+
+          <div
+            class="colorhead"
+            style="margin-top:10px"
+          >
             Maximum long edge
           </div>
 
-          <select class="select" id="size">
-            <option value="1600">1600 px</option>
-            <option value="2400" selected>2400 px</option>
-            <option value="3200">3200 px</option>
-            <option value="0">Original working size</option>
+
+          <select
+            class="select"
+            id="size"
+          >
+
+            <option value="1600">
+              1600 px
+            </option>
+
+            <option
+              value="2400"
+              selected
+            >
+              2400 px
+            </option>
+
+            <option value="3200">
+              3200 px
+            </option>
+
+            <option value="0">
+              Original working size
+            </option>
+
           </select>
 
-          <button class="download" id="download">
+
+          <button
+            class="download"
+            id="download"
+          >
             Download Edited Photo
           </button>
 
@@ -681,16 +1047,492 @@ function panel() {
 
       </div>
 
-      <button class="btn danger" id="resetAll" style="width:100%">
+
+      <button
+        class="btn danger"
+        id="resetAll"
+        style="width:100%"
+      >
         Reset All Edits
       </button>
     `;
   }
 
+
   p.innerHTML = h;
 
   bind();
   panelActions();
+
+  bindOverlayTools();
+
+  if (active === 'layers') {
+    renderLayerList();
+  }
+}
+
+
+/* =========================================================
+   FIXED TOOL CONTROLS
+========================================================= */
+
+function bindOverlayTools() {
+
+  /* TEXT */
+
+  if (active === 'text') {
+
+    const applyTextSettings = () => {
+
+      const text = S.textLayers.find(
+        item => item.id === S.selectedTextId
+      );
+
+      if (!text) return;
+
+      text.text =
+        $('textValue').value;
+
+      text.font =
+        $('textFont').value;
+
+      text.size =
+        Number($('textSize').value);
+
+      text.opacity =
+        Number($('textOpacity').value);
+
+      text.color =
+        $('textColor').value;
+
+      text.stroke =
+        $('textStroke').value;
+
+      text.bold =
+        $('textBold').classList.contains('active');
+
+      text.italic =
+        $('textItalic').classList.contains('active');
+
+      text.align =
+        $('textCenter').classList.contains('active')
+          ? 'center'
+          : 'left';
+
+      showOverlay();
+    };
+
+
+    $('addText').onclick = () => {
+
+      push();
+
+      const text = {
+
+        id:
+          Date.now() +
+          Math.random(),
+
+        text: 'Text',
+
+        x: .5,
+        y: .5,
+
+        font: 'Arial',
+
+        size: 48,
+
+        opacity: 100,
+
+        color: '#ffffff',
+
+        stroke: '#000000',
+
+        bold: false,
+
+        italic: false,
+
+        align: 'center'
+      };
+
+
+      S.textLayers.push(text);
+
+      S.selectedTextId =
+        text.id;
+
+      panel();
+      render();
+    };
+
+
+    $('deleteText').onclick = () => {
+
+      if (
+        S.selectedTextId === null
+      ) {
+        return;
+      }
+
+      push();
+
+      S.textLayers =
+        S.textLayers.filter(
+          item =>
+            item.id !==
+            S.selectedTextId
+        );
+
+      S.selectedTextId =
+        null;
+
+      panel();
+      render();
+    };
+
+
+    $('clearText').onclick = () => {
+
+      if (!S.textLayers.length) {
+        return;
+      }
+
+      push();
+
+      S.textLayers = [];
+
+      S.selectedTextId =
+        null;
+
+      panel();
+      render();
+    };
+
+
+    [
+      'textValue',
+      'textFont',
+      'textSize',
+      'textOpacity',
+      'textColor',
+      'textStroke'
+    ].forEach(id => {
+
+      $(id)?.addEventListener(
+        'input',
+        applyTextSettings
+      );
+
+    });
+
+
+    [
+      'textBold',
+      'textItalic',
+      'textLeft',
+      'textCenter'
+    ].forEach(id => {
+
+      $(id)?.addEventListener(
+        'click',
+        e => {
+
+          e.currentTarget.classList.toggle(
+            'active'
+          );
+
+
+          if (
+            id === 'textLeft' &&
+            e.currentTarget.classList.contains('active')
+          ) {
+            $('textCenter')
+              .classList
+              .remove('active');
+          }
+
+
+          if (
+            id === 'textCenter' &&
+            e.currentTarget.classList.contains('active')
+          ) {
+            $('textLeft')
+              .classList
+              .remove('active');
+          }
+
+
+          applyTextSettings();
+        }
+      );
+
+    });
+
+
+    const selected =
+      S.textLayers.find(
+        item =>
+          item.id ===
+          S.selectedTextId
+      );
+
+
+    if (selected) {
+
+      $('textValue').value =
+        selected.text;
+
+      $('textFont').value =
+        selected.font;
+
+      $('textSize').value =
+        selected.size;
+
+      $('textOpacity').value =
+        selected.opacity;
+
+      $('textColor').value =
+        selected.color;
+
+      $('textStroke').value =
+        selected.stroke;
+
+      $('textBold')
+        .classList
+        .toggle(
+          'active',
+          selected.bold
+        );
+
+      $('textItalic')
+        .classList
+        .toggle(
+          'active',
+          selected.italic
+        );
+
+      $('textCenter')
+        .classList
+        .toggle(
+          'active',
+          selected.align === 'center'
+        );
+
+      $('textLeft')
+        .classList
+        .toggle(
+          'active',
+          selected.align !== 'center'
+        );
+    }
+  }
+
+
+  /* DRAW */
+
+  if (active === 'draw') {
+
+    $('clearDraw').onclick = () => {
+
+      if (!S.drawLayers.length) {
+        return;
+      }
+
+      push();
+
+      S.drawLayers = [];
+
+      render();
+    };
+
+
+    $('undoDraw').onclick = () => {
+
+      if (!S.drawLayers.length) {
+        return;
+      }
+
+      push();
+
+      S.drawLayers.pop();
+
+      render();
+    };
+  }
+
+
+  /* COLOR SELECT */
+
+  if (active === 'selective') {
+
+    $('pickColor').onclick = () => {
+
+      if (!img) {
+
+        alert(
+          'Please open a photo first.'
+        );
+
+        return;
+      }
+
+      $('status').textContent =
+        'Click a color in the photo';
+
+      pickMode = true;
+
+      $('pickerBadge').style.display =
+        'block';
+    };
+
+
+    $('clearColorSelect').onclick = () => {
+
+      push();
+
+      S.selectiveR = 0;
+      S.selectiveG = 0;
+      S.selectiveB = 0;
+
+      S.selectiveHue = 0;
+      S.selectiveSat = 0;
+      S.selectiveLight = 0;
+
+      S.selectiveRange = 35;
+
+      pickMode = false;
+
+      $('pickerBadge').style.display =
+        'none';
+
+      schedule();
+    };
+  }
+
+
+  /* LAYERS */
+
+  if (active === 'layers') {
+
+    $('clearLayers').onclick = () => {
+
+      if (
+        !S.textLayers.length &&
+        !S.drawLayers.length
+      ) {
+        return;
+      }
+
+      push();
+
+      S.textLayers = [];
+      S.drawLayers = [];
+
+      S.selectedTextId =
+        null;
+
+      renderLayerList();
+      render();
+    };
+  }
+}
+
+
+/* =========================================================
+   LAYER LIST
+========================================================= */
+
+function renderLayerList() {
+
+  const list =
+    $('layerList');
+
+  if (!list) return;
+
+  list.innerHTML = '';
+
+
+  if (
+    !S.textLayers.length &&
+    !S.drawLayers.length
+  ) {
+
+    list.innerHTML =
+      '<p class="note">No layers yet.</p>';
+
+    return;
+  }
+
+
+  S.textLayers
+    .slice()
+    .reverse()
+    .forEach(text => {
+
+      const button =
+        document.createElement('button');
+
+      button.className =
+        'btn';
+
+      button.style.width =
+        '100%';
+
+      button.style.marginBottom =
+        '6px';
+
+      button.textContent =
+        `Text: ${text.text || 'Text'}`;
+
+
+      button.onclick = () => {
+
+        S.selectedTextId =
+          text.id;
+
+        active = 'text';
+
+        document
+          .querySelectorAll('#tabs button')
+          .forEach(item => {
+
+            item.classList.toggle(
+              'active',
+              item.dataset.tool === 'text'
+            );
+
+          });
+
+        panel();
+      };
+
+
+      list.appendChild(button);
+    });
+
+
+  S.drawLayers
+    .slice()
+    .reverse()
+    .forEach((draw, index) => {
+
+      const button =
+        document.createElement('button');
+
+      button.className =
+        'btn';
+
+      button.style.width =
+        '100%';
+
+      button.style.marginBottom =
+        '6px';
+
+      button.textContent =
+        `Drawing ${S.drawLayers.length - index}`;
+
+      list.appendChild(button);
+    });
 }
 
 
@@ -700,142 +1542,187 @@ function panel() {
 
 function panelActions() {
 
-  $('auto')?.addEventListener('click', () => {
-
-    push();
-
-    S.exposure = 0;
-    S.contrast = 8;
-    S.highlights = -14;
-    S.shadows = 16;
-    S.whites = 4;
-    S.blacks = -5;
-
-    render();
-    panel();
-  });
-
-
-  $('ratio')?.addEventListener('change', e => {
-
-    push();
-
-    S.ratio = e.target.value;
-
-    schedule();
-  });
-
-
-  $('rl')?.addEventListener('click', () => {
-
-    push();
-
-    S.rotate = (S.rotate + 270) % 360;
-
-    panX = 0;
-    panY = 0;
-
-    schedule();
-  });
-
-
-  $('rr')?.addEventListener('click', () => {
-
-    push();
-
-    S.rotate = (S.rotate + 90) % 360;
-
-    panX = 0;
-    panY = 0;
-
-    schedule();
-  });
-
-
-  $('fx')?.addEventListener('click', () => {
-
-    push();
-
-    S.flipX = !S.flipX;
-
-    schedule();
-  });
-
-
-  $('fy')?.addEventListener('click', () => {
-
-    push();
-
-    S.flipY = !S.flipY;
-
-    schedule();
-  });
-
-
-  document.querySelectorAll('[data-preset]').forEach(button => {
-
-    button.onclick = () => preset(button.dataset.preset);
-
-  });
-
-
-  document.querySelectorAll('[data-profile]').forEach(button => {
-
-    button.onclick = () => {
+  $('auto')?.addEventListener(
+    'click',
+    () => {
 
       push();
 
-      S.profile = button.dataset.profile;
+      S.exposure = 0;
+      S.contrast = 8;
+      S.highlights = -14;
+      S.shadows = 16;
+      S.whites = 4;
+      S.blacks = -5;
 
       render();
       panel();
-    };
-  });
+    }
+  );
 
 
-  document.querySelectorAll('.mask').forEach(button => {
+  $('ratio')?.addEventListener(
+    'change',
+    e => {
 
-    button.onclick = () => {
+      push();
 
-      S.maskType = button.dataset.type;
-
-      document.querySelectorAll('.mask').forEach(x => {
-        x.classList.remove('active');
-      });
-
-      button.classList.add('active');
+      S.ratio =
+        e.target.value;
 
       schedule();
-    };
-  });
+    }
+  );
 
 
-  $('maskClear')?.addEventListener('click', () => {
+  $('rl')?.addEventListener(
+    'click',
+    () => {
 
-    push();
+      push();
 
-    S.maskAmount = 0;
-    S.maskExposure = 0;
-    S.maskContrast = 0;
-    S.maskSaturation = 0;
+      S.rotate =
+        (S.rotate + 270) % 360;
 
-    schedule();
-  });
-
-
-  $('retouchClear')?.addEventListener('click', () => {
-
-    push();
-
-    retouch = [];
-
-    render();
-  });
+      schedule();
+    }
+  );
 
 
-  $('download')?.addEventListener('click', exportImage);
+  $('rr')?.addEventListener(
+    'click',
+    () => {
 
-  $('resetAll')?.addEventListener('click', resetAll);
+      push();
+
+      S.rotate =
+        (S.rotate + 90) % 360;
+
+      schedule();
+    }
+  );
+
+
+  $('fx')?.addEventListener(
+    'click',
+    () => {
+
+      push();
+
+      S.flipX =
+        !S.flipX;
+
+      schedule();
+    }
+  );
+
+
+  $('fy')?.addEventListener(
+    'click',
+    () => {
+
+      push();
+
+      S.flipY =
+        !S.flipY;
+
+      schedule();
+    }
+  );
+
+
+  document
+    .querySelectorAll('[data-preset]')
+    .forEach(button => {
+
+      button.onclick = () =>
+        preset(
+          button.dataset.preset
+        );
+
+    });
+
+
+  document
+    .querySelectorAll('[data-profile]')
+    .forEach(button => {
+
+      button.onclick = () => {
+
+        push();
+
+        S.profile =
+          button.dataset.profile;
+
+        render();
+        panel();
+      };
+
+    });
+
+
+  document
+    .querySelectorAll('.mask')
+    .forEach(button => {
+
+      button.onclick = () => {
+
+        S.maskType =
+          button.dataset.type;
+
+        document
+          .querySelectorAll('.mask')
+          .forEach(item =>
+            item.classList.remove('active')
+          );
+
+        button.classList.add('active');
+
+        schedule();
+      };
+
+    });
+
+
+  $('maskClear')?.addEventListener(
+    'click',
+    () => {
+
+      push();
+
+      S.maskAmount = 0;
+      S.maskExposure = 0;
+      S.maskContrast = 0;
+      S.maskSaturation = 0;
+
+      schedule();
+    }
+  );
+
+
+  $('retouchClear')?.addEventListener(
+    'click',
+    () => {
+
+      push();
+
+      retouch = [];
+
+      render();
+    }
+  );
+
+
+  $('download')?.addEventListener(
+    'click',
+    exportImage
+  );
+
+
+  $('resetAll')?.addEventListener(
+    'click',
+    resetAll
+  );
 }
 
 
@@ -919,7 +1806,11 @@ function preset(name) {
     }
   };
 
-  Object.assign(S, values[name] || {});
+
+  Object.assign(
+    S,
+    values[name] || {}
+  );
 
   S.preset = name;
 
@@ -936,17 +1827,29 @@ function handleImageFile(file) {
 
   if (!file) return;
 
-  if (!file.type || !file.type.startsWith('image/')) {
+  if (
+    !file.type ||
+    !file.type.startsWith('image/')
+  ) {
 
-    alert('Please select a valid image file.');
+    alert(
+      'Please select a valid image file.'
+    );
 
     return;
   }
 
-  $('status').textContent = 'Opening photo...';
 
-  const url = URL.createObjectURL(file);
-  const image = new Image();
+  $('status').textContent =
+    'Opening photo...';
+
+
+  const url =
+    URL.createObjectURL(file);
+
+  const image =
+    new Image();
+
 
   image.onload = () => {
 
@@ -957,15 +1860,44 @@ function handleImageFile(file) {
 
     const max = 1400;
 
-    const scale = Math.min(
-      1,
-      max / Math.max(image.naturalWidth, image.naturalHeight)
+    const scale =
+      Math.min(
+        1,
+        max /
+        Math.max(
+          image.naturalWidth,
+          image.naturalHeight
+        )
+      );
+
+
+    src.width =
+      Math.max(
+        1,
+        Math.round(
+          image.naturalWidth *
+          scale
+        )
+      );
+
+
+    src.height =
+      Math.max(
+        1,
+        Math.round(
+          image.naturalHeight *
+          scale
+        )
+      );
+
+
+    sx.clearRect(
+      0,
+      0,
+      src.width,
+      src.height
     );
 
-    src.width = Math.max(1, Math.round(image.naturalWidth * scale));
-    src.height = Math.max(1, Math.round(image.naturalHeight * scale));
-
-    sx.clearRect(0, 0, src.width, src.height);
 
     sx.drawImage(
       image,
@@ -975,66 +1907,85 @@ function handleImageFile(file) {
       src.height
     );
 
-    $('name').textContent = file.name;
+
+    $('name').textContent =
+      file.name;
+
 
     $('meta').textContent =
       `${image.naturalWidth} × ${image.naturalHeight}px`;
 
-    $('empty').style.display = 'none';
 
-    C.style.display = 'block';
-    O.style.display = 'block';
+    $('empty').style.display =
+      'none';
+
+
+    C.style.display =
+      'block';
+
+    O.style.display =
+      'block';
+
 
     showBefore = false;
 
-    $('badge').style.display = 'none';
+    $('badge').style.display =
+      'none';
+
 
     retouch = [];
 
     resetState(false);
 
     zoom = 1;
-    panX = 0;
-    panY = 0;
 
     render();
 
-    $('status').textContent = 'Ready';
+    $('status').textContent =
+      'Ready';
   };
+
 
   image.onerror = () => {
 
     URL.revokeObjectURL(url);
 
-    $('status').textContent = 'Ready';
+    $('status').textContent =
+      'Ready';
 
     alert(
       'The selected image could not be opened. Please try another image.'
     );
   };
 
+
   image.src = url;
 }
 
 
-const fileInput = $('fileInput');
+const fileInput =
+  $('fileInput');
+
 
 $('openTop').addEventListener(
   'click',
   () => fileInput.click()
 );
 
+
 $('openEmpty').addEventListener(
   'click',
   () => fileInput.click()
 );
+
 
 fileInput.addEventListener(
   'change',
   e => {
 
     handleImageFile(
-      e.target.files && e.target.files[0]
+      e.target.files &&
+      e.target.files[0]
     );
 
     e.target.value = '';
@@ -1048,9 +1999,21 @@ fileInput.addEventListener(
 
 function resetState() {
 
-  for (const key of Object.keys(S)) {
+  for (
+    const key of Object.keys(S)
+  ) {
 
-    if (
+    if (Array.isArray(S[key])) {
+
+      S[key] = [];
+
+    } else if (
+      key === 'selectedTextId'
+    ) {
+
+      S[key] = null;
+
+    } else if (
       key.startsWith('h_') ||
       key.startsWith('s_') ||
       key.startsWith('l_')
@@ -1058,7 +2021,9 @@ function resetState() {
 
       S[key] = 0;
 
-    } else if (typeof S[key] === 'boolean') {
+    } else if (
+      typeof S[key] === 'boolean'
+    ) {
 
       S[key] = false;
 
@@ -1091,6 +2056,31 @@ function resetState() {
 
       S[key] = 25;
 
+    } else if (key === 'grainRough') {
+
+      S[key] = 50;
+
+    } else if (
+      key === 'selectiveRange'
+    ) {
+
+      S[key] = 35;
+
+    } else if (
+      key === 'drawOpacity' ||
+      key === 'textOpacity'
+    ) {
+
+      S[key] = 100;
+
+    } else if (key === 'drawSize') {
+
+      S[key] = 8;
+
+    } else if (key === 'textSize') {
+
+      S[key] = 48;
+
     } else if (key === 'radius') {
 
       S[key] = 1;
@@ -1101,17 +2091,15 @@ function resetState() {
     }
   }
 
+
   S.presetAmount = 100;
 
   history = [];
   future = [];
 
   zoom = 1;
-  panX = 0;
-  panY = 0;
 
   panel();
-
   schedule();
 }
 
@@ -1130,27 +2118,33 @@ function resetAll() {
 
 function schedule() {
 
-  if (renderQueued) return;
+  if (renderQueued) {
+    return;
+  }
 
   renderQueued = true;
 
-  requestAnimationFrame(() => {
+  requestAnimationFrame(
+    () => {
 
-    renderQueued = false;
+      renderQueued = false;
 
-    render();
-  });
+      render();
+    }
+  );
 }
 
 
 /* =========================================================
    PROFILE
-   IMPORTANT: DOES NOT MUTATE S
 ========================================================= */
 
 function getProfileValues() {
 
-  const p = { ...S };
+  const p = {
+    ...S
+  };
+
 
   if (p.profile === 'vivid') {
 
@@ -1181,6 +2175,7 @@ function getProfileValues() {
     p.saturation = -100;
   }
 
+
   return p;
 }
 
@@ -1191,51 +2186,77 @@ function getProfileValues() {
 
 function rgbh(r, g, b) {
 
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
+  const max =
+    Math.max(r, g, b);
 
-  const d = max - min;
+  const min =
+    Math.min(r, g, b);
+
+  const d =
+    max - min;
 
   let h = 0;
 
-  const s = max ? d / max : 0;
+  const s =
+    max
+      ? d / max
+      : 0;
+
 
   if (d) {
 
     if (max === r) {
 
       h =
-        ((g - b) / d +
-          (g < b ? 6 : 0)) / 6;
+        (
+          (g - b) / d +
+          (g < b ? 6 : 0)
+        ) / 6;
 
     } else if (max === g) {
 
       h =
-        ((b - r) / d + 2) / 6;
+        (
+          (b - r) / d +
+          2
+        ) / 6;
 
     } else {
 
       h =
-        ((r - g) / d + 4) / 6;
+        (
+          (r - g) / d +
+          4
+        ) / 6;
     }
   }
 
-  return [h, s, max];
+
+  return [
+    h,
+    s,
+    max
+  ];
 }
 
 
 function hsv(h, s, v) {
 
-  let i = Math.floor(h * 6);
+  let i =
+    Math.floor(h * 6);
 
-  const f = h * 6 - i;
+  const f =
+    h * 6 - i;
 
-  const p = v * (1 - s);
+  const p =
+    v * (1 - s);
 
-  const q = v * (1 - f * s);
+  const q =
+    v * (1 - f * s);
 
   const t =
     v * (1 - (1 - f) * s);
+
 
   return [
     [v, t, p],
@@ -1250,13 +2271,28 @@ function hsv(h, s, v) {
 
 function band(h) {
 
-  if (h < .04 || h > .96) return 'red';
-  if (h < .11) return 'orange';
-  if (h < .19) return 'yellow';
-  if (h < .43) return 'green';
-  if (h < .53) return 'aqua';
-  if (h < .70) return 'blue';
-  if (h < .85) return 'purple';
+  if (
+    h < .04 ||
+    h > .96
+  ) return 'red';
+
+  if (h < .11)
+    return 'orange';
+
+  if (h < .19)
+    return 'yellow';
+
+  if (h < .43)
+    return 'green';
+
+  if (h < .53)
+    return 'aqua';
+
+  if (h < .70)
+    return 'blue';
+
+  if (h < .85)
+    return 'purple';
 
   return 'magenta';
 }
@@ -1266,30 +2302,53 @@ function band(h) {
    PIXEL PROCESSING
 ========================================================= */
 
-function applyPixel(imageData, w, h) {
+function applyPixel(
+  imageData,
+  w,
+  h
+) {
 
-  const d = imageData.data;
+  const d =
+    imageData.data;
 
-  const p = getProfileValues();
+  const p =
+    getProfileValues();
+
 
   const exposure =
-    Math.pow(2, p.exposure / 50);
+    Math.pow(
+      2,
+      p.exposure / 50
+    );
+
 
   const contrast =
     (100 + p.contrast) / 100;
 
+
   const saturation =
     (100 + p.saturation) / 100;
+
 
   const vibrance =
     p.vibrance / 100;
 
 
-  for (let i = 0; i < d.length; i += 4) {
+  for (
+    let i = 0;
+    i < d.length;
+    i += 4
+  ) {
 
-    let r = d[i] / 255;
-    let g = d[i + 1] / 255;
-    let b = d[i + 2] / 255;
+    let r =
+      d[i] / 255;
+
+    let g =
+      d[i + 1] / 255;
+
+    let b =
+      d[i + 2] / 255;
+
 
     r *= exposure;
     g *= exposure;
@@ -1311,15 +2370,25 @@ function applyPixel(imageData, w, h) {
 
     if (lum > .5) {
 
-      r += hi * (r - .5);
-      g += hi * (g - .5);
-      b += hi * (b - .5);
+      r +=
+        hi * (r - .5);
+
+      g +=
+        hi * (g - .5);
+
+      b +=
+        hi * (b - .5);
 
     } else {
 
-      r += sh * (.5 - r);
-      g += sh * (.5 - g);
-      b += sh * (.5 - b);
+      r +=
+        sh * (.5 - r);
+
+      g +=
+        sh * (.5 - g);
+
+      b +=
+        sh * (.5 - b);
     }
 
 
@@ -1333,15 +2402,30 @@ function applyPixel(imageData, w, h) {
     b += whiteBlack;
 
 
-    r = (r - .5) * contrast + .5;
-    g = (g - .5) * contrast + .5;
-    b = (b - .5) * contrast + .5;
+    r =
+      (r - .5) *
+      contrast +
+      .5;
+
+    g =
+      (g - .5) *
+      contrast +
+      .5;
+
+    b =
+      (b - .5) *
+      contrast +
+      .5;
 
 
-    r += p.temp * .0009;
-    b -= p.temp * .0009;
+    r +=
+      p.temp * .0009;
 
-    g += p.tint * .00045;
+    b -=
+      p.temp * .0009;
+
+    g +=
+      p.tint * .00045;
 
 
     const gray =
@@ -1353,7 +2437,12 @@ function applyPixel(imageData, w, h) {
     const boost =
       1 +
       vibrance *
-      (1 - Math.abs(2 * lum - 1)) *
+      (
+        1 -
+        Math.abs(
+          2 * lum - 1
+        )
+      ) *
       .7;
 
 
@@ -1376,20 +2465,28 @@ function applyPixel(imageData, w, h) {
       boost;
 
 
-    /* Texture / clarity */
-
     const effect =
-      (p.texture + p.clarity) / 900;
+      (
+        p.texture +
+        p.clarity
+      ) / 900;
 
     const average =
       (r + g + b) / 3;
 
-    r += (r - average) * effect;
-    g += (g - average) * effect;
-    b += (b - average) * effect;
 
+    r +=
+      (r - average) *
+      effect;
 
-    /* Dehaze */
+    g +=
+      (g - average) *
+      effect;
+
+    b +=
+      (b - average) *
+      effect;
+
 
     if (p.dehaze) {
 
@@ -1413,20 +2510,31 @@ function applyPixel(imageData, w, h) {
     }
 
 
-    /* HSL mixer */
+    const safeR =
+      clamp(r, 0, 1);
 
-    const safeR = clamp(r, 0, 1);
-    const safeG = clamp(g, 0, 1);
-    const safeB = clamp(b, 0, 1);
+    const safeG =
+      clamp(g, 0, 1);
 
-    let [hh, ss, vv] =
+    const safeB =
+      clamp(b, 0, 1);
+
+
+    let [
+      hh,
+      ss,
+      vv
+    ] =
       rgbh(
         safeR,
         safeG,
         safeB
       );
 
-    const colorBand = band(hh);
+
+    const colorBand =
+      band(hh);
+
 
     const hueShift =
       S['h_' + colorBand];
@@ -1444,16 +2552,34 @@ function applyPixel(imageData, w, h) {
       lumShift
     ) {
 
-      [r, g, b] =
+      [
+        r,
+        g,
+        b
+      ] =
         hsv(
-          (hh + hueShift / 360 + 1) % 1,
+          (
+            hh +
+            hueShift / 360 +
+            1
+          ) % 1,
+
           clamp(
-            ss * (1 + satShift / 100),
+            ss *
+            (
+              1 +
+              satShift / 100
+            ),
             0,
             1
           ),
+
           clamp(
-            vv * (1 + lumShift / 100),
+            vv *
+            (
+              1 +
+              lumShift / 100
+            ),
             0,
             1
           )
@@ -1461,7 +2587,132 @@ function applyPixel(imageData, w, h) {
     }
 
 
-    /* Color grading */
+    /* =====================================================
+       COLOR SELECT
+    ===================================================== */
+
+    if (
+      S.selectiveR ||
+      S.selectiveG ||
+      S.selectiveB
+    ) {
+
+      const sr =
+        S.selectiveR / 255;
+
+      const sg =
+        S.selectiveG / 255;
+
+      const sb =
+        S.selectiveB / 255;
+
+
+      const distance =
+        Math.sqrt(
+          (r - sr) ** 2 +
+          (g - sg) ** 2 +
+          (b - sb) ** 2
+        );
+
+
+      const radius =
+        Math.max(
+          .01,
+          S.selectiveRange /
+          100 *
+          .9
+        );
+
+
+      const mask =
+        clamp(
+          1 -
+          distance / radius,
+          0,
+          1
+        );
+
+
+      if (mask > 0) {
+
+        let [
+          currentHue,
+          currentSat,
+          currentValue
+        ] =
+          rgbh(
+            clamp(r, 0, 1),
+            clamp(g, 0, 1),
+            clamp(b, 0, 1)
+          );
+
+
+        const targetHue =
+          (
+            currentHue +
+            mask *
+            S.selectiveHue /
+            200 +
+            1
+          ) % 1;
+
+
+        const targetSat =
+          clamp(
+            currentSat *
+            (
+              1 +
+              mask *
+              S.selectiveSat /
+              100
+            ),
+            0,
+            1
+          );
+
+
+        const targetValue =
+          clamp(
+            currentValue *
+            (
+              1 +
+              mask *
+              S.selectiveLight /
+              100
+            ),
+            0,
+            1
+          );
+
+
+        const changed =
+          hsv(
+            targetHue,
+            targetSat,
+            targetValue
+          );
+
+
+        r =
+          r *
+          (1 - mask) +
+          changed[0] *
+          mask;
+
+        g =
+          g *
+          (1 - mask) +
+          changed[1] *
+          mask;
+
+        b =
+          b *
+          (1 - mask) +
+          changed[2] *
+          mask;
+      }
+    }
+
 
     const gradeLum =
       .2126 * r +
@@ -1469,25 +2720,20 @@ function applyPixel(imageData, w, h) {
       .0722 * b;
 
 
-    let gradeHue;
-    let gradeSat;
+    const gradeHue =
+      gradeLum < .35
+        ? S.gradeShadow
+        : gradeLum > .65
+          ? S.gradeHigh
+          : S.gradeMid;
 
 
-    if (gradeLum < .35) {
-
-      gradeHue = S.gradeShadow;
-      gradeSat = S.gradeShadowSat;
-
-    } else if (gradeLum > .65) {
-
-      gradeHue = S.gradeHigh;
-      gradeSat = S.gradeHighSat;
-
-    } else {
-
-      gradeHue = S.gradeMid;
-      gradeSat = S.gradeMidSat;
-    }
+    const gradeSat =
+      gradeLum < .35
+        ? S.gradeShadowSat
+        : gradeLum > .65
+          ? S.gradeHighSat
+          : S.gradeMidSat;
 
 
     if (gradeSat) {
@@ -1496,63 +2742,94 @@ function applyPixel(imageData, w, h) {
         hsv(
           gradeHue / 360,
           gradeSat / 100,
-          Math.max(.25, gradeLum)
+          Math.max(
+            .25,
+            gradeLum
+          )
         );
 
+
       const blend =
-        (S.gradeBlend / 100) * .35;
+        (
+          S.gradeBlend / 100
+        ) * .35;
+
 
       r =
-        r * (1 - blend) +
-        gradeColor[0] * blend;
+        r *
+        (1 - blend) +
+        gradeColor[0] *
+        blend;
 
       g =
-        g * (1 - blend) +
-        gradeColor[1] * blend;
+        g *
+        (1 - blend) +
+        gradeColor[1] *
+        blend;
 
       b =
-        b * (1 - blend) +
-        gradeColor[2] * blend;
+        b *
+        (1 - blend) +
+        gradeColor[2] *
+        blend;
     }
 
 
-    /* Vignette */
-
     const px =
-      (i / 4 % w) / w - .5;
+      (i / 4 % w) /
+      w -
+      .5;
 
     const py =
-      Math.floor(i / 4 / w) / h - .5;
+      Math.floor(
+        i / 4 / w
+      ) /
+      h -
+      .5;
 
-    let distance =
-      Math.sqrt(px * px + py * py) *
+
+    const distance =
+      Math.sqrt(
+        px * px +
+        py * py
+      ) *
       1.414;
 
 
     if (p.vignette) {
 
       const start =
-        p.midpoint / 100 * .65;
+        p.midpoint /
+        100 *
+        .65;
 
       const softness =
         Math.max(
           .05,
-          p.feather / 100
+          p.feather /
+          100
         );
+
 
       const edge =
         clamp(
-          (distance - start) /
+          (
+            distance -
+            start
+          ) /
           softness,
           0,
           1
         );
 
+
       const factor =
         1 -
-        p.vignette / 100 *
+        p.vignette /
+        100 *
         edge *
         edge;
+
 
       r *= factor;
       g *= factor;
@@ -1560,27 +2837,36 @@ function applyPixel(imageData, w, h) {
     }
 
 
-    /* Local mask */
-
     if (p.maskAmount) {
 
       let mask = 0;
 
-      if (p.maskType === 'radial') {
+
+      if (
+        p.maskType ===
+        'radial'
+      ) {
 
         mask =
           1 -
           clamp(
-            Math.sqrt(px * px + py * py) * 2.1,
+            Math.sqrt(
+              px * px +
+              py * py
+            ) * 2.1,
             0,
             1
           );
 
-      } else if (p.maskType === 'linear') {
+      } else if (
+        p.maskType ===
+        'linear'
+      ) {
 
         mask =
           clamp(
-            1 - Math.abs(py) * 2,
+            1 -
+            Math.abs(py) * 2,
             0,
             1
           );
@@ -1591,11 +2877,13 @@ function applyPixel(imageData, w, h) {
       }
 
 
-      mask *= p.maskAmount / 100;
+      mask *=
+        p.maskAmount / 100;
 
 
       const local =
-        p.maskExposure / 250 *
+        p.maskExposure /
+        250 *
         mask;
 
 
@@ -1607,7 +2895,8 @@ function applyPixel(imageData, w, h) {
       const localContrast =
         1 +
         mask *
-        p.maskContrast / 100;
+        p.maskContrast /
+        100;
 
 
       r =
@@ -1635,7 +2924,8 @@ function applyPixel(imageData, w, h) {
       const localSat =
         1 +
         mask *
-        p.maskSaturation / 100;
+        p.maskSaturation /
+        100;
 
 
       r =
@@ -1656,16 +2946,29 @@ function applyPixel(imageData, w, h) {
 
 
     d[i] =
-      clamp(r * 255, 0, 255);
+      clamp(
+        r * 255,
+        0,
+        255
+      );
 
     d[i + 1] =
-      clamp(g * 255, 0, 255);
+      clamp(
+        g * 255,
+        0,
+        255
+      );
 
     d[i + 2] =
-      clamp(b * 255, 0, 255);
+      clamp(
+        b * 255,
+        0,
+        255
+      );
 
     d[i + 3] = 255;
   }
+
 
   return imageData;
 }
@@ -1675,9 +2978,17 @@ function applyPixel(imageData, w, h) {
    SHARPEN
 ========================================================= */
 
-function sharpen(canvasContext, w, h, amount) {
+function sharpen(
+  canvasContext,
+  w,
+  h,
+  amount
+) {
 
-  if (amount < 1) return;
+  if (amount < 1) {
+    return;
+  }
+
 
   const source =
     canvasContext.getImageData(
@@ -1687,19 +2998,28 @@ function sharpen(canvasContext, w, h, amount) {
       h
     );
 
+
   const output =
     canvasContext.createImageData(
       w,
       h
     );
 
-  const d = source.data;
-  const q = output.data;
+
+  const d =
+    source.data;
+
+  const q =
+    output.data;
+
 
   q.set(d);
 
+
   const strength =
-    amount / 100 * .7;
+    amount /
+    100 *
+    .7;
 
 
   for (
@@ -1715,7 +3035,11 @@ function sharpen(canvasContext, w, h, amount) {
     ) {
 
       const i =
-        (y * w + x) * 4;
+        (
+          y * w +
+          x
+        ) * 4;
+
 
       for (
         let channel = 0;
@@ -1726,23 +3050,49 @@ function sharpen(canvasContext, w, h, amount) {
         q[i + channel] =
           clamp(
             d[i + channel] *
-              (1 + 4 * strength) -
+            (
+              1 +
+              4 *
+              strength
+            ) -
 
             strength *
-              (
-                d[i - 4 + channel] +
-                d[i + 4 + channel] +
-                d[i - w * 4 + channel] +
-                d[i + w * 4 + channel]
-              ),
+            (
+              d[
+                i -
+                4 +
+                channel
+              ] +
+
+              d[
+                i +
+                4 +
+                channel
+              ] +
+
+              d[
+                i -
+                w * 4 +
+                channel
+              ] +
+
+              d[
+                i +
+                w * 4 +
+                channel
+              ]
+            ),
+
             0,
             255
           );
       }
 
+
       q[i + 3] = 255;
     }
   }
+
 
   canvasContext.putImageData(
     output,
@@ -1756,9 +3106,17 @@ function sharpen(canvasContext, w, h, amount) {
    GRAIN
 ========================================================= */
 
-function grain(canvasContext, w, h, amount) {
+function grain(
+  canvasContext,
+  w,
+  h,
+  amount
+) {
 
-  if (amount <= 0) return;
+  if (amount <= 0) {
+    return;
+  }
+
 
   const imageData =
     canvasContext.getImageData(
@@ -1768,19 +3126,15 @@ function grain(canvasContext, w, h, amount) {
       h
     );
 
-  const d = imageData.data;
 
-  const size =
-    Math.max(
-      .2,
-      S.grainSize / 25
-    );
+  const d =
+    imageData.data;
 
-  const rough =
-    S.grainRough / 100;
 
   const strength =
-    amount / 100 * 28;
+    amount /
+    100 *
+    28;
 
 
   for (
@@ -1794,9 +3148,7 @@ function grain(canvasContext, w, h, amount) {
         Math.random() -
         .5
       ) *
-      strength *
-      size *
-      (0.6 + rough);
+      strength;
 
 
     d[i] =
@@ -1821,6 +3173,7 @@ function grain(canvasContext, w, h, amount) {
       );
   }
 
+
   canvasContext.putImageData(
     imageData,
     0,
@@ -1830,80 +3183,27 @@ function grain(canvasContext, w, h, amount) {
 
 
 /* =========================================================
-   FAST BLUR
-========================================================= */
-
-function applyBlur(canvasContext, w, h, amount) {
-
-  if (amount <= 0) return;
-
-  const temp =
-    document.createElement('canvas');
-
-  temp.width = w;
-  temp.height = h;
-
-  const tctx =
-    temp.getContext('2d');
-
-  tctx.filter =
-    `blur(${Math.min(8, amount / 12)}px)`;
-
-  tctx.drawImage(
-    canvasContext.canvas,
-    0,
-    0
-  );
-
-  canvasContext.clearRect(
-    0,
-    0,
-    w,
-    h
-  );
-
-  canvasContext.drawImage(
-    temp,
-    0,
-    0
-  );
-}
-
-
-/* =========================================================
    RETOUCH
-   ONE BLURRING PASS INSTEAD OF ONE PASS PER DOT
 ========================================================= */
 
-function retouchDraw(canvasContext, w, h) {
+function retouchDraw(
+  canvasContext,
+  w,
+  h
+) {
 
-  if (!retouch.length) return;
-
-  const blurred =
-    document.createElement('canvas');
-
-  blurred.width = w;
-  blurred.height = h;
-
-  const bctx =
-    blurred.getContext('2d');
-
-  bctx.filter =
-    'blur(4px)';
-
-  bctx.drawImage(
-    canvasContext.canvas,
-    0,
-    0
-  );
+  if (!retouch.length) {
+    return;
+  }
 
 
-  canvasContext.save();
-
-  for (const point of retouch) {
+  for (
+    const point of retouch
+  ) {
 
     const radius =
       point.r;
+
 
     canvasContext.save();
 
@@ -1919,29 +3219,57 @@ function retouchDraw(canvasContext, w, h) {
 
     canvasContext.clip();
 
-    canvasContext.globalAlpha = .9;
 
-    canvasContext.drawImage(
-      blurred,
+    const temp =
+      document.createElement(
+        'canvas'
+      );
+
+    temp.width = w;
+    temp.height = h;
+
+
+    const tctx =
+      temp.getContext('2d');
+
+    tctx.filter =
+      `blur(${Math.max(
+        2,
+        radius / 5
+      )}px)`;
+
+
+    tctx.drawImage(
+      canvasContext.canvas,
       0,
       0
     );
 
+
+    canvasContext.drawImage(
+      temp,
+      0,
+      0
+    );
+
+
     canvasContext.restore();
   }
-
-  canvasContext.restore();
 }
 
 
 /* =========================================================
-   OVERLAY
+   OVERLAY RENDER
 ========================================================= */
 
 function showOverlay() {
 
-  O.width = C.width;
-  O.height = C.height;
+  O.width =
+    C.width;
+
+  O.height =
+    C.height;
+
 
   ox.clearRect(
     0,
@@ -1950,41 +3278,213 @@ function showOverlay() {
     O.height
   );
 
+
   O.style.width =
-    C.clientWidth + 'px';
+    C.clientWidth +
+    'px';
 
   O.style.height =
-    C.clientHeight + 'px';
+    C.clientHeight +
+    'px';
+
+
+  /* DRAW LAYERS */
+
+  S.drawLayers.forEach(
+    stroke => {
+
+      if (
+        stroke.points.length <
+        2
+      ) {
+        return;
+      }
+
+
+      ox.save();
+
+      ox.globalAlpha =
+        stroke.opacity /
+        100;
+
+      ox.strokeStyle =
+        stroke.color;
+
+      ox.lineWidth =
+        stroke.size;
+
+      ox.lineCap =
+        'round';
+
+      ox.lineJoin =
+        'round';
+
+
+      ox.beginPath();
+
+
+      stroke.points.forEach(
+        (point, index) => {
+
+          const x =
+            point.x *
+            C.width;
+
+          const y =
+            point.y *
+            C.height;
+
+
+          if (index === 0) {
+
+            ox.moveTo(
+              x,
+              y
+            );
+
+          } else {
+
+            ox.lineTo(
+              x,
+              y
+            );
+          }
+        }
+      );
+
+
+      ox.stroke();
+
+      ox.restore();
+    }
+  );
+
+
+  /* TEXT LAYERS */
+
+  S.textLayers.forEach(
+    text => {
+
+      ox.save();
+
+
+      ox.globalAlpha =
+        text.opacity /
+        100;
+
+
+      ox.font =
+        `${text.italic ? 'italic ' : ''}` +
+        `${text.bold ? 'bold ' : ''}` +
+        `${text.size}px ${text.font}`;
+
+
+      ox.textAlign =
+        text.align ||
+        'center';
+
+      ox.textBaseline =
+        'middle';
+
+
+      const x =
+        text.x *
+        C.width;
+
+      const y =
+        text.y *
+        C.height;
+
+
+      ox.lineWidth =
+        Math.max(
+          1,
+          text.size *
+          .08
+        );
+
+
+      ox.strokeStyle =
+        text.stroke;
+
+      ox.fillStyle =
+        text.color;
+
+
+      ox.strokeText(
+        text.text,
+        x,
+        y
+      );
+
+
+      ox.fillText(
+        text.text,
+        x,
+        y
+      );
+
+
+      /* selected text border */
+
+      if (
+        text.id ===
+        S.selectedTextId &&
+        active === 'text'
+      ) {
+
+        ox.strokeStyle =
+          'rgba(255,255,255,.65)';
+
+        ox.lineWidth = 1;
+
+
+        const metrics =
+          ox.measureText(
+            text.text
+          );
+
+
+        ox.strokeRect(
+          x -
+          (
+            text.align ===
+            'center'
+              ? metrics.width / 2
+              : 0
+          ) -
+          8,
+
+          y -
+          text.size /
+          2 -
+          8,
+
+          metrics.width +
+          16,
+
+          text.size +
+          16
+        );
+      }
+
+
+      ox.restore();
+    }
+  );
 }
 
 
 /* =========================================================
-   CANVAS TRANSFORM
-   ZOOM + PAN
-========================================================= */
-
-function updateCanvasTransform() {
-
-  const transform =
-    `translate3d(${panX}px, ${panY}px, 0) scale(${zoom})`;
-
-  C.style.transform = transform;
-  O.style.transform = transform;
-
-  $('zlabel').textContent =
-    `${Math.round(zoom * 100)}%`;
-}
-
-
-/* =========================================================
-   RENDER
+   IMAGE RENDER
 ========================================================= */
 
 function render() {
 
-  if (!img || rendering) return;
+  if (!img) {
+    return;
+  }
 
-  rendering = true;
 
   $('status').textContent =
     'Rendering...';
@@ -1999,19 +3499,29 @@ function render() {
     180;
 
 
-  const W = src.width;
-  const H = src.height;
+  const W =
+    src.width;
+
+  const H =
+    src.height;
 
 
   const rotatedWidth =
-    S.rotate % 180 ? H : W;
+    S.rotate % 180
+      ? H
+      : W;
 
   const rotatedHeight =
-    S.rotate % 180 ? W : H;
+    S.rotate % 180
+      ? W
+      : H;
 
 
   const transformed =
-    document.createElement('canvas');
+    document.createElement(
+      'canvas'
+    );
+
 
   transformed.width =
     rotatedWidth;
@@ -2021,7 +3531,9 @@ function render() {
 
 
   const tctx =
-    transformed.getContext('2d');
+    transformed.getContext(
+      '2d'
+    );
 
 
   tctx.translate(
@@ -2029,12 +3541,15 @@ function render() {
     rotatedHeight / 2
   );
 
+
   tctx.rotate(angle);
+
 
   tctx.scale(
     S.flipX ? -1 : 1,
     S.flipY ? -1 : 1
   );
+
 
   tctx.drawImage(
     src,
@@ -2053,22 +3568,31 @@ function render() {
   let cropY = 0;
 
 
-  if (S.ratio !== 'original') {
+  if (
+    S.ratio !==
+    'original'
+  ) {
 
     const parts =
       S.ratio
         .split(':')
         .map(Number);
 
+
     const targetRatio =
-      parts[0] / parts[1];
+      parts[0] /
+      parts[1];
+
 
     const currentRatio =
       rotatedWidth /
       rotatedHeight;
 
 
-    if (currentRatio > targetRatio) {
+    if (
+      currentRatio >
+      targetRatio
+    ) {
 
       cropWidth =
         Math.round(
@@ -2077,9 +3601,10 @@ function render() {
         );
 
       cropX =
-        (rotatedWidth -
-          cropWidth) /
-        2;
+        (
+          rotatedWidth -
+          cropWidth
+        ) / 2;
 
     } else {
 
@@ -2090,22 +3615,18 @@ function render() {
         );
 
       cropY =
-        (rotatedHeight -
-          cropHeight) /
-        2;
+        (
+          rotatedHeight -
+          cropHeight
+        ) / 2;
     }
   }
 
 
-  /*
-    Keep preview processing lightweight.
-    This is the main speed improvement.
-  */
-
   const maxPreview =
     window.innerWidth < 700
-      ? 600
-      : 1000;
+      ? 720
+      : 1100;
 
 
   const scale =
@@ -2123,21 +3644,27 @@ function render() {
     Math.max(
       1,
       Math.round(
-        cropWidth * scale
+        cropWidth *
+        scale
       )
     );
+
 
   const height =
     Math.max(
       1,
       Math.round(
-        cropHeight * scale
+        cropHeight *
+        scale
       )
     );
 
 
-  C.width = width;
-  C.height = height;
+  C.width =
+    width;
+
+  C.height =
+    height;
 
 
   ctx.clearRect(
@@ -2170,6 +3697,7 @@ function render() {
       height
     );
 
+
     ctx.drawImage(
       transformed,
       cropX,
@@ -2182,14 +3710,11 @@ function render() {
       height
     );
 
-    showOverlay();
 
-    updateCanvasTransform();
+    showOverlay();
 
     $('status').textContent =
       'Original';
-
-    rendering = false;
 
     return;
   }
@@ -2219,68 +3744,6 @@ function render() {
   );
 
 
-  if (S.noise > 0) {
-
-    applyBlur(
-      ctx,
-      width,
-      height,
-      S.noise
-    );
-  }
-
-
-  if (S.colorNoise > 0) {
-
-    const imageData =
-      ctx.getImageData(
-        0,
-        0,
-        width,
-        height
-      );
-
-    const d =
-      imageData.data;
-
-    const strength =
-      S.colorNoise / 100;
-
-
-    for (
-      let i = 0;
-      i < d.length;
-      i += 4
-    ) {
-
-      const gray =
-        .299 * d[i] +
-        .587 * d[i + 1] +
-        .114 * d[i + 2];
-
-
-      d[i] =
-        d[i] * (1 - strength) +
-        gray * strength;
-
-      d[i + 1] =
-        d[i + 1] * (1 - strength) +
-        gray * strength;
-
-      d[i + 2] =
-        d[i + 2] * (1 - strength) +
-        gray * strength;
-    }
-
-
-    ctx.putImageData(
-      imageData,
-      0,
-      0
-    );
-  }
-
-
   if (S.sharp > 0) {
 
     sharpen(
@@ -2288,6 +3751,41 @@ function render() {
       width,
       height,
       S.sharp
+    );
+  }
+
+
+  if (S.noise > 0) {
+
+    ctx.filter =
+      `blur(${S.noise / 50}px)`;
+
+    const temp =
+      document.createElement(
+        'canvas'
+      );
+
+    temp.width =
+      width;
+
+    temp.height =
+      height;
+
+    temp
+      .getContext('2d')
+      .drawImage(
+        C,
+        0,
+        0
+      );
+
+    ctx.filter =
+      'none';
+
+    ctx.drawImage(
+      temp,
+      0,
+      0
     );
   }
 
@@ -2305,11 +3803,49 @@ function render() {
 
   if (S.blur > 0) {
 
-    applyBlur(
-      ctx,
+    ctx.filter =
+      `blur(${Math.min(
+        10,
+        S.blur / 10
+      )}px)`;
+
+
+    const temp =
+      document.createElement(
+        'canvas'
+      );
+
+    temp.width =
+      width;
+
+    temp.height =
+      height;
+
+
+    temp
+      .getContext('2d')
+      .drawImage(
+        C,
+        0,
+        0
+      );
+
+
+    ctx.filter =
+      'none';
+
+    ctx.clearRect(
+      0,
+      0,
       width,
-      height,
-      S.blur
+      height
+    );
+
+
+    ctx.drawImage(
+      temp,
+      0,
+      0
     );
   }
 
@@ -2323,12 +3859,16 @@ function render() {
 
   showOverlay();
 
-  updateCanvasTransform();
+
+  C.style.transform =
+    `scale(${zoom})`;
+
+  O.style.transform =
+    `scale(${zoom})`;
+
 
   $('status').textContent =
     'Ready';
-
-  rendering = false;
 }
 
 
@@ -2353,23 +3893,20 @@ function exportImage() {
 
 
   const max =
-    Number($('size').value) ||
+    Number(
+      $('size').value
+    ) ||
     Math.max(
       src.width,
       src.height
     );
 
 
-  const oldZoom = zoom;
-
-  const oldPanX = panX;
-  const oldPanY = panY;
+  const oldZoom =
+    zoom;
 
 
   zoom = 1;
-  panX = 0;
-  panY = 0;
-
 
   render();
 
@@ -2386,24 +3923,35 @@ function exportImage() {
 
 
   const output =
-    document.createElement('canvas');
+    document.createElement(
+      'canvas'
+    );
 
 
   output.width =
     Math.max(
       1,
-      Math.round(C.width * scale)
+      Math.round(
+        C.width *
+        scale
+      )
     );
+
 
   output.height =
     Math.max(
       1,
-      Math.round(C.height * scale)
+      Math.round(
+        C.height *
+        scale
+      )
     );
 
 
   const outputContext =
-    output.getContext('2d');
+    output.getContext(
+      '2d'
+    );
 
 
   outputContext.drawImage(
@@ -2418,8 +3966,11 @@ function exportImage() {
   const type =
     $('format').value;
 
+
   const quality =
-    Number($('quality').value);
+    Number(
+      $('quality').value
+    );
 
 
   const extension =
@@ -2431,11 +3982,14 @@ function exportImage() {
 
 
   const link =
-    document.createElement('a');
+    document.createElement(
+      'a'
+    );
 
 
   link.download =
     `toolora-edited-${Date.now()}.${extension}`;
+
 
   link.href =
     output.toDataURL(
@@ -2443,15 +3997,16 @@ function exportImage() {
       quality
     );
 
+
   link.click();
 
 
-  zoom = oldZoom;
+  zoom =
+    oldZoom;
 
-  panX = oldPanX;
-  panY = oldPanY;
 
   render();
+
 
   $('status').textContent =
     'Export complete';
@@ -2459,578 +4014,350 @@ function exportImage() {
 
 
 /* =========================================================
-   TOP CONTROLS
+   TEXT / DRAW / COLOR SELECT POINTER SYSTEM
 ========================================================= */
 
-$('tabs').addEventListener(
-  'click',
-  e => {
-
-    const button =
-      e.target.closest(
-        '[data-tool]'
-      );
-
-    if (!button) return;
-
-    active =
-      button.dataset.tool;
-
-
-    document
-      .querySelectorAll(
-        '#tabs button'
-      )
-      .forEach(item => {
-
-        item.classList.toggle(
-          'active',
-          item === button
-        );
-      });
-
-
-    panel();
-  }
-);
-
-
-$('reset').onclick = () => {
-
-  push();
-
-  resetState();
-};
-
-
-$('undo').onclick = () => {
-
-  if (!history.length) return;
-
-  future.push(
-    snap()
-  );
-
-  restore(
-    history.pop()
-  );
-};
-
-
-$('redo').onclick = () => {
-
-  if (!future.length) return;
-
-  history.push(
-    snap()
-  );
-
-  restore(
-    future.pop()
-  );
-};
-
-
-$('before').onclick = () => {
-
-  showBefore =
-    !showBefore;
-
-  $('badge').style.display =
-    showBefore
-      ? 'block'
-      : 'none';
-
-  render();
-};
-
-
-/* =========================================================
-   ZOOM BUTTONS
-========================================================= */
-
-function setZoom(value) {
-
-  zoom =
-    clamp(
-      value,
-      0.5,
-      4
-    );
-
-  if (zoom <= 1) {
-
-    panX = 0;
-    panY = 0;
-  }
-
-  updateCanvasTransform();
-
-  schedule();
-}
-
-
-$('zout').onclick = () => {
-
-  setZoom(
-    zoom - 0.2
-  );
-};
-
-
-$('zin').onclick = () => {
-
-  setZoom(
-    zoom + 0.2
-  );
-};
-
-
-$('fit').onclick = () => {
-
-  zoom = 1;
-
-  panX = 0;
-  panY = 0;
-
-  updateCanvasTransform();
-
-  render();
-};
-
-
-$('full').onclick = () => {
-
-  $('stage')
-    .requestFullscreen?.();
-};
-
-
-/* =========================================================
-   DOUBLE TAP
-========================================================= */
-
-let lastTap = 0;
-
-$('stage').addEventListener(
-  'pointerup',
-  e => {
-
-    if (
-      active === 'retouch' ||
-      active === 'mask'
-    ) {
-      return;
-    }
-
-    const now =
-      Date.now();
-
-    if (
-      now - lastTap <
-      280
-    ) {
-
-      if (zoom > 1) {
-
-        zoom = 1;
-        panX = 0;
-        panY = 0;
-
-      } else {
-
-        zoom = 2;
-      }
-
-      updateCanvasTransform();
-
-      render();
-    }
-
-    lastTap = now;
-  }
-);
-
-
-/* =========================================================
-   TOUCH / MOUSE PAN + PINCH ZOOM
-========================================================= */
-
-function distance(a, b) {
-
-  return Math.hypot(
-    a.clientX - b.clientX,
-    a.clientY - b.clientY
-  );
-}
-
-
-function midpoint(a, b) {
-
-  return {
-    x:
-      (a.clientX +
-        b.clientX) / 2,
-
-    y:
-      (a.clientY +
-        b.clientY) / 2
-  };
-}
-
-
-$('stage').addEventListener(
-  'pointerdown',
-  e => {
-
-    /*
-      Retouch uses the same stage.
-      Do not start normal pan in that mode.
-    */
-
-    if (
-      active === 'retouch' &&
-      img
-    ) {
-
-      addRetouchPoint(e);
-
-      return;
-    }
-
-
-    pointers.set(
-      e.pointerId,
-      e
-    );
-
-    $('stage').setPointerCapture(
-      e.pointerId
-    );
-
-
-    if (pointers.size === 1) {
-
-      gesture = {
-        type: 'pan',
-        startX: e.clientX,
-        startY: e.clientY,
-        startPanX: panX,
-        startPanY: panY
-      };
-
-    } else if (pointers.size === 2) {
-
-      const values =
-        [...pointers.values()];
-
-      gesture = {
-
-        type: 'pinch',
-
-        startDistance:
-          distance(
-            values[0],
-            values[1]
-          ),
-
-        startZoom:
-          zoom,
-
-        startPanX:
-          panX,
-
-        startPanY:
-          panY,
-
-        startMid:
-          midpoint(
-            values[0],
-            values[1]
-          )
-      };
-    }
-  }
-);
-
-
-$('stage').addEventListener(
-  'pointermove',
-  e => {
-
-    if (
-      active === 'retouch'
-    ) {
-
-      if (
-        e.buttons ||
-        e.pressure
-      ) {
-
-        addRetouchPoint(e);
-      }
-
-      return;
-    }
-
-
-    if (!pointers.has(e.pointerId)) {
-      return;
-    }
-
-
-    pointers.set(
-      e.pointerId,
-      e
-    );
-
-
-    if (
-      pointers.size === 1 &&
-      gesture &&
-      gesture.type === 'pan'
-    ) {
-
-      if (zoom <= 1) {
-        return;
-      }
-
-
-      panX =
-        gesture.startPanX +
-        (
-          e.clientX -
-          gesture.startX
-        );
-
-      panY =
-        gesture.startPanY +
-        (
-          e.clientY -
-          gesture.startY
-        );
-
-
-      updateCanvasTransform();
-
-      return;
-    }
-
-
-    if (
-      pointers.size === 2 &&
-      gesture &&
-      gesture.type === 'pinch'
-    ) {
-
-      const values =
-        [...pointers.values()];
-
-      const currentDistance =
-        distance(
-          values[0],
-          values[1]
-        );
-
-
-      if (
-        gesture.startDistance <= 0
-      ) {
-        return;
-      }
-
-
-      const factor =
-        currentDistance /
-        gesture.startDistance;
-
-
-      zoom =
-        clamp(
-          gesture.startZoom *
-          factor,
-          0.5,
-          4
-        );
-
-
-      const currentMid =
-        midpoint(
-          values[0],
-          values[1]
-        );
-
-
-      panX =
-        gesture.startPanX +
-        (
-          currentMid.x -
-          gesture.startMid.x
-        );
-
-      panY =
-        gesture.startPanY +
-        (
-          currentMid.y -
-          gesture.startMid.y
-        );
-
-
-      if (zoom <= 1) {
-
-        panX = 0;
-        panY = 0;
-      }
-
-
-      updateCanvasTransform();
-    }
-  }
-);
-
-
-$('stage').addEventListener(
-  'pointerup',
-  e => {
-
-    pointers.delete(
-      e.pointerId
-    );
-
-    if (
-      pointers.size === 0
-    ) {
-
-      gesture = null;
-    }
-  }
-);
-
-
-$('stage').addEventListener(
-  'pointercancel',
-  e => {
-
-    pointers.delete(
-      e.pointerId
-    );
-
-    if (
-      pointers.size === 0
-    ) {
-
-      gesture = null;
-    }
-  }
-);
-
-
-/* =========================================================
-   RETOUCH POINTER
-========================================================= */
-
-let retouchDrawing = false;
-
-
-function addRetouchPoint(e) {
-
-  if (!img) return;
+function stagePoint(e) {
 
   const rect =
     C.getBoundingClientRect();
 
 
-  if (
-    rect.width <= 0 ||
-    rect.height <= 0
-  ) {
-    return;
-  }
+  return {
 
+    x:
+      clamp(
+        (
+          e.clientX -
+          rect.left
+        ) /
+        rect.width,
+        0,
+        1
+      ),
 
-  const x =
-    (
-      e.clientX -
-      rect.left
-    ) /
-    rect.width *
-    C.width;
-
-
-  const y =
-    (
-      e.clientY -
-      rect.top
-    ) /
-    rect.height *
-    C.height;
-
-
-  retouch.push({
-
-    x,
-    y,
-
-    r:
-      Math.max(
-        3,
-        S.retouchSize *
-        C.width /
-        1000
+    y:
+      clamp(
+        (
+          e.clientY -
+          rect.top
+        ) /
+        rect.height,
+        0,
+        1
       )
-  });
-
-
-  schedule();
+  };
 }
 
+
+function rgbToHex(r, g, b) {
+
+  return '#' +
+    [r, g, b]
+      .map(
+        value =>
+          Math.round(value)
+            .toString(16)
+            .padStart(2, '0')
+      )
+      .join('');
+}
+
+
+/* POINTER DOWN */
 
 $('stage').addEventListener(
   'pointerdown',
   e => {
 
-    if (
-      active !== 'retouch' ||
-      !img
-    ) {
+    if (!img) {
       return;
     }
 
-    retouchDrawing = true;
 
-    $('stage').setPointerCapture(
-      e.pointerId
-    );
+    const point =
+      stagePoint(e);
 
-    addRetouchPoint(e);
+
+    /* COLOR SELECT */
+
+    if (
+      active === 'selective' &&
+      pickMode
+    ) {
+
+      const pixel =
+        ctx.getImageData(
+          Math.round(
+            point.x *
+            C.width
+          ),
+
+          Math.round(
+            point.y *
+            C.height
+          ),
+
+          1,
+          1
+        ).data;
+
+
+      push();
+
+
+      S.selectiveR =
+        pixel[0];
+
+      S.selectiveG =
+        pixel[1];
+
+      S.selectiveB =
+        pixel[2];
+
+
+      if ($('pickedColor')) {
+
+        $('pickedColor')
+          .textContent =
+          `Selected: ${
+            rgbToHex(
+              pixel[0],
+              pixel[1],
+              pixel[2]
+            )
+          }`;
+      }
+
+
+      pickMode = false;
+
+
+      $('pickerBadge')
+        .style
+        .display =
+        'none';
+
+
+      panel();
+
+      schedule();
+
+      return;
+    }
+
+
+    /* DRAW */
+
+    if (
+      active === 'draw'
+    ) {
+
+      e.preventDefault();
+
+      push();
+
+      drawingTool =
+        true;
+
+
+      $('stage')
+        .setPointerCapture(
+          e.pointerId
+        );
+
+
+      const stroke = {
+
+        points: [
+          point
+        ],
+
+        size:
+          Number(
+            S.drawSize
+          ) || 8,
+
+        opacity:
+          Number(
+            S.drawOpacity
+          ) || 100,
+
+        color:
+          $('drawColor')?.value ||
+          '#ffffff'
+      };
+
+
+      S.drawLayers.push(
+        stroke
+      );
+
+
+      showOverlay();
+
+      return;
+    }
+
+
+    /* TEXT */
+
+    if (
+      active === 'text'
+    ) {
+
+      const hit =
+        S.textLayers
+          .slice()
+          .reverse()
+          .find(
+            text => {
+
+              const dx =
+                point.x -
+                text.x;
+
+              const dy =
+                point.y -
+                text.y;
+
+
+              return (
+                Math.abs(dx) <
+                .35 &&
+                Math.abs(dy) <
+                .12
+              );
+            }
+          );
+
+
+      if (hit) {
+
+        push();
+
+        S.selectedTextId =
+          hit.id;
+
+        draggingText =
+          hit;
+
+
+        dragDX =
+          point.x -
+          hit.x;
+
+        dragDY =
+          point.y -
+          hit.y;
+
+
+        $('stage')
+          .setPointerCapture(
+            e.pointerId
+          );
+
+
+        panel();
+
+        showOverlay();
+      }
+    }
   }
 );
 
+
+/* POINTER MOVE */
 
 $('stage').addEventListener(
   'pointermove',
   e => {
 
+    const point =
+      stagePoint(e);
+
+
+    /* DRAW */
+
     if (
-      active === 'retouch' &&
-      retouchDrawing
+      active === 'draw' &&
+      drawingTool
     ) {
 
-      addRetouchPoint(e);
+      const stroke =
+        S.drawLayers[
+          S.drawLayers.length - 1
+        ];
+
+
+      if (stroke) {
+
+        stroke.points.push(
+          point
+        );
+      }
+
+
+      showOverlay();
+
+      return;
+    }
+
+
+    /* TEXT */
+
+    if (
+      active === 'text' &&
+      draggingText
+    ) {
+
+      draggingText.x =
+        clamp(
+          point.x -
+          dragDX,
+          0,
+          1
+        );
+
+
+      draggingText.y =
+        clamp(
+          point.y -
+          dragDY,
+          0,
+          1
+        );
+
+
+      showOverlay();
     }
   }
 );
 
 
+/* POINTER UP */
+
 $('stage').addEventListener(
   'pointerup',
   () => {
 
-    if (retouchDrawing) {
+    if (drawingTool) {
 
-      push();
+      drawingTool =
+        false;
 
-      retouchDrawing = false;
+      panel();
+      render();
+    }
+
+
+    if (draggingText) {
+
+      draggingText =
+        null;
+
+      panel();
+      render();
     }
   }
 );
@@ -3040,7 +4367,11 @@ $('stage').addEventListener(
   'pointercancel',
   () => {
 
-    retouchDrawing = false;
+    drawingTool =
+      false;
+
+    draggingText =
+      null;
   }
 );
 
@@ -3083,12 +4414,168 @@ $('stage').addEventListener(
       .classList
       .remove('dragover');
 
+
     handleImageFile(
       e.dataTransfer.files &&
       e.dataTransfer.files[0]
     );
   }
 );
+
+
+/* =========================================================
+   TOP CONTROLS
+========================================================= */
+
+$('tabs').addEventListener(
+  'click',
+  e => {
+
+    const button =
+      e.target.closest(
+        '[data-tool]'
+      );
+
+
+    if (!button) {
+      return;
+    }
+
+
+    active =
+      button.dataset.tool;
+
+
+    document
+      .querySelectorAll(
+        '#tabs button'
+      )
+      .forEach(item => {
+
+        item.classList.toggle(
+          'active',
+          item === button
+        );
+
+      });
+
+
+    panel();
+  }
+);
+
+
+$('reset').onclick =
+  () => {
+
+    push();
+
+    resetState();
+  };
+
+
+$('undo').onclick =
+  () => {
+
+    if (!history.length) {
+      return;
+    }
+
+
+    future.push(
+      snap()
+    );
+
+
+    restore(
+      history.pop()
+    );
+  };
+
+
+$('redo').onclick =
+  () => {
+
+    if (!future.length) {
+      return;
+    }
+
+
+    history.push(
+      snap()
+    );
+
+
+    restore(
+      future.pop()
+    );
+  };
+
+
+$('before').onclick =
+  () => {
+
+    showBefore =
+      !showBefore;
+
+
+    $('badge').style.display =
+      showBefore
+        ? 'block'
+        : 'none';
+
+
+    render();
+  };
+
+
+/* =========================================================
+   ZOOM
+========================================================= */
+
+$('zout').onclick =
+  () => {
+
+    zoom =
+      clamp(
+        zoom - .1,
+        .5,
+        2.5
+      );
+
+    render();
+  };
+
+
+$('zin').onclick =
+  () => {
+
+    zoom =
+      clamp(
+        zoom + .1,
+        .5,
+        2.5
+      );
+
+    render();
+  };
+
+
+$('fit').onclick =
+  () => {
+
+    zoom = 1;
+
+    render();
+  };
+
+
+$('full').onclick =
+  () => {
+
+    $('stage')
+      .requestFullscreen?.();
+  };
 
 
 /* =========================================================
@@ -3139,7 +4626,5 @@ document
 
 
 panel();
-
-updateCanvasTransform();
 
 })();
