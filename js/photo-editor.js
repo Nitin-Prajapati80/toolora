@@ -1,218 +1,325 @@
-(() => {
+(()=>{
+'use strict';
 
-"use strict";
+
+/* =========================================================
+   BASIC HELPERS
+========================================================= */
 
 const $ = id => document.getElementById(id);
 
-const clamp = (
-  value,
-  min = 0,
-  max = 1
-) => Math.min(max, Math.max(min, value));
+const clamp = (n,min,max) =>
+  Math.max(min,Math.min(max,n));
+
+const fmt = n => {
+  n = Number(n);
+
+  return `${n > 0 ? '+' : ''}${
+    Number.isInteger(n)
+      ? n
+      : n.toFixed(1)
+  }`;
+};
 
 
-const canvas = $("canvas");
-const ctx = canvas.getContext("2d", {
-  willReadFrequently: true
-});
+/* =========================================================
+   CANVAS
+========================================================= */
 
-const overlay = $("overlay");
-const overlayCtx = overlay.getContext("2d");
+const canvas = $('canvas');
 
-const sourceCanvas = document.createElement("canvas");
-const sourceCtx = sourceCanvas.getContext("2d", {
-  willReadFrequently: true
-});
+const ctx = canvas.getContext(
+  '2d',
+  {
+    willReadFrequently:true
+  }
+);
 
+const overlay = $('overlay');
+
+const ox = overlay.getContext('2d');
+
+const source =
+  document.createElement('canvas');
+
+const sx =
+  source.getContext(
+    '2d',
+    {
+      willReadFrequently:true
+    }
+);
+
+
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
 
 let image = null;
-let fileName = "";
-let activeTool = "light";
 
 let zoom = 1;
+
+let active = 'light';
+
 let showBefore = false;
+
 let renderQueued = false;
 
+let history = [];
+
+let future = [];
+
+let historyTimer = null;
+
 let drawing = false;
+
+let dragText = null;
+
+let picking = false;
+
 let selectedTextId = null;
 
 
-/* -----------------------------
-   HISTORY
------------------------------ */
-
-const history = [];
-const future = [];
-
-
-/* -----------------------------
-   TEXT / DRAW / COLOR
------------------------------ */
-
-let textLayers = [];
-
-let drawStrokes = [];
-
-let selective = {
-  active: false,
-  color: "#ff0000",
-  radius: 24,
-  hue: 0,
-  sat: 0,
-  light: 0
-};
-
-
-/* -----------------------------
-   MAIN EDIT STATE
------------------------------ */
+/* =========================================================
+   EDIT STATE
+========================================================= */
 
 const S = {
 
-  exposure: 0,
-  contrast: 0,
-  highlights: 0,
-  shadows: 0,
-  whites: 0,
-  blacks: 0,
+  exposure:0,
+  contrast:0,
+  highlights:0,
+  shadows:0,
+  whites:0,
+  blacks:0,
 
-  temp: 0,
-  tint: 0,
-  vibrance: 0,
-  saturation: 0,
+  temp:0,
+  tint:0,
+  vibrance:0,
+  saturation:0,
 
-  texture: 0,
-  clarity: 0,
-  dehaze: 0,
+  texture:0,
+  clarity:0,
+  dehaze:0,
 
-  vignette: 0,
-  midpoint: 50,
-  feather: 50,
+  vignette:0,
+  midpoint:50,
+  feather:50,
 
-  grain: 0,
-  grainSize: 25,
-  grainRough: 50,
+  grain:0,
+  grainSize:25,
+  grainRough:50,
 
-  sharp: 0,
-  radius: 1,
-  noise: 0,
-  colorNoise: 0,
+  blur:0,
+  blurX:50,
+  blurY:50,
 
-  ratio: "original",
+  sharp:0,
+  radius:1,
 
-  rotate: 0,
-  straighten: 0,
+  noise:0,
+  colorNoise:0,
 
-  flipX: false,
-  flipY: false,
+  ratio:'original',
 
-  blur: 0,
-  blurX: 50,
-  blurY: 50,
+  rotate:0,
+  straighten:0,
 
-  gradeShadow: 0,
-  gradeShadowSat: 0,
+  flipX:false,
+  flipY:false,
 
-  gradeMid: 0,
-  gradeMidSat: 0,
+  gradeShadow:0,
+  gradeShadowSat:0,
 
-  gradeHigh: 0,
-  gradeHighSat: 0,
+  gradeMid:0,
+  gradeMidSat:0,
 
-  gradeBlend: 50,
-  gradeBalance: 0,
+  gradeHigh:0,
+  gradeHighSat:0,
 
-  selectiveRadius: 24,
-  selectiveHue: 0,
-  selectiveSat: 0,
-  selectiveLight: 0,
+  gradeBlend:50,
+  gradeBalance:0,
 
-  brushSize: 8,
-  brushOpacity: 100,
+  selectiveRadius:24,
+  selectiveHue:0,
+  selectiveSat:0,
+  selectiveLight:0,
 
-  textOpacity: 100,
+  brushSize:20,
+  brushOpacity:100,
+  brushColor:'#ffffff',
 
-  profile: "natural"
+  textSize:56,
+  textColor:'#ffffff',
+  textStroke:'#000000',
+  textOpacity:100,
+
+  presetAmount:100
+
 };
 
 
-/* -----------------------------
-   HSL BANDS
------------------------------ */
+/* =========================================================
+   COLOR BANDS
+========================================================= */
 
 const bands = [
-  "red",
-  "orange",
-  "yellow",
-  "green",
-  "aqua",
-  "blue",
-  "purple",
-  "magenta"
+  'red',
+  'orange',
+  'yellow',
+  'green',
+  'aqua',
+  'blue',
+  'purple',
+  'magenta'
 ];
 
-bands.forEach(name => {
-
-  S["h_" + name] = 0;
-  S["s_" + name] = 0;
-  S["l_" + name] = 0;
-
+bands.forEach(color=>{
+  S[`h_${color}`] = 0;
+  S[`s_${color}`] = 0;
+  S[`l_${color}`] = 0;
 });
 
 
-/* -----------------------------
-   TOOL TITLES
------------------------------ */
+/* =========================================================
+   SELECTED COLOR
+========================================================= */
 
-const names = {
+let selectedColor = {
 
-  light: ["Adjust", "Light"],
-  color: ["Adjust", "Color"],
-  effects: ["Adjust", "Effects"],
-  detail: ["Adjust", "Detail"],
-  crop: ["Geometry", "Crop & Rotate"],
-  text: ["Creative", "Text"],
-  draw: ["Creative", "Draw"],
-  selective: ["Color", "Selective Color"],
-  presets: ["Style", "Presets"],
-  layers: ["Layers", "Layers"],
-  export: ["Output", "Export"]
+  r:255,
+  g:255,
+  b:255,
+
+  h:0,
+  s:0,
+  v:1,
+
+  hex:'#ffffff'
 
 };
 
 
-/* -----------------------------
-   HISTORY
------------------------------ */
+/* =========================================================
+   DRAWING + TEXT
+========================================================= */
 
-function snapshot() {
+let strokes = [];
+
+let texts = [];
+
+
+/* =========================================================
+   TOOL NAMES
+========================================================= */
+
+const names = {
+
+  light:[
+    'Adjust',
+    'Light'
+  ],
+
+  color:[
+    'Adjust',
+    'Color'
+  ],
+
+  effects:[
+    'Adjust',
+    'Effects'
+  ],
+
+  detail:[
+    'Adjust',
+    'Detail'
+  ],
+
+  crop:[
+    'Transform',
+    'Crop'
+  ],
+
+  text:[
+    'Overlay',
+    'Text'
+  ],
+
+  draw:[
+    'Overlay',
+    'Draw'
+  ],
+
+  selective:[
+    'Color',
+    'Color Select'
+  ],
+
+  presets:[
+    'Looks',
+    'Presets'
+  ],
+
+  layers:[
+    'Manage',
+    'Layers'
+  ],
+
+  export:[
+    'Output',
+    'Export'
+  ]
+
+};
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+function snapshot(){
 
   return JSON.stringify({
 
-    state: S,
+    S,
 
-    textLayers,
+    texts,
 
-    drawStrokes,
+    strokes,
 
-    selective
+    selectedColor,
+
+    selectedTextId
 
   });
 
 }
 
 
-function restore(snapshotValue) {
+function restoreSnapshot(raw){
 
-  const data = JSON.parse(snapshotValue);
+  const x =
+    JSON.parse(raw);
 
-  Object.assign(S, data.state);
+  Object.assign(
+    S,
+    x.S
+  );
 
-  textLayers = data.textLayers || [];
+  texts =
+    x.texts || [];
 
-  drawStrokes = data.drawStrokes || [];
+  strokes =
+    x.strokes || [];
 
-  selective = data.selective || selective;
+  selectedColor =
+    x.selectedColor ||
+    selectedColor;
+
+  selectedTextId =
+    x.selectedTextId ??
+    texts[0]?.id ??
+    null;
 
   panel();
 
@@ -221,152 +328,213 @@ function restore(snapshotValue) {
 }
 
 
-function pushHistory() {
+function push(){
 
-  history.push(snapshot());
+  history.push(
+    snapshot()
+  );
 
-  if (history.length > 60) {
-
+  if(history.length > 50){
     history.shift();
-
   }
 
-  future.length = 0;
+  future = [];
 
 }
 
 
-/* -----------------------------
-   UI HELPERS
------------------------------ */
+function setStatus(text){
 
-function formatValue(value) {
-
-  return `${Math.round(Number(value))}%`;
+  $('status').textContent = text;
 
 }
 
+
+function schedule(){
+
+  if(renderQueued){
+    return;
+  }
+
+  renderQueued = true;
+
+  requestAnimationFrame(()=>{
+    renderQueued = false;
+
+    render();
+  });
+
+}
+
+
+/* =========================================================
+   CONTROL HTML
+========================================================= */
 
 function control(
   key,
   label,
   min,
   max,
-  step = 1
-) {
+  step=1
+){
 
   return `
+
     <div class="control">
 
-      <div class="ch">
+      <div class="control-head">
 
         <span>${label}</span>
 
-        <span class="val" id="v_${key}">
-          ${formatValue(S[key])}
+        <span
+          class="value"
+          id="v_${key}"
+        >
+          ${fmt(S[key])}
         </span>
 
       </div>
 
       <input
+        class="range"
+        data-k="${key}"
         type="range"
         min="${min}"
         max="${max}"
         step="${step}"
         value="${S[key]}"
-        data-key="${key}"
       >
 
     </div>
+
   `;
 
 }
 
 
-function selectControl(
-  key,
-  label,
-  options
-) {
+function selectHTML(
+  id,
+  value,
+  items
+){
 
   return `
-    <div class="control">
 
-      <div class="ch">
-        <span>${label}</span>
-      </div>
+    <select
+      class="select"
+      id="${id}"
+    >
 
-      <select data-select="${key}">
+      ${items.map(item=>`
 
-        ${options.map(option => `
+        <option
+          value="${item[0]}"
+          ${String(item[0]) === String(value)
+            ? 'selected'
+            : ''}
+        >
+          ${item[1]}
+        </option>
 
-          <option
-            value="${option[0]}"
-            ${S[key] === option[0] ? "selected" : ""}
-          >
-            ${option[1]}
-          </option>
+      `).join('')}
 
-        `).join("")}
+    </select>
 
-      </select>
-
-    </div>
   `;
 
 }
 
 
-/* -----------------------------
+/* =========================================================
    PANEL
------------------------------ */
+========================================================= */
 
-function panel() {
+function panel(){
 
-  $("eyebrow").textContent =
-    names[activeTool][0];
+  const p = $('panel');
 
-  $("title").textContent =
-    names[activeTool][1];
+  $('eyebrow').textContent =
+    names[active][0];
+
+  $('title').textContent =
+    names[active][1];
 
 
-  let html = "";
+  let h = '';
 
 
-  /* LIGHT */
+  /* -------------------------------------------------------
+     LIGHT
+  ------------------------------------------------------- */
 
-  if (activeTool === "light") {
+  if(active === 'light'){
 
-    html = `
+    h = `
 
       <div class="section">
 
         <h3>Tone</h3>
 
-        ${control("exposure","Exposure",-100,100)}
+        ${control(
+          'exposure',
+          'Exposure',
+          -100,
+          100
+        )}
 
-        ${control("contrast","Contrast",-100,100)}
+        ${control(
+          'contrast',
+          'Contrast',
+          -100,
+          100
+        )}
 
-        ${control("highlights","Highlights",-100,100)}
+        ${control(
+          'highlights',
+          'Highlights',
+          -100,
+          100
+        )}
 
-        ${control("shadows","Shadows",-100,100)}
+        ${control(
+          'shadows',
+          'Shadows',
+          -100,
+          100
+        )}
 
-        ${control("whites","Whites",-100,100)}
+        ${control(
+          'whites',
+          'Whites',
+          -100,
+          100
+        )}
 
-        ${control("blacks","Blacks",-100,100)}
+        ${control(
+          'blacks',
+          'Blacks',
+          -100,
+          100
+        )}
 
       </div>
 
-      <div class="section">
 
-        <h3>Auto</h3>
+      <div class="section">
 
         <button
           class="btn"
-          id="autoTone"
+          id="auto"
+          style="width:100%"
         >
           Auto Tone
         </button>
+
+        <p class="note">
+          Applies a quick balanced
+          browser-side tone correction.
+        </p>
 
       </div>
 
@@ -375,75 +543,169 @@ function panel() {
   }
 
 
-  /* COLOR */
+  /* -------------------------------------------------------
+     COLOR
+  ------------------------------------------------------- */
 
-  if (activeTool === "color") {
+  if(active === 'color'){
 
-    html = `
+    h = `
 
       <div class="section">
 
         <h3>White Balance</h3>
 
-        ${control("temp","Temperature",-100,100)}
+        ${control(
+          'temp',
+          'Temperature',
+          -100,
+          100
+        )}
 
-        ${control("tint","Tint",-100,100)}
+        ${control(
+          'tint',
+          'Tint',
+          -100,
+          100
+        )}
+
+        ${control(
+          'vibrance',
+          'Vibrance',
+          -100,
+          100
+        )}
+
+        ${control(
+          'saturation',
+          'Saturation',
+          -100,
+          100
+        )}
 
       </div>
 
-      <div class="section">
-
-        <h3>Presence</h3>
-
-        ${control("vibrance","Vibrance",-100,100)}
-
-        ${control("saturation","Saturation",-100,100)}
-
-      </div>
 
       <div class="section">
 
         <h3>Color Mixer</h3>
 
-        ${bands.map(color => `
+        ${bands.map(color=>`
 
-          <div class="section">
+          <div class="mixer-row">
 
-            <h3 class="colorhead">
-              ${color.toUpperCase()}
-            </h3>
+            <span>
+              ${
+                color[0].toUpperCase()
+                +
+                color.slice(1)
+              }
+            </span>
 
-            ${control("h_"+color,"Hue",-100,100)}
+            <input
+              class="mini-range"
+              data-mix="h"
+              data-color="${color}"
+              type="range"
+              min="-30"
+              max="30"
+              value="${S[`h_${color}`]}"
+              title="Hue"
+            >
 
-            ${control("s_"+color,"Saturation",-100,100)}
+            <input
+              class="mini-range"
+              data-mix="s"
+              data-color="${color}"
+              type="range"
+              min="-100"
+              max="100"
+              value="${S[`s_${color}`]}"
+              title="Saturation"
+            >
 
-            ${control("l_"+color,"Luminance",-100,100)}
+            <input
+              class="mini-range"
+              data-mix="l"
+              data-color="${color}"
+              type="range"
+              min="-100"
+              max="100"
+              value="${S[`l_${color}`]}"
+              title="Luminance"
+            >
 
           </div>
 
-        `).join("")}
+        `).join('')}
+
+        <p class="note">
+          Hue, saturation and luminance
+          can be adjusted independently.
+        </p>
 
       </div>
+
 
       <div class="section">
 
         <h3>Color Grading</h3>
 
-        ${control("gradeShadow","Shadow Hue",0,360)}
+        ${control(
+          'gradeShadow',
+          'Shadow Hue',
+          0,
+          360
+        )}
 
-        ${control("gradeShadowSat","Shadow Saturation",0,100)}
+        ${control(
+          'gradeShadowSat',
+          'Shadow Strength',
+          0,
+          100
+        )}
 
-        ${control("gradeMid","Midtone Hue",0,360)}
+        ${control(
+          'gradeMid',
+          'Midtone Hue',
+          0,
+          360
+        )}
 
-        ${control("gradeMidSat","Midtone Saturation",0,100)}
+        ${control(
+          'gradeMidSat',
+          'Midtone Strength',
+          0,
+          100
+        )}
 
-        ${control("gradeHigh","Highlight Hue",0,360)}
+        ${control(
+          'gradeHigh',
+          'Highlight Hue',
+          0,
+          360
+        )}
 
-        ${control("gradeHighSat","Highlight Saturation",0,100)}
+        ${control(
+          'gradeHighSat',
+          'Highlight Strength',
+          0,
+          100
+        )}
 
-        ${control("gradeBlend","Blending",0,100)}
+        ${control(
+          'gradeBlend',
+          'Blending',
+          0,
+          100
+        )}
 
-        ${control("gradeBalance","Balance",-100,100)}
+        ${control(
+          'gradeBalance',
+          'Balance',
+          -100,
+          100
+        )}
 
       </div>
 
@@ -452,39 +714,120 @@ function panel() {
   }
 
 
-  /* EFFECTS */
+  /* -------------------------------------------------------
+     EFFECTS
+  ------------------------------------------------------- */
 
-  if (activeTool === "effects") {
+  if(active === 'effects'){
 
-    html = `
+    h = `
 
       <div class="section">
 
         <h3>Effects</h3>
 
-        ${control("texture","Texture",-100,100)}
+        ${control(
+          'texture',
+          'Texture',
+          -100,
+          100
+        )}
 
-        ${control("clarity","Clarity",-100,100)}
+        ${control(
+          'clarity',
+          'Clarity',
+          -100,
+          100
+        )}
 
-        ${control("dehaze","Dehaze",-100,100)}
+        ${control(
+          'dehaze',
+          'Dehaze',
+          -100,
+          100
+        )}
 
-        ${control("vignette","Vignette",-100,100)}
+        ${control(
+          'vignette',
+          'Vignette',
+          -100,
+          100
+        )}
 
-        ${control("midpoint","Midpoint",0,100)}
+        ${control(
+          'midpoint',
+          'Vignette Midpoint',
+          0,
+          100
+        )}
 
-        ${control("feather","Feather",1,100)}
+        ${control(
+          'feather',
+          'Vignette Feather',
+          1,
+          100
+        )}
 
       </div>
+
+
+      <div class="section">
+
+        <h3>Lens Blur</h3>
+
+        ${control(
+          'blur',
+          'Blur Amount',
+          0,
+          100
+        )}
+
+        ${control(
+          'blurX',
+          'Focus X',
+          0,
+          100
+        )}
+
+        ${control(
+          'blurY',
+          'Focus Y',
+          0,
+          100
+        )}
+
+        <p class="note">
+          Browser-side lens-style blur.
+          This is not AI depth detection.
+        </p>
+
+      </div>
+
 
       <div class="section">
 
         <h3>Grain</h3>
 
-        ${control("grain","Amount",0,100)}
+        ${control(
+          'grain',
+          'Amount',
+          0,
+          100
+        )}
 
-        ${control("grainSize","Size",1,100)}
+        ${control(
+          'grainSize',
+          'Size',
+          1,
+          100
+        )}
 
-        ${control("grainRough","Roughness",0,100)}
+        ${control(
+          'grainRough',
+          'Roughness',
+          0,
+          100
+        )}
 
       </div>
 
@@ -493,262 +836,50 @@ function panel() {
   }
 
 
-  /* DETAIL */
+  /* -------------------------------------------------------
+     DETAIL
+  ------------------------------------------------------- */
 
-  if (activeTool === "detail") {
+  if(active === 'detail'){
 
-    html = `
+    h = `
 
       <div class="section">
 
         <h3>Sharpening</h3>
 
-        ${control("sharp","Amount",0,100)}
+        ${control(
+          'sharp',
+          'Amount',
+          0,
+          100
+        )}
 
-        ${control("radius","Radius",0.5,3,.1)}
+        ${control(
+          'radius',
+          'Radius',
+          0.5,
+          3,
+          0.1
+        )}
 
       </div>
+
 
       <div class="section">
 
         <h3>Noise Reduction</h3>
 
-        ${control("noise","Luminance",0,100)}
-
-        ${control("colorNoise","Color",0,100)}
-
-      </div>
-
-    `;
-
-  }
-
-
-  /* CROP */
-
-  if (activeTool === "crop") {
-
-    html = `
-
-      <div class="section">
-
-        <h3>Aspect Ratio</h3>
-
-        ${selectControl(
-          "ratio",
-          "Ratio",
-          [
-            ["original","Original"],
-            ["1:1","Square 1:1"],
-            ["4:5","Portrait 4:5"],
-            ["3:4","Portrait 3:4"],
-            ["4:3","Landscape 4:3"],
-            ["16:9","Widescreen 16:9"],
-            ["9:16","Story 9:16"]
-          ]
+        ${control(
+          'noise',
+          'Luminance',
+          0,
+          100
         )}
 
-      </div>
-
-      <div class="section">
-
-        <h3>Transform</h3>
-
         ${control(
-          "straighten",
-          "Straighten",
-          -15,
-          15,
-          .1
-        )}
-
-        <div class="grid2">
-
-          <button class="btn" id="rotL">
-            Rotate Left
-          </button>
-
-          <button class="btn" id="rotR">
-            Rotate Right
-          </button>
-
-          <button class="btn" id="flipX">
-            Flip Horizontal
-          </button>
-
-          <button class="btn" id="flipY">
-            Flip Vertical
-          </button>
-
-        </div>
-
-      </div>
-
-      <p class="note">
-        The photo area remains fixed while the editing controls scroll.
-      </p>
-
-    `;
-
-  }
-
-
-  /* TEXT */
-
-  if (activeTool === "text") {
-
-    html = `
-
-      <div class="section">
-
-        <h3>Add Text</h3>
-
-        <textarea
-          id="textValue"
-          placeholder="Type your text here..."
-        ></textarea>
-
-        <div class="grid2">
-
-          <button
-            class="btn"
-            id="addText"
-          >
-            Add Text
-          </button>
-
-          <button
-            class="btn"
-            id="clearText"
-          >
-            Clear Text
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <div class="section">
-
-        <h3>Text Customization</h3>
-
-        <p class="hint">
-          Tap a text layer on the photo to select it.
-          Drag it to any position.
-        </p>
-
-        <div class="control">
-
-          <div class="ch">
-            <span>Font</span>
-          </div>
-
-          <select id="textFont">
-
-            <option>Arial</option>
-            <option>Georgia</option>
-            <option>Verdana</option>
-            <option>Trebuchet MS</option>
-            <option>Courier New</option>
-            <option>Impact</option>
-            <option>Times New Roman</option>
-            <option>Tahoma</option>
-            <option>Palatino Linotype</option>
-
-          </select>
-
-        </div>
-
-
-        <div class="control">
-
-          <div class="ch">
-            <span>Size</span>
-            <span id="textSizeValue">64px</span>
-          </div>
-
-          <input
-            id="textSize"
-            type="range"
-            min="10"
-            max="240"
-            value="64"
-          >
-
-        </div>
-
-
-        <div class="grid2">
-
-          <button
-            class="btn"
-            id="textBold"
-          >
-            Bold
-          </button>
-
-          <button
-            class="btn"
-            id="textItalic"
-          >
-            Italic
-          </button>
-
-          <button
-            class="btn"
-            id="textAlign"
-          >
-            Align
-          </button>
-
-          <button
-            class="btn"
-            id="deleteText"
-          >
-            Delete
-          </button>
-
-        </div>
-
-
-        <div class="grid2">
-
-          <div>
-
-            <label class="hint">
-              Text Color
-            </label>
-
-            <input
-              id="textColor"
-              type="color"
-              value="#ffffff"
-            >
-
-          </div>
-
-
-          <div>
-
-            <label class="hint">
-              Stroke
-            </label>
-
-            <input
-              id="textStroke"
-              type="color"
-              value="#000000"
-            >
-
-          </div>
-
-        </div>
-
-
-        ${control(
-          "textOpacity",
-          "Opacity",
+          'colorNoise',
+          'Color',
           0,
           100
         )}
@@ -757,8 +888,8 @@ function panel() {
 
 
       <p class="note">
-        Text is an independent layer. Move it directly on the photo and use
-        Undo if the position or style is wrong.
+        Preview processing is optimized
+        for large photos.
       </p>
 
     `;
@@ -766,68 +897,323 @@ function panel() {
   }
 
 
-  /* DRAW */
+  /* -------------------------------------------------------
+     CROP
+  ------------------------------------------------------- */
 
-  if (activeTool === "draw") {
+  if(active === 'crop'){
 
-    html = `
+    h = `
+
+      <div class="section">
+
+        <h3>Crop & Geometry</h3>
+
+        ${selectHTML(
+          'ratio',
+          S.ratio,
+          [
+            ['original','Original'],
+            ['1:1','1 : 1'],
+            ['4:5','4 : 5'],
+            ['3:4','3 : 4'],
+            ['4:3','4 : 3'],
+            ['16:9','16 : 9'],
+            ['9:16','9 : 16'],
+            ['2:3','2 : 3']
+          ]
+        )}
+
+        ${control(
+          'straighten',
+          'Straighten',
+          -10,
+          10,
+          0.1
+        )}
+
+        <div class="grid2">
+
+          <button
+            class="btn"
+            id="rotateLeft"
+          >
+            Rotate Left
+          </button>
+
+          <button
+            class="btn"
+            id="rotateRight"
+          >
+            Rotate Right
+          </button>
+
+          <button
+            class="btn"
+            id="flipX"
+          >
+            Flip Horizontal
+          </button>
+
+          <button
+            class="btn"
+            id="flipY"
+          >
+            Flip Vertical
+          </button>
+
+        </div>
+
+        <p class="note">
+          Aspect-ratio crop is applied
+          while keeping the photo area fixed.
+        </p>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* -------------------------------------------------------
+     TEXT
+  ------------------------------------------------------- */
+
+  if(active === 'text'){
+
+    const t =
+      getSelectedText();
+
+
+    h = `
+
+      <div class="section">
+
+        <h3>Text Layer</h3>
+
+        <textarea
+          class="text-area"
+          id="textValue"
+          placeholder="Type your text"
+        >${escapeHTML(t?.text || '')}</textarea>
+
+        <div style="height:8px"></div>
+
+        <button
+          class="btn"
+          id="addText"
+          style="width:100%"
+        >
+          Add Text Layer
+        </button>
+
+      </div>
+
+
+      <div class="section">
+
+        <h3>Typography</h3>
+
+        ${selectHTML(
+          'font',
+          t?.font || 'Arial',
+          [
+            ['Arial','Arial'],
+            ['Georgia','Georgia'],
+            ['Verdana','Verdana'],
+            ['Trebuchet MS','Trebuchet MS'],
+            ['Courier New','Courier New'],
+            ['Impact','Impact'],
+            ['Times New Roman','Times New Roman'],
+            ['Tahoma','Tahoma'],
+            ['Palatino Linotype','Palatino Linotype']
+          ]
+        )}
+
+        ${control(
+          'textSize',
+          'Font Size',
+          12,
+          180,
+          1
+        )}
+
+        <div class="grid2">
+
+          <button
+            class="btn ${t?.bold ? 'active':''}"
+            id="textBold"
+          >
+            Bold
+          </button>
+
+          <button
+            class="btn ${t?.italic ? 'active':''}"
+            id="textItalic"
+          >
+            Italic
+          </button>
+
+          <button
+            class="btn ${t?.align === 'left' ? 'active':''}"
+            id="textLeft"
+          >
+            Align Left
+          </button>
+
+          <button
+            class="btn ${t?.align !== 'left' ? 'active':''}"
+            id="textCenter"
+          >
+            Center
+          </button>
+
+        </div>
+
+        <div style="height:9px"></div>
+
+        <label class="small-label">
+          Text Color
+        </label>
+
+        <div class="color-row">
+
+          <span
+            class="note"
+            style="margin:0"
+          >
+            Choose text color
+          </span>
+
+          <input
+            id="textColor"
+            class="color-input"
+            type="color"
+            value="${t?.color || S.textColor}"
+          >
+
+        </div>
+
+
+        <div style="height:8px"></div>
+
+        <label class="small-label">
+          Stroke Color
+        </label>
+
+        <div class="color-row">
+
+          <span
+            class="note"
+            style="margin:0"
+          >
+            Choose outline color
+          </span>
+
+          <input
+            id="textStroke"
+            class="color-input"
+            type="color"
+            value="${t?.stroke || S.textStroke}"
+          >
+
+        </div>
+
+
+        ${control(
+          'textOpacity',
+          'Opacity',
+          0,
+          100
+        )}
+
+
+        <button
+          class="btn danger"
+          id="deleteText"
+          style="width:100%;margin-top:4px"
+        >
+          Delete Selected Text
+        </button>
+
+      </div>
+
+
+      <p class="note">
+        Tap a text layer on the photo to select it.
+        Drag it anywhere on the image.
+      </p>
+
+    `;
+
+  }
+
+
+  /* -------------------------------------------------------
+     DRAW
+  ------------------------------------------------------- */
+
+  if(active === 'draw'){
+
+    h = `
 
       <div class="section">
 
         <h3>Brush</h3>
 
         ${control(
-          "brushSize",
-          "Size",
+          'brushSize',
+          'Brush Size',
           1,
-          100
+          120
         )}
 
         ${control(
-          "brushOpacity",
-          "Opacity",
+          'brushOpacity',
+          'Opacity',
           1,
           100
         )}
 
-        <div class="control">
+        <label class="small-label">
+          Brush Color
+        </label>
 
-          <div class="ch">
-            <span>Brush Color</span>
-          </div>
+        <input
+          id="brushColor"
+          class="color-input"
+          style="width:100%;height:40px"
+          type="color"
+          value="${S.brushColor}"
+        >
 
-          <input
-            id="brushColor"
-            type="color"
-            value="#ffffff"
-          >
-
-        </div>
-
+        <div style="height:8px"></div>
 
         <div class="grid2">
 
           <button
             class="btn"
+            id="undoStroke"
+          >
+            Remove Last
+          </button>
+
+          <button
+            class="btn danger"
             id="clearDraw"
           >
             Clear Drawing
           </button>
 
-          <button
-            class="btn"
-            id="undoDraw"
-          >
-            Remove Last
-          </button>
-
         </div>
 
       </div>
 
 
       <p class="note">
-        Draw directly over the photo. The photo itself does not scroll.
+        Draw directly over the photo.
+        Each stroke is one undo step.
       </p>
 
     `;
@@ -835,106 +1221,88 @@ function panel() {
   }
 
 
-  /* SELECTIVE COLOR */
+  /* -------------------------------------------------------
+     SELECTIVE COLOR
+  ------------------------------------------------------- */
 
-  if (activeTool === "selective") {
+  if(active === 'selective'){
 
-    html = `
+    h = `
 
       <div class="section">
 
-        <h3>Color Picker</h3>
+        <h3>Point Color</h3>
 
         <button
           class="btn"
           id="pickColor"
+          style="width:100%"
         >
           Pick Color From Photo
         </button>
 
-        <div class="swatches">
+        <div style="height:9px"></div>
 
-          <button
-            class="swatch"
-            data-color="#ff0000"
-            style="background:#ff0000"
-          ></button>
+        <div class="selected-color">
 
-          <button
-            class="swatch"
-            data-color="#00ff00"
-            style="background:#00ff00"
-          ></button>
+          <div
+            id="colorSample"
+            class="sample"
+          ></div>
 
-          <button
-            class="swatch"
-            data-color="#0000ff"
-            style="background:#0000ff"
-          ></button>
-
-          <button
-            class="swatch"
-            data-color="#ffff00"
-            style="background:#ffff00"
-          ></button>
-
-          <button
-            class="swatch"
-            data-color="#00ffff"
-            style="background:#00ffff"
-          ></button>
-
-          <button
-            class="swatch"
-            data-color="#ff00ff"
-            style="background:#ff00ff"
-          ></button>
+          <span id="colorHex">
+            ${selectedColor.hex}
+          </span>
 
         </div>
 
-
         ${control(
-          "selectiveRadius",
-          "Color Range",
-          5,
-          80
+          'selectiveRadius',
+          'Color Range',
+          4,
+          70
         )}
 
         ${control(
-          "selectiveHue",
-          "Hue",
+          'selectiveHue',
+          'Hue Shift',
+          -180,
+          180
+        )}
+
+        ${control(
+          'selectiveSat',
+          'Saturation',
           -100,
           100
         )}
 
         ${control(
-          "selectiveSat",
-          "Saturation",
+          'selectiveLight',
+          'Lightness',
           -100,
           100
         )}
 
-        ${control(
-          "selectiveLight",
-          "Lightness",
-          -100,
-          100
-        )}
-
+        <div
+          class="swatches"
+          id="quickSwatches"
+        ></div>
 
         <button
           class="btn"
           id="clearSelective"
+          style="width:100%;margin-top:8px"
         >
-          Reset Selected Color
+          Clear Color Selection
         </button>
 
       </div>
 
 
       <p class="note">
-        Pick a color directly from the photo. Similar colors are adjusted
-        together according to the selected range.
+        Click a color in the photo,
+        then change nearby colors.
       </p>
 
     `;
@@ -942,39 +1310,52 @@ function panel() {
   }
 
 
-  /* PRESETS */
+  /* -------------------------------------------------------
+     PRESETS
+  ------------------------------------------------------- */
 
-  if (activeTool === "presets") {
+  if(active === 'presets'){
 
-    html = `
+    h = `
 
-      <div class="presets">
+      <div class="section">
 
-        ${[
-          ["clean","Clean"],
-          ["warm","Warm"],
-          ["cool","Cool"],
-          ["cinematic","Cinematic"],
-          ["matte","Matte"],
-          ["vivid","Vivid"],
-          ["portrait","Portrait"],
-          ["bw","Black & White"]
-        ].map(item => `
+        <h3>Toolora Presets</h3>
 
-          <button
-            class="preset"
-            data-preset="${item[0]}"
-          >
+        <div class="presets">
 
-            <b>${item[1]}</b>
+          ${[
+            ['clean','Clean','Balanced'],
+            ['warm','Warm','Warm tone'],
+            ['cool','Cool','Cool tone'],
+            ['cinematic','Cinematic','Moody contrast'],
+            ['matte','Matte','Soft film'],
+            ['vivid','Vivid','Color punch'],
+            ['portrait','Portrait','Soft portrait'],
+            ['bw','Black & White','Monochrome']
+          ].map(x=>`
 
-            <small>
-              Apply preset
-            </small>
+            <button
+              class="preset-card ${S.preset === x[0] ? 'active':''}"
+              data-preset="${x[0]}"
+            >
 
-          </button>
+              <b>${x[1]}</b>
 
-        `).join("")}
+              <span>${x[2]}</span>
+
+            </button>
+
+          `).join('')}
+
+        </div>
+
+        ${control(
+          'presetAmount',
+          'Preset Amount',
+          0,
+          100
+        )}
 
       </div>
 
@@ -983,72 +1364,78 @@ function panel() {
   }
 
 
-  /* LAYERS */
+  /* -------------------------------------------------------
+     LAYERS
+  ------------------------------------------------------- */
 
-  if (activeTool === "layers") {
+  if(active === 'layers'){
 
-    html = `
+    h = `
 
       <div class="section">
 
         <h3>Layers</h3>
 
-        <p class="hint">
-          Text and drawing layers are editable overlays.
-        </p>
-
-
         ${
-          textLayers.length
-            ?
+          texts.length
 
-          textLayers.map((layer,index) => `
+          ?
+
+          texts.map(t=>`
 
             <div class="layer">
 
-              <b>
-                ${escapeHTML(layer.text)}
-              </b>
+              <div class="layer-main">
 
-              <small>
-                ${layer.font}
-              </small>
+                <strong>
+                  ${escapeHTML(t.text || 'Text')}
+                </strong>
+
+                <small>
+                  ${t.font} · ${t.size}px
+                </small>
+
+              </div>
+
 
               <button
-                data-delete-layer="${index}"
+                data-select-layer="${t.id}"
+                title="Select"
+              >
+                ✓
+              </button>
+
+
+              <button
+                data-delete-layer="${t.id}"
+                title="Delete"
               >
                 ×
               </button>
 
             </div>
 
-          `).join("")
+          `).join('')
 
-            :
+          :
 
-          `<p class="hint">
+          `<p class="note">
             No text layers yet.
           </p>`
         }
 
+      </div>
 
-        <div class="grid2">
 
-          <button
-            class="btn"
-            id="clearLayers"
-          >
-            Clear Text
-          </button>
+      <div class="section">
 
-          <button
-            class="btn"
-            id="clearAllOverlays"
-          >
-            Clear All
-          </button>
-
-        </div>
+        <button
+          class="btn danger"
+          id="clearOverlays"
+          style="width:100%"
+        >
+          Clear All Overlays
+        </button>
 
       </div>
 
@@ -1057,95 +1444,105 @@ function panel() {
   }
 
 
-  /* EXPORT */
+  /* -------------------------------------------------------
+     EXPORT
+  ------------------------------------------------------- */
 
-  if (activeTool === "export") {
+  if(active === 'export'){
 
-    html = `
+    h = `
 
       <div class="section">
 
         <h3>Export</h3>
 
+        <div class="export-box">
 
-        <div class="control">
+          <div class="grid2">
 
-          <div class="ch">
-            <span>Format</span>
+            <div>
+
+              <label class="small-label">
+                Format
+              </label>
+
+              ${selectHTML(
+                'format',
+                'image/jpeg',
+                [
+                  ['image/jpeg','JPG'],
+                  ['image/png','PNG'],
+                  ['image/webp','WebP']
+                ]
+              )}
+
+            </div>
+
+
+            <div>
+
+              <label class="small-label">
+                Quality
+              </label>
+
+              ${selectHTML(
+                'quality',
+                '.9',
+                [
+                  ['.7','Standard'],
+                  ['.9','High'],
+                  ['.98','Maximum']
+                ]
+              )}
+
+            </div>
+
           </div>
 
-          <select id="format">
 
-            <option value="image/jpeg">
-              JPG
-            </option>
-
-            <option value="image/png">
-              PNG
-            </option>
-
-            <option value="image/webp">
-              WebP
-            </option>
-
-          </select>
-
-        </div>
+          <div style="height:10px"></div>
 
 
-        <div class="control">
+          <label class="small-label">
+            Maximum long edge
+          </label>
 
-          <div class="ch">
-            <span>Maximum Long Edge</span>
-          </div>
+          ${selectHTML(
+            'exportSize',
+            '2400',
+            [
+              ['1600','1600 px'],
+              ['2400','2400 px'],
+              ['3200','3200 px'],
+              ['0','Working size']
+            ]
+          )}
 
-          <select id="size">
 
-            <option value="0">
-              Preview Size
-            </option>
-
-            <option value="1080">
-              1080 px
-            </option>
-
-            <option value="1600">
-              1600 px
-            </option>
-
-            <option value="2048">
-              2048 px
-            </option>
-
-            <option value="3000">
-              3000 px
-            </option>
-
-          </select>
+          <button
+            class="download-btn"
+            id="download"
+          >
+            Download Edited Photo
+          </button>
 
         </div>
-
-
-        ${control(
-          "quality",
-          "Quality",
-          10,
-          100
-        )}
-
-
-        <button
-          class="download"
-          id="download"
-        >
-          Export Photo
-        </button>
 
       </div>
 
 
+      <button
+        class="btn danger"
+        id="resetAll"
+        style="width:100%"
+      >
+        Reset All Edits
+      </button>
+
+
       <p class="note">
-        Export is generated locally in your browser.
+        Exports use the current edit state
+        and overlays. Processing stays local.
       </p>
 
     `;
@@ -1153,124 +1550,482 @@ function panel() {
   }
 
 
-  $("panel").innerHTML = html;
+  p.innerHTML = h;
 
   bindPanel();
+
+  panelActions();
+
+  updateSelectedTextControls();
+
+  updateColorPanel();
 
 }
 
 
-/* -----------------------------
-   PANEL EVENTS
------------------------------ */
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
 
-let lastSliderHistoryKey = "";
+function escapeHTML(value){
 
+  return String(value).replace(
+    /[&<>"']/g,
+    char=>({
 
-function bindPanel() {
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
 
-  $("panel")
-    .querySelectorAll("input[data-key]")
-    .forEach(input => {
+    }[char])
+  );
 
-      input.addEventListener("input", () => {
-
-        const key = input.dataset.key;
-
-        if (lastSliderHistoryKey !== key) {
-
-          pushHistory();
-
-          lastSliderHistoryKey = key;
-
-          setTimeout(() => {
-
-            if (lastSliderHistoryKey === key) {
-              lastSliderHistoryKey = "";
-            }
-
-          }, 300);
-
-        }
+}
 
 
-        S[key] = Number(input.value);
+/* =========================================================
+   TEXT HELPERS
+========================================================= */
+
+function getSelectedText(){
+
+  return texts.find(
+    t=>t.id === selectedTextId
+  ) || null;
+
+}
 
 
-        if (key === "selectiveRadius") {
-          selective.radius = Number(input.value);
-        }
+function updateSelectedText(patch){
 
-        if (key === "selectiveHue") {
-          selective.hue = Number(input.value);
-        }
+  const t =
+    getSelectedText();
 
-        if (key === "selectiveSat") {
-          selective.sat = Number(input.value);
-        }
+  if(!t){
+    return;
+  }
 
-        if (key === "selectiveLight") {
-          selective.light = Number(input.value);
-        }
+  push();
+
+  Object.assign(
+    t,
+    patch
+  );
+
+  schedule();
+
+  panel();
+
+}
 
 
-        if (key === "textOpacity") {
+function updateSelectedTextFromState(key){
 
-          const selected = getSelectedText();
+  const t =
+    getSelectedText();
 
-          if (selected) {
-            selected.opacity = Number(input.value);
+  if(!t){
+    return;
+  }
+
+  const map = {
+
+    textSize:'size',
+
+    textOpacity:'opacity'
+
+  };
+
+  if(map[key]){
+
+    t[map[key]] =
+      S[key];
+
+  }
+
+  schedule();
+
+}
+
+
+function updateSelectedTextControls(){
+
+  const t =
+    getSelectedText();
+
+  if(!t){
+    return;
+  }
+
+
+  if($('textSize')){
+
+    $('textSize').value =
+      t.size;
+
+    const value =
+      $('v_textSize');
+
+    if(value){
+
+      value.textContent =
+        fmt(t.size);
+
+    }
+
+  }
+
+
+  if($('textOpacity')){
+
+    $('textOpacity').value =
+      t.opacity;
+
+    const value =
+      $('v_textOpacity');
+
+    if(value){
+
+      value.textContent =
+        fmt(t.opacity);
+
+    }
+
+  }
+
+
+  if($('font')){
+
+    $('font').value =
+      t.font || 'Arial';
+
+  }
+
+
+  if($('textColor')){
+
+    $('textColor').value =
+      t.color || '#ffffff';
+
+  }
+
+
+  if($('textStroke')){
+
+    $('textStroke').value =
+      t.stroke || '#000000';
+
+  }
+
+}
+
+
+/* =========================================================
+   COLOR PANEL
+========================================================= */
+
+function updateColorPanel(){
+
+  if(!$('colorSample')){
+    return;
+  }
+
+  $('colorSample').style.background =
+    selectedColor.hex;
+
+  $('colorHex').textContent =
+    selectedColor.hex;
+
+
+  const swatches = [
+
+    '#ff3b30',
+    '#ff9500',
+    '#ffcc00',
+    '#34c759',
+    '#00c7be',
+    '#007aff',
+    '#5856d6',
+    '#af52de'
+
+  ];
+
+
+  $('quickSwatches').innerHTML =
+    swatches.map(color=>`
+
+      <button
+        class="swatch"
+        data-sw="${color}"
+        style="background:${color}"
+        aria-label="${color}"
+      ></button>
+
+    `).join('');
+
+
+  document
+    .querySelectorAll('[data-sw]')
+    .forEach(button=>{
+
+      button.onclick = ()=>{
+
+        const rgb =
+          hexToRgb(button.dataset.sw);
+
+        selectedColor = {
+
+          ...rgb,
+
+          ...rgbToHsv(
+            rgb.r,
+            rgb.g,
+            rgb.b
+          ),
+
+          hex:
+            button.dataset.sw
+
+        };
+
+        schedule();
+
+        panel();
+
+      };
+
+    });
+
+}
+
+
+/* =========================================================
+   PANEL BINDING
+========================================================= */
+
+function bindPanel(){
+
+  document
+    .querySelectorAll(
+      '#panel input[data-k]'
+    )
+    .forEach(element=>{
+
+      let started = false;
+
+
+      element.addEventListener(
+        'pointerdown',
+        ()=>{
+
+          if(!started){
+
+            push();
+
+            started = true;
+
           }
 
         }
+      );
 
 
-        const valueElement =
-          $("v_" + key);
+      element.addEventListener(
+        'input',
+        ()=>{
 
-        if (valueElement) {
-          valueElement.textContent =
-            formatValue(input.value);
+          S[element.dataset.k] =
+            Number(element.value);
+
+
+          const value =
+            $(`v_${element.dataset.k}`);
+
+
+          if(value){
+
+            value.textContent =
+              fmt(element.value);
+
+          }
+
+
+          if(
+            element.dataset.k
+              .startsWith('text')
+          ){
+
+            updateSelectedTextFromState(
+              element.dataset.k
+            );
+
+          }
+
+
+          schedule();
+
         }
+      );
 
 
-        schedule();
+      element.addEventListener(
+        'change',
+        ()=>{
 
-      });
+          started = false;
 
-    });
-
-
-  $("panel")
-    .querySelectorAll("select[data-select]")
-    .forEach(select => {
-
-      select.addEventListener("change", () => {
-
-        pushHistory();
-
-        S[select.dataset.select] =
-          select.value;
-
-        schedule();
-
-      });
+        }
+      );
 
     });
 
 
-  $("autoTone")?.addEventListener(
-    "click",
-    () => {
+  document
+    .querySelectorAll(
+      '#panel input[data-mix]'
+    )
+    .forEach(element=>{
 
-      pushHistory();
+      let started = false;
 
-      S.exposure = 4;
-      S.contrast = 6;
-      S.highlights = -10;
-      S.shadows = 12;
-      S.whites = 3;
-      S.blacks = -4;
+
+      element.addEventListener(
+        'pointerdown',
+        ()=>{
+
+          if(!started){
+
+            push();
+
+            started = true;
+
+          }
+
+        }
+      );
+
+
+      element.addEventListener(
+        'input',
+        ()=>{
+
+          S[
+            `${element.dataset.mix}_${element.dataset.color}`
+          ] =
+            Number(element.value);
+
+          schedule();
+
+        }
+      );
+
+
+      element.addEventListener(
+        'change',
+        ()=>{
+
+          started = false;
+
+        }
+      );
+
+    });
+
+
+  $('font')?.addEventListener(
+    'change',
+    event=>{
+
+      updateSelectedText({
+        font:event.target.value
+      });
+
+    }
+  );
+
+
+  $('textValue')?.addEventListener(
+    'input',
+    event=>{
+
+      const t =
+        getSelectedText();
+
+      if(t){
+
+        t.text =
+          event.target.value;
+
+        schedule();
+
+      }
+
+    }
+  );
+
+
+  $('textColor')?.addEventListener(
+    'input',
+    event=>{
+
+      updateSelectedText({
+        color:event.target.value
+      });
+
+    }
+  );
+
+
+  $('textStroke')?.addEventListener(
+    'input',
+    event=>{
+
+      updateSelectedText({
+        stroke:event.target.value
+      });
+
+    }
+  );
+
+
+  $('brushColor')?.addEventListener(
+    'input',
+    event=>{
+
+      S.brushColor =
+        event.target.value;
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   PANEL ACTIONS
+========================================================= */
+
+function panelActions(){
+
+  $('auto')?.addEventListener(
+    'click',
+    ()=>{
+
+      push();
+
+      Object.assign(
+        S,
+        {
+          exposure:0,
+          contrast:8,
+          highlights:-14,
+          shadows:16,
+          whites:4,
+          blacks:-5
+        }
+      );
 
       schedule();
 
@@ -1278,27 +2033,14 @@ function bindPanel() {
   );
 
 
-  $("rotL")?.addEventListener(
-    "click",
-    () => {
+  $('ratio')?.addEventListener(
+    'change',
+    event=>{
 
-      pushHistory();
+      push();
 
-      S.rotate -= 90;
-
-      schedule();
-
-    }
-  );
-
-
-  $("rotR")?.addEventListener(
-    "click",
-    () => {
-
-      pushHistory();
-
-      S.rotate += 90;
+      S.ratio =
+        event.target.value;
 
       schedule();
 
@@ -1306,27 +2048,14 @@ function bindPanel() {
   );
 
 
-  $("flipX")?.addEventListener(
-    "click",
-    () => {
+  $('rotateLeft')?.addEventListener(
+    'click',
+    ()=>{
 
-      pushHistory();
+      push();
 
-      S.flipX = !S.flipX;
-
-      schedule();
-
-    }
-  );
-
-
-  $("flipY")?.addEventListener(
-    "click",
-    () => {
-
-      pushHistory();
-
-      S.flipY = !S.flipY;
+      S.rotate =
+        (S.rotate + 270) % 360;
 
       schedule();
 
@@ -1334,69 +2063,105 @@ function bindPanel() {
   );
 
 
-  /* TEXT */
+  $('rotateRight')?.addEventListener(
+    'click',
+    ()=>{
 
-  $("addText")?.addEventListener(
-    "click",
-    () => {
+      push();
 
-      const value =
-        $("textValue").value.trim();
+      S.rotate =
+        (S.rotate + 90) % 360;
 
-      if (!value) return;
+      schedule();
+
+    }
+  );
 
 
-      pushHistory();
+  $('flipX')?.addEventListener(
+    'click',
+    ()=>{
 
-      const layer = {
+      push();
 
-        id: Date.now(),
+      S.flipX =
+        !S.flipX;
 
-        text: value,
+      schedule();
 
-        x: .5,
-        y: .5,
+    }
+  );
 
-        size: 64,
 
-        font: "Arial",
+  $('flipY')?.addEventListener(
+    'click',
+    ()=>{
 
-        bold: false,
+      push();
 
-        italic: false,
+      S.flipY =
+        !S.flipY;
 
-        align: "center",
+      schedule();
 
-        color: "#ffffff",
+    }
+  );
 
-        stroke: "#000000",
 
-        opacity: 100
+  /* ADD TEXT */
+
+  $('addText')?.addEventListener(
+    'click',
+    ()=>{
+
+      push();
+
+      const text =
+        $('textValue')?.value.trim()
+        || 'ABC XYZ';
+
+
+      const t = {
+
+        id:
+          Date.now()
+          +
+          Math.random(),
+
+        text,
+
+        x:.5,
+        y:.5,
+
+        font:'Arial',
+
+        size:56,
+
+        bold:false,
+
+        italic:false,
+
+        align:'center',
+
+        color:'#ffffff',
+
+        stroke:'#000000',
+
+        opacity:100
 
       };
 
 
-      textLayers.push(layer);
+      texts.push(t);
 
-      selectedTextId = layer.id;
+      selectedTextId =
+        t.id;
 
-      panel();
+      S.textSize =
+        t.size;
 
-      schedule();
-
-    }
-  );
-
-
-  $("clearText")?.addEventListener(
-    "click",
-    () => {
-
-      pushHistory();
-
-      textLayers = [];
-
-      selectedTextId = null;
+      S.textOpacity =
+        t.opacity;
 
       panel();
 
@@ -1406,162 +2171,121 @@ function bindPanel() {
   );
 
 
-  $("deleteText")?.addEventListener(
-    "click",
-    () => {
+  $('textBold')?.addEventListener(
+    'click',
+    ()=>{
 
-      if (selectedTextId === null) return;
+      const t =
+        getSelectedText();
 
-      pushHistory();
+      if(!t){
+        return;
+      }
 
-      textLayers =
-        textLayers.filter(
-          layer =>
-            layer.id !== selectedTextId
+      push();
+
+      t.bold =
+        !t.bold;
+
+      panel();
+
+      schedule();
+
+    }
+  );
+
+
+  $('textItalic')?.addEventListener(
+    'click',
+    ()=>{
+
+      const t =
+        getSelectedText();
+
+      if(!t){
+        return;
+      }
+
+      push();
+
+      t.italic =
+        !t.italic;
+
+      panel();
+
+      schedule();
+
+    }
+  );
+
+
+  $('textLeft')?.addEventListener(
+    'click',
+    ()=>{
+
+      const t =
+        getSelectedText();
+
+      if(!t){
+        return;
+      }
+
+      push();
+
+      t.align =
+        'left';
+
+      panel();
+
+      schedule();
+
+    }
+  );
+
+
+  $('textCenter')?.addEventListener(
+    'click',
+    ()=>{
+
+      const t =
+        getSelectedText();
+
+      if(!t){
+        return;
+      }
+
+      push();
+
+      t.align =
+        'center';
+
+      panel();
+
+      schedule();
+
+    }
+  );
+
+
+  $('deleteText')?.addEventListener(
+    'click',
+    ()=>{
+
+      if(!getSelectedText()){
+        return;
+      }
+
+      push();
+
+      texts =
+        texts.filter(
+          t=>t.id !== selectedTextId
         );
 
-      selectedTextId = null;
+      selectedTextId =
+        texts.at(-1)?.id || null;
 
       panel();
-
-      schedule();
-
-    }
-  );
-
-
-  $("textFont")?.addEventListener(
-    "change",
-    event => {
-
-      const selected =
-        getSelectedText();
-
-      if (!selected) return;
-
-      pushHistory();
-
-      selected.font =
-        event.target.value;
-
-      schedule();
-
-    }
-  );
-
-
-  $("textSize")?.addEventListener(
-    "input",
-    event => {
-
-      const selected =
-        getSelectedText();
-
-      if (!selected) return;
-
-      selected.size =
-        Number(event.target.value);
-
-      $("textSizeValue").textContent =
-        `${selected.size}px`;
-
-      schedule();
-
-    }
-  );
-
-
-  $("textColor")?.addEventListener(
-    "input",
-    event => {
-
-      const selected =
-        getSelectedText();
-
-      if (!selected) return;
-
-      selected.color =
-        event.target.value;
-
-      schedule();
-
-    }
-  );
-
-
-  $("textStroke")?.addEventListener(
-    "input",
-    event => {
-
-      const selected =
-        getSelectedText();
-
-      if (!selected) return;
-
-      selected.stroke =
-        event.target.value;
-
-      schedule();
-
-    }
-  );
-
-
-  $("textBold")?.addEventListener(
-    "click",
-    () => {
-
-      const selected =
-        getSelectedText();
-
-      if (!selected) return;
-
-      pushHistory();
-
-      selected.bold =
-        !selected.bold;
-
-      schedule();
-
-    }
-  );
-
-
-  $("textItalic")?.addEventListener(
-    "click",
-    () => {
-
-      const selected =
-        getSelectedText();
-
-      if (!selected) return;
-
-      pushHistory();
-
-      selected.italic =
-        !selected.italic;
-
-      schedule();
-
-    }
-  );
-
-
-  $("textAlign")?.addEventListener(
-    "click",
-    () => {
-
-      const selected =
-        getSelectedText();
-
-      if (!selected) return;
-
-      pushHistory();
-
-      selected.align =
-        selected.align === "center"
-          ? "left"
-          : "center";
 
       schedule();
 
@@ -1571,29 +2295,17 @@ function bindPanel() {
 
   /* DRAW */
 
-  $("clearDraw")?.addEventListener(
-    "click",
-    () => {
+  $('undoStroke')?.addEventListener(
+    'click',
+    ()=>{
 
-      pushHistory();
+      if(!strokes.length){
+        return;
+      }
 
-      drawStrokes = [];
+      push();
 
-      schedule();
-
-    }
-  );
-
-
-  $("undoDraw")?.addEventListener(
-    "click",
-    () => {
-
-      if (!drawStrokes.length) return;
-
-      pushHistory();
-
-      drawStrokes.pop();
+      strokes.pop();
 
       schedule();
 
@@ -1601,70 +2313,76 @@ function bindPanel() {
   );
 
 
-  /* SELECTIVE COLOR */
+  $('clearDraw')?.addEventListener(
+    'click',
+    ()=>{
 
-  $("pickColor")?.addEventListener(
-    "click",
-    () => {
+      if(!strokes.length){
+        return;
+      }
 
-      selective.active = true;
+      push();
 
-      $("status").textContent =
-        "Click a color on the photo";
+      strokes = [];
+
+      schedule();
 
     }
   );
 
 
-  $("panel")
-    .querySelectorAll(".swatch")
-    .forEach(button => {
+  /* SELECT COLOR */
 
-      button.addEventListener(
-        "click",
-        () => {
+  $('pickColor')?.addEventListener(
+    'click',
+    ()=>{
 
-          pushHistory();
+      if(!image){
 
-          selective.active = true;
+        alert(
+          'Please open a photo first.'
+        );
 
-          selective.color =
-            button.dataset.color;
+        return;
 
-          schedule();
+      }
 
-        }
+      picking = true;
+
+      $('pickerBadge').style.display =
+        'block';
+
+      setStatus(
+        'Click a color in the photo'
       );
 
-    });
+    }
+  );
 
 
-  $("clearSelective")?.addEventListener(
-    "click",
-    () => {
+  $('clearSelective')?.addEventListener(
+    'click',
+    ()=>{
 
-      pushHistory();
+      push();
 
-      selective = {
-
-        active: false,
-
-        color: "#ff0000",
-
-        radius: 24,
-
-        hue: 0,
-
-        sat: 0,
-
-        light: 0
-
-      };
-
-      S.selectiveRadius = 24;
       S.selectiveHue = 0;
       S.selectiveSat = 0;
       S.selectiveLight = 0;
+
+      selectedColor = {
+
+        r:255,
+        g:255,
+        b:255,
+
+        h:0,
+        s:0,
+        v:1,
+
+        hex:'#ffffff'
+
+      };
 
       panel();
 
@@ -1676,454 +2394,374 @@ function bindPanel() {
 
   /* PRESETS */
 
-  $("panel")
-    .querySelectorAll("[data-preset]")
-    .forEach(button => {
+  document
+    .querySelectorAll('[data-preset]')
+    .forEach(button=>{
 
-      button.addEventListener(
-        "click",
-        () => {
-
+      button.onclick =
+        () =>
           applyPreset(
             button.dataset.preset
           );
-
-        }
-      );
 
     });
 
 
   /* LAYERS */
 
-  $("panel")
-    .querySelectorAll("[data-delete-layer]")
-    .forEach(button => {
+  document
+    .querySelectorAll('[data-select-layer]')
+    .forEach(button=>{
 
-      button.addEventListener(
-        "click",
-        () => {
+      button.onclick = ()=>{
 
-          pushHistory();
-
-          textLayers.splice(
-            Number(button.dataset.deleteLayer),
-            1
+        selectedTextId =
+          Number(
+            button.dataset.selectLayer
           );
 
-          schedule();
+        active = 'text';
 
-          panel();
+        syncTabs();
 
-        }
-      );
+        panel();
+
+      };
 
     });
 
 
-  $("clearLayers")?.addEventListener(
-    "click",
-    () => {
+  document
+    .querySelectorAll('[data-delete-layer]')
+    .forEach(button=>{
 
-      pushHistory();
+      button.onclick = ()=>{
 
-      textLayers = [];
+        push();
 
-      selectedTextId = null;
+        texts =
+          texts.filter(
+            t =>
+              String(t.id)
+              !==
+              button.dataset.deleteLayer
+          );
 
-      panel();
+        if(
+          String(selectedTextId)
+          ===
+          button.dataset.deleteLayer
+        ){
 
-      schedule();
+          selectedTextId =
+            texts.at(-1)?.id || null;
 
-    }
-  );
+        }
 
+        panel();
 
-  $("clearAllOverlays")?.addEventListener(
-    "click",
-    () => {
-
-      pushHistory();
-
-      textLayers = [];
-
-      drawStrokes = [];
-
-      selectedTextId = null;
-
-      panel();
-
-      schedule();
-
-    }
-  );
-
-
-  $("download")?.addEventListener(
-    "click",
-    exportImage
-  );
-
-}
-
-
-/* -----------------------------
-   TEXT HELPERS
------------------------------ */
-
-function getSelectedText() {
-
-  return textLayers.find(
-    layer =>
-      layer.id === selectedTextId
-  );
-
-}
-
-
-function escapeHTML(value) {
-
-  return String(value).replace(
-    /[&<>'"]/g,
-    character => {
-
-      const map = {
-
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "'": "&#39;",
-        '"': "&quot;"
+        schedule();
 
       };
 
-      return map[character];
+    });
+
+
+  $('clearOverlays')?.addEventListener(
+    'click',
+    ()=>{
+
+      if(
+        !texts.length &&
+        !strokes.length
+      ){
+
+        return;
+
+      }
+
+      push();
+
+      texts = [];
+
+      strokes = [];
+
+      selectedTextId = null;
+
+      schedule();
+
+      panel();
 
     }
+  );
+
+
+  $('download')?.addEventListener(
+    'click',
+    exportImage
+  );
+
+
+  $('resetAll')?.addEventListener(
+    'click',
+    ()=>resetAll(true)
   );
 
 }
 
 
-/* -----------------------------
+/* =========================================================
    PRESETS
------------------------------ */
+========================================================= */
 
-function applyPreset(name) {
+function applyPreset(name){
 
-  pushHistory();
+  push();
+
 
   const presets = {
 
-    clean: {
-      exposure: 4,
-      contrast: 5,
-      shadows: 8,
-      vibrance: 10,
-      texture: 8
+    clean:{
+      exposure:4,
+      contrast:4,
+      shadows:7,
+      vibrance:8,
+      texture:5
     },
 
-    warm: {
-      temp: 18,
-      contrast: 4,
-      highlights: -8,
-      shadows: 8,
-      vibrance: 8
+    warm:{
+      temp:18,
+      contrast:4,
+      highlights:-8,
+      shadows:8,
+      vibrance:8
     },
 
-    cool: {
-      temp: -18,
-      contrast: 5,
-      shadows: 6,
-      vibrance: 8
+    cool:{
+      temp:-18,
+      contrast:5,
+      shadows:6,
+      vibrance:7
     },
 
-    cinematic: {
-      contrast: 14,
-      highlights: -18,
-      shadows: 8,
-      blacks: -14,
-      clarity: 10,
-      dehaze: 8,
-      vignette: 18,
-      saturation: -5
+    cinematic:{
+      contrast:13,
+      highlights:-16,
+      blacks:-12,
+      clarity:10,
+      dehaze:7,
+      vignette:18,
+      saturation:-5
     },
 
-    matte: {
-      contrast: -8,
-      highlights: -12,
-      shadows: 15,
-      blacks: 15,
-      clarity: -4,
-      saturation: -5,
-      vignette: 8
+    matte:{
+      contrast:-8,
+      highlights:-12,
+      shadows:15,
+      blacks:18,
+      clarity:-4,
+      saturation:-4,
+      vignette:8
     },
 
-    vivid: {
-      contrast: 8,
-      vibrance: 30,
-      saturation: 5,
-      clarity: 7
+    vivid:{
+      contrast:7,
+      vibrance:28,
+      saturation:6,
+      clarity:6
     },
 
-    portrait: {
-      exposure: 4,
-      highlights: -8,
-      shadows: 14,
-      temp: 5,
-      vibrance: 8,
-      texture: -12,
-      clarity: -5
+    portrait:{
+      exposure:4,
+      highlights:-8,
+      shadows:12,
+      temp:5,
+      vibrance:8,
+      texture:-10,
+      clarity:-5
     },
 
-    bw: {
-      contrast: 12,
-      highlights: -10,
-      shadows: 10,
-      blacks: -12,
-      saturation: -100
+    bw:{
+      contrast:10,
+      highlights:-8,
+      shadows:8,
+      blacks:-12,
+      saturation:-100,
+      clarity:7
     }
+
+  };
+
+
+  const base = {
+
+    exposure:0,
+    contrast:0,
+    highlights:0,
+    shadows:0,
+    whites:0,
+    blacks:0,
+
+    temp:0,
+    tint:0,
+
+    vibrance:0,
+    saturation:0,
+
+    texture:0,
+    clarity:0,
+    dehaze:0,
+
+    vignette:0,
+    grain:0
 
   };
 
 
   Object.assign(
     S,
+    base,
     presets[name] || {}
   );
 
 
+  S.preset =
+    name;
+
+
   schedule();
+
+  panel();
 
 }
 
 
-/* -----------------------------
-   LOAD IMAGE
------------------------------ */
+/* =========================================================
+   RESET
+========================================================= */
 
-function loadImage(file) {
+function resetAll(
+  addHistory=true
+){
 
-  if (
-    !file ||
-    !file.type.startsWith("image/")
-  ) {
-    return;
+  if(addHistory){
+    push();
   }
 
 
-  const url =
-    URL.createObjectURL(file);
-
-  const newImage =
-    new Image();
-
-
-  newImage.onload = () => {
-
-    URL.revokeObjectURL(url);
-
-    image = newImage;
-
-    fileName = file.name;
-
-
-    const maximum =
-      1800;
-
-    const scale =
-      Math.min(
-        1,
-        maximum /
-        Math.max(
-          newImage.naturalWidth,
-          newImage.naturalHeight
-        )
-      );
-
-
-    sourceCanvas.width =
-      Math.max(
-        1,
-        Math.round(
-          newImage.naturalWidth * scale
-        )
-      );
-
-
-    sourceCanvas.height =
-      Math.max(
-        1,
-        Math.round(
-          newImage.naturalHeight * scale
-        )
-      );
-
-
-    sourceCtx.clearRect(
-      0,
-      0,
-      sourceCanvas.width,
-      sourceCanvas.height
-    );
-
-
-    sourceCtx.drawImage(
-      newImage,
-      0,
-      0,
-      sourceCanvas.width,
-      sourceCanvas.height
-    );
-
-
-    $("name").textContent =
-      file.name;
-
-
-    $("meta").textContent =
-      `${newImage.naturalWidth} × ${newImage.naturalHeight}px`;
-
-
-    $("empty").style.display =
-      "none";
-
-
-    canvas.style.display =
-      "block";
-
-
-    overlay.style.display =
-      "block";
-
-
-    resetEditor();
-
-    render();
-
-  };
-
-
-  newImage.onerror = () => {
-
-    URL.revokeObjectURL(url);
-
-    alert(
-      "The selected image could not be opened. Please try another image."
-    );
-
-  };
-
-
-  newImage.src = url;
-
-}
-
-
-/* -----------------------------
-   RESET
------------------------------ */
-
-function resetEditor() {
-
-  Object.keys(S).forEach(key => {
-
-    if (
-      key === "ratio"
-    ) {
-
-      S[key] = "original";
-
-    }
-
-    else if (
-      key === "profile"
-    ) {
-
-      S[key] = "natural";
-
-    }
-
-    else if (
-      key === "midpoint" ||
-      key === "feather"
-    ) {
-
-      S[key] = 50;
-
-    }
-
-    else if (
-      key === "gradeBlend"
-    ) {
-
-      S[key] = 50;
-
-    }
-
-    else if (
-      key === "radius"
-    ) {
-
-      S[key] = 1;
-
-    }
-
-    else if (
-      key === "brushOpacity"
-    ) {
-
-      S[key] = 100;
-
-    }
-
-    else if (
-      key === "textOpacity"
-    ) {
-
-      S[key] = 100;
-
-    }
-
-    else {
+  for(
+    const key of Object.keys(S)
+  ){
+
+    if(
+      key.startsWith('h_') ||
+      key.startsWith('s_') ||
+      key.startsWith('l_')
+    ){
 
       S[key] = 0;
 
     }
 
-  });
+    else if(
+      typeof S[key] === 'boolean'
+    ){
+
+      S[key] = false;
+
+    }
+
+    else if(key === 'ratio'){
+
+      S[key] = 'original';
+
+    }
+
+    else if(
+      key === 'midpoint' ||
+      key === 'feather'
+    ){
+
+      S[key] = 50;
+
+    }
+
+    else if(key === 'grainSize'){
+
+      S[key] = 25;
+
+    }
+
+    else if(key === 'grainRough'){
+
+      S[key] = 50;
+
+    }
+
+    else if(key === 'radius'){
+
+      S[key] = 1;
+
+    }
+
+    else if(key === 'selectiveRadius'){
+
+      S[key] = 24;
+
+    }
+
+    else if(key === 'brushSize'){
+
+      S[key] = 20;
+
+    }
+
+    else if(
+      key === 'brushOpacity' ||
+      key === 'textOpacity'
+    ){
+
+      S[key] = 100;
+
+    }
+
+    else if(key === 'brushColor'){
+
+      S[key] = '#ffffff';
+
+    }
+
+    else if(key === 'textColor'){
+
+      S[key] = '#ffffff';
+
+    }
+
+    else if(key === 'textStroke'){
+
+      S[key] = '#000000';
+
+    }
+
+    else{
+
+      S[key] = 0;
+
+    }
+
+  }
 
 
-  S.flipX = false;
-  S.flipY = false;
+  S.presetAmount = 100;
 
 
-  S.selectiveRadius = 24;
-  S.brushSize = 8;
-  S.brushOpacity = 100;
-  S.textOpacity = 100;
+  texts = [];
 
-
-  textLayers = [];
-  drawStrokes = [];
+  strokes = [];
 
   selectedTextId = null;
 
-
-  selective = {
-
-    active: false,
-    color: "#ff0000",
-    radius: 24,
-    hue: 0,
-    sat: 0,
-    light: 0
-
-  };
-
-
-  history.length = 0;
-  future.length = 0;
+  showBefore = false;
 
   zoom = 1;
 
@@ -2134,15 +2772,292 @@ function resetEditor() {
 }
 
 
-/* -----------------------------
+/* =========================================================
+   IMAGE LOADING
+========================================================= */
+
+function loadImage(file){
+
+  if(
+    !file ||
+    !file.type.startsWith('image/')
+  ){
+
+    alert(
+      'Please select a valid image file.'
+    );
+
+    return;
+
+  }
+
+
+  setStatus(
+    'Opening photo…'
+  );
+
+
+  const url =
+    URL.createObjectURL(file);
+
+  const im =
+    new Image();
+
+
+  im.onload = ()=>{
+
+    URL.revokeObjectURL(url);
+
+    image = im;
+
+
+    const max = 1800;
+
+
+    const scale =
+      Math.min(
+        1,
+        max /
+        Math.max(
+          im.naturalWidth,
+          im.naturalHeight
+        )
+      );
+
+
+    source.width =
+      Math.max(
+        1,
+        Math.round(
+          im.naturalWidth * scale
+        )
+      );
+
+
+    source.height =
+      Math.max(
+        1,
+        Math.round(
+          im.naturalHeight * scale
+        )
+      );
+
+
+    sx.clearRect(
+      0,
+      0,
+      source.width,
+      source.height
+    );
+
+
+    sx.drawImage(
+      im,
+      0,
+      0,
+      source.width,
+      source.height
+    );
+
+
+    $('name').textContent =
+      file.name;
+
+
+    $('meta').textContent =
+      `${im.naturalWidth} × ${im.naturalHeight}px`;
+
+
+    $('empty').style.display =
+      'none';
+
+
+    canvas.style.display =
+      'block';
+
+
+    overlay.style.display =
+      'block';
+
+
+    showBefore = false;
+
+
+    $('beforeBadge').style.display =
+      'none';
+
+
+    texts = [];
+
+    strokes = [];
+
+    selectedTextId = null;
+
+
+    resetEditsWithoutHistory();
+
+
+    zoom = 1;
+
+
+    render();
+
+
+    setStatus('Ready');
+
+  };
+
+
+  im.onerror = ()=>{
+
+    URL.revokeObjectURL(url);
+
+    setStatus('Ready');
+
+    alert(
+      'The selected image could not be opened. Please try another image.'
+    );
+
+  };
+
+
+  im.src = url;
+
+}
+
+
+/* =========================================================
+   RESET WITHOUT HISTORY
+========================================================= */
+
+function resetEditsWithoutHistory(){
+
+  for(
+    const key of Object.keys(S)
+  ){
+
+    if(
+      key.startsWith('h_') ||
+      key.startsWith('s_') ||
+      key.startsWith('l_')
+    ){
+
+      S[key] = 0;
+
+    }
+
+    else if(
+      typeof S[key] === 'boolean'
+    ){
+
+      S[key] = false;
+
+    }
+
+    else if(key === 'ratio'){
+
+      S[key] = 'original';
+
+    }
+
+    else if(
+      key === 'midpoint' ||
+      key === 'feather'
+    ){
+
+      S[key] = 50;
+
+    }
+
+    else if(key === 'grainSize'){
+
+      S[key] = 25;
+
+    }
+
+    else if(key === 'grainRough'){
+
+      S[key] = 50;
+
+    }
+
+    else if(key === 'radius'){
+
+      S[key] = 1;
+
+    }
+
+    else if(key === 'selectiveRadius'){
+
+      S[key] = 24;
+
+    }
+
+    else if(key === 'brushSize'){
+
+      S[key] = 20;
+
+    }
+
+    else if(
+      key === 'brushOpacity' ||
+      key === 'textOpacity'
+    ){
+
+      S[key] = 100;
+
+    }
+
+    else if(key === 'brushColor'){
+
+      S[key] = '#ffffff';
+
+    }
+
+    else if(key === 'textColor'){
+
+      S[key] = '#ffffff';
+
+    }
+
+    else if(key === 'textStroke'){
+
+      S[key] = '#000000';
+
+    }
+
+    else{
+
+      S[key] = 0;
+
+    }
+
+  }
+
+
+  S.presetAmount = 100;
+
+  history = [];
+
+  future = [];
+
+}
+
+
+/* =========================================================
    COLOR MATH
------------------------------ */
+========================================================= */
 
 function rgbToHsv(
   r,
   g,
   b
-) {
+){
+
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
 
   const max =
     Math.max(r,g,b);
@@ -2150,43 +3065,65 @@ function rgbToHsv(
   const min =
     Math.min(r,g,b);
 
-  const difference =
+  const d =
     max - min;
+
 
   let h = 0;
 
-  if (difference) {
 
-    if (max === r) {
+  if(d){
+
+    if(max === r){
 
       h =
-        ((g-b) / difference +
-        (g < b ? 6 : 0)) / 6;
+        (
+          (g-b)/d
+          +
+          (g<b ? 6 : 0)
+        ) / 6;
 
     }
 
-    else if (max === g) {
+    else if(max === g){
 
       h =
-        ((b-r) / difference + 2) / 6;
+        (
+          (b-r)/d
+          +
+          2
+        ) / 6;
 
     }
 
-    else {
+    else{
 
       h =
-        ((r-g) / difference + 4) / 6;
+        (
+          (r-g)/d
+          +
+          4
+        ) / 6;
 
     }
 
   }
 
 
-  return [
+  return {
+
     h,
-    max ? difference / max : 0,
-    max
-  ];
+
+    s:
+      max
+      ?
+      d/max
+      :
+      0,
+
+    v:max
+
+  };
 
 }
 
@@ -2195,107 +3132,203 @@ function hsvToRgb(
   h,
   s,
   v
-) {
+){
+
+  h =
+    ((h % 1)+1)%1;
+
+  s =
+    clamp(s,0,1);
+
+  v =
+    clamp(v,0,1);
+
 
   const i =
-    Math.floor(h * 6);
+    Math.floor(h*6);
 
   const f =
-    h * 6 - i;
+    h*6-i;
 
   const p =
-    v * (1-s);
+    v*(1-s);
 
   const q =
-    v * (1-f*s);
+    v*(1-f*s);
 
   const t =
-    v * (1-(1-f)*s);
+    v*(1-(1-f)*s);
 
 
-  return [
-    [v,t,p],
-    [q,v,p],
-    [p,v,t],
-    [p,q,v],
-    [t,p,v],
-    [v,p,q]
-  ][i % 6];
+  const values =
+    [
+      [v,t,p],
+      [q,v,p],
+      [p,v,t],
+      [p,q,v],
+      [t,p,v],
+      [v,p,q]
+    ][i%6];
+
+
+  return {
+
+    r:Math.round(values[0]*255),
+
+    g:Math.round(values[1]*255),
+
+    b:Math.round(values[2]*255)
+
+  };
 
 }
 
 
-function colorBand(h) {
+function hexToRgb(hex){
 
-  if (
+  const value =
+    hex.replace('#','');
+
+
+  return {
+
+    r:parseInt(
+      value.slice(0,2),
+      16
+    ),
+
+    g:parseInt(
+      value.slice(2,4),
+      16
+    ),
+
+    b:parseInt(
+      value.slice(4,6),
+      16
+    )
+
+  };
+
+}
+
+
+function rgbToHex(
+  r,
+  g,
+  b
+){
+
+  return '#' +
+    [r,g,b]
+      .map(
+        value =>
+          Math.round(value)
+            .toString(16)
+            .padStart(2,'0')
+      )
+      .join('');
+
+}
+
+
+function hueDistance(a,b){
+
+  const d =
+    Math.abs(a-b);
+
+  return Math.min(
+    d,
+    1-d
+  );
+
+}
+
+
+function colorBand(h){
+
+  if(
     h < .04 ||
     h > .96
-  ) return "red";
+  ){
+    return 'red';
+  }
 
-  if (h < .11) return "orange";
+  if(h < .11){
+    return 'orange';
+  }
 
-  if (h < .19) return "yellow";
+  if(h < .19){
+    return 'yellow';
+  }
 
-  if (h < .43) return "green";
+  if(h < .43){
+    return 'green';
+  }
 
-  if (h < .53) return "aqua";
+  if(h < .53){
+    return 'aqua';
+  }
 
-  if (h < .70) return "blue";
+  if(h < .70){
+    return 'blue';
+  }
 
-  if (h < .85) return "purple";
+  if(h < .85){
+    return 'purple';
+  }
 
-  return "magenta";
+  return 'magenta';
 
 }
 
 
-/* -----------------------------
-   PIXEL ADJUSTMENTS
------------------------------ */
+/* =========================================================
+   PIXEL PROCESSING
+========================================================= */
 
 function applyPixels(
-  imageData,
+  data,
   width,
   height
-) {
+){
 
-  const pixels =
-    imageData.data;
+  const d =
+    data.data;
 
 
   const exposure =
     Math.pow(
       2,
-      S.exposure / 50
+      S.exposure/100
     );
 
 
   const contrast =
-    (100 + S.contrast) / 100;
+    (100+S.contrast)/100;
 
 
   const saturation =
-    (100 + S.saturation) / 100;
+    (100+S.saturation)/100;
 
 
   const vibrance =
-    S.vibrance / 100;
+    S.vibrance/100;
 
 
-  for (
-    let i = 0;
-    i < pixels.length;
-    i += 4
-  ) {
+  for(
+    let i=0;
+    i<d.length;
+    i+=4
+  ){
 
     let r =
-      pixels[i] / 255;
+      d[i]/255;
 
     let g =
-      pixels[i+1] / 255;
+      d[i+1]/255;
 
     let b =
-      pixels[i+2] / 255;
+      d[i+2]/255;
 
 
     r *= exposure;
@@ -2303,38 +3336,49 @@ function applyPixels(
     b *= exposure;
 
 
-    const luminance =
-      .2126*r +
-      .7152*g +
+    let luminance =
+      .2126*r+
+      .7152*g+
       .0722*b;
 
 
     const highlight =
-      S.highlights / 120;
+      S.highlights/120;
 
     const shadow =
-      S.shadows / 120;
+      S.shadows/120;
 
 
-    if (luminance > .5) {
+    if(luminance>.5){
 
-      r += highlight * (r-.5);
-      g += highlight * (g-.5);
-      b += highlight * (b-.5);
+      r +=
+        highlight*(r-.5);
+
+      g +=
+        highlight*(g-.5);
+
+      b +=
+        highlight*(b-.5);
 
     }
 
-    else {
+    else{
 
-      r += shadow * (.5-r);
-      g += shadow * (.5-g);
-      b += shadow * (.5-b);
+      r +=
+        shadow*(.5-r);
+
+      g +=
+        shadow*(.5-g);
+
+      b +=
+        shadow*(.5-b);
 
     }
 
 
     const whiteBlack =
-      (S.whites + S.blacks) / 255;
+      S.whites/255+
+      S.blacks/255;
 
 
     r += whiteBlack;
@@ -2343,270 +3387,274 @@ function applyPixels(
 
 
     r =
-      (r-.5) * contrast + .5;
+      (r-.5)*contrast+.5;
 
     g =
-      (g-.5) * contrast + .5;
+      (g-.5)*contrast+.5;
 
     b =
-      (b-.5) * contrast + .5;
+      (b-.5)*contrast+.5;
 
 
-    r += S.temp * .0009;
-    b -= S.temp * .0009;
-    g += S.tint * .00045;
+    r +=
+      S.temp*.001;
+
+    b -=
+      S.temp*.001;
+
+    g +=
+      S.tint*.0005;
 
 
     const gray =
-      .299*r +
-      .587*g +
+      .299*r+
+      .587*g+
       .114*b;
 
 
     const vibranceBoost =
-      1 +
-      vibrance *
+      1+
+      vibrance*
       (1-Math.abs(
         2*luminance-1
-      )) *
-      .7;
+      ))*
+      .75;
 
 
     r =
-      gray +
-      (r-gray) *
-      saturation *
+      gray+
+      (r-gray)*
+      saturation*
       vibranceBoost;
 
     g =
-      gray +
-      (g-gray) *
-      saturation *
+      gray+
+      (g-gray)*
+      saturation*
       vibranceBoost;
 
     b =
-      gray +
-      (b-gray) *
-      saturation *
+      gray+
+      (b-gray)*
+      saturation*
       vibranceBoost;
 
 
     const effect =
-      (S.texture + S.clarity) / 900;
+      (
+        S.texture+
+        S.clarity
+      )/1000;
 
 
     const average =
       (r+g+b)/3;
 
 
-    r += (r-average)*effect;
-    g += (g-average)*effect;
-    b += (b-average)*effect;
+    r +=
+      (r-average)*effect;
+
+    g +=
+      (g-average)*effect;
+
+    b +=
+      (b-average)*effect;
 
 
-    if (S.dehaze) {
+    if(S.dehaze){
 
-      const dehaze =
-        S.dehaze / 140;
+      const amount =
+        S.dehaze/150;
+
 
       r =
-        (r-.5) *
-        (1+dehaze) +
+        (r-.5)*
+        (1+amount)+
         .5;
 
       g =
-        (g-.5) *
-        (1+dehaze) +
+        (g-.5)*
+        (1+amount)+
         .5;
 
       b =
-        (b-.5) *
-        (1+dehaze) +
+        (b-.5)*
+        (1+amount)+
         .5;
 
     }
 
 
-    r = clamp(r);
-    g = clamp(g);
-    b = clamp(b);
+    r =
+      clamp(r,0,1);
+
+    g =
+      clamp(g,0,1);
+
+    b =
+      clamp(b,0,1);
 
 
-    let [
-      hue,
-      sat,
-      value
-    ] = rgbToHsv(
-      r,
-      g,
-      b
-    );
+    let hsv =
+      rgbToHsv(
+        r*255,
+        g*255,
+        b*255
+      );
 
 
     const band =
-      colorBand(hue);
+      colorBand(hsv.h);
 
 
-    const hueShift =
-      S["h_"+band];
+    const hue =
+      S[`h_${band}`];
 
-    const satShift =
-      S["s_"+band];
+    const sat =
+      S[`s_${band}`];
 
-    const lightShift =
-      S["l_"+band];
+    const light =
+      S[`l_${band}`];
 
 
-    if (
-      hueShift ||
-      satShift ||
-      lightShift
-    ) {
+    if(
+      hue ||
+      sat ||
+      light
+    ){
 
-      [
-        r,
-        g,
-        b
-      ] = hsvToRgb(
-
+      hsv.h =
         (
-          hue +
-          hueShift / 360 +
+          hsv.h+
+          hue/360+
           1
-        ) % 1,
+        )%1;
 
+
+      hsv.s =
         clamp(
-          sat *
-          (1 + satShift/100)
-        ),
+          hsv.s*
+          (1+sat/100),
+          0,
+          1
+        );
 
+
+      hsv.v =
         clamp(
-          value *
-          (1 + lightShift/100)
-        )
+          hsv.v*
+          (1+light/100),
+          0,
+          1
+        );
 
-      );
+
+      const rgb =
+        hsvToRgb(
+          hsv.h,
+          hsv.s,
+          hsv.v
+        );
+
+
+      r = rgb.r/255;
+      g = rgb.g/255;
+      b = rgb.b/255;
 
     }
 
 
-    /* Color grading */
-
-    const finalLum =
-      .2126*r +
-      .7152*g +
+    const lum =
+      .2126*r+
+      .7152*g+
       .0722*b;
 
 
-    let gradeHue;
-    let gradeSat;
+    const gradeHue =
+      lum < .35
+        ? S.gradeShadow
+        : lum > .65
+          ? S.gradeHigh
+          : S.gradeMid;
 
 
-    if (finalLum < .35) {
-
-      gradeHue =
-        S.gradeShadow;
-
-      gradeSat =
-        S.gradeShadowSat;
-
-    }
-
-    else if (
-      finalLum > .65
-    ) {
-
-      gradeHue =
-        S.gradeHigh;
-
-      gradeSat =
-        S.gradeHighSat;
-
-    }
-
-    else {
-
-      gradeHue =
-        S.gradeMid;
-
-      gradeSat =
-        S.gradeMidSat;
-
-    }
+    const gradeSat =
+      lum < .35
+        ? S.gradeShadowSat
+        : lum > .65
+          ? S.gradeHighSat
+          : S.gradeMidSat;
 
 
-    if (gradeSat > 0) {
+    if(gradeSat){
 
-      const graded =
+      const rgb =
         hsvToRgb(
-          gradeHue / 360,
-          gradeSat / 100,
-          Math.max(
-            .25,
-            finalLum
-          )
+          gradeHue/360,
+          gradeSat/100,
+          Math.max(.25,lum)
         );
 
 
       const blend =
-        (S.gradeBlend/100) * .3;
+        (S.gradeBlend/100)*.35;
 
 
       r =
-        r*(1-blend) +
-        graded[0]*blend;
+        r*(1-blend)
+        +
+        (rgb.r/255)*blend;
 
       g =
-        g*(1-blend) +
-        graded[1]*blend;
+        g*(1-blend)
+        +
+        (rgb.g/255)*blend;
 
       b =
-        b*(1-blend) +
-        graded[2]*blend;
+        b*(1-blend)
+        +
+        (rgb.b/255)*blend;
 
     }
 
 
-    /* Vignette */
-
     const x =
-      ((i/4) % width) /
-      width -
-      .5;
+      ((i/4)%width)/width-.5;
 
     const y =
       Math.floor(
-        (i/4) / width
-      ) /
-      height -
-      .5;
+        (i/4)/width
+      )/height-.5;
 
 
     const distance =
       Math.sqrt(
         x*x+y*y
-      ) * 1.414;
+      )*1.414;
 
 
-    if (S.vignette) {
+    if(S.vignette){
 
       const edge =
         clamp(
           (
-            distance -
-            (S.midpoint/100*.65)
-          ) /
+            distance-
+            S.midpoint/100*.65
+          )
+          /
           Math.max(
             .05,
             S.feather/100
-          )
+          ),
+          0,
+          1
         );
 
 
       const vignette =
-        1 -
-        (S.vignette/100) *
-        edge *
+        1-
+        S.vignette/100*
+        edge*
         edge;
 
 
@@ -2617,130 +3665,298 @@ function applyPixels(
     }
 
 
-    /* Selective Color */
+    /* Lens-style blur */
 
-    if (
-      selective.active
-    ) {
+    if(S.blur>0){
 
-      const selectedRGB =
-        hexToRGB(
-          selective.color
+      const dx =
+        x-
+        (
+          S.blurX/100-.5
+        );
+
+      const dy =
+        y-
+        (
+          S.blurY/100-.5
         );
 
 
-      const selectedHSV =
-        rgbToHsv(
-          selectedRGB[0],
-          selectedRGB[1],
-          selectedRGB[2]
-        );
-
-
-      const currentHSV =
-        rgbToHsv(
-          clamp(r),
-          clamp(g),
-          clamp(b)
-        );
-
-
-      const hueDistance =
-        Math.min(
-          Math.abs(
-            currentHSV[0] -
-            selectedHSV[0]
-          ),
-
-          1 -
-          Math.abs(
-            currentHSV[0] -
-            selectedHSV[0]
-          )
-        );
-
-
-      const mask =
+      const focus =
         clamp(
-          1 -
-          hueDistance /
-          (
-            selective.radius /
-            100 *
-            .5
-          )
-        ) *
-        currentHSV[1];
-
-
-      if (mask > .01) {
-
-        [
-          r,
-          g,
-          b
-        ] = hsvToRgb(
-
-          (
-            currentHSV[0] +
-            selective.hue/360 +
-            1
-          ) % 1,
-
-          clamp(
-            currentHSV[1] *
-            (
-              1 +
-              selective.sat/100 *
-              mask
-            )
-          ),
-
-          clamp(
-            currentHSV[2] +
-            selective.light/100 *
-            mask
-          )
-
+          Math.sqrt(
+            dx*dx+
+            dy*dy
+          )*2,
+          0,
+          1
         );
+
+
+      const fade =
+        focus*
+        S.blur/100;
+
+
+      const avg =
+        (r+g+b)/3;
+
+
+      r =
+        r*(1-fade*.12)
+        +
+        avg*fade*.12;
+
+      g =
+        g*(1-fade*.12)
+        +
+        avg*fade*.12;
+
+      b =
+        b*(1-fade*.12)
+        +
+        avg*fade*.12;
+
+    }
+
+
+    /* Selective color */
+
+    if(selectedColor){
+
+      const distance =
+        hueDistance(
+          hsv.h,
+          selectedColor.h
+        );
+
+
+      const range =
+        S.selectiveRadius/360;
+
+
+      const weight =
+        distance<range
+          ?
+          Math.pow(
+            1-distance/range,
+            2
+          )
+          *
+          clamp(
+            hsv.s/.15,
+            0,
+            1
+          )
+          :
+          0;
+
+
+      if(weight){
+
+        const rgb =
+          hsvToRgb(
+            (
+              hsv.h+
+              S.selectiveHue/360*
+              weight+
+              1
+            )%1,
+
+            clamp(
+              hsv.s+
+              (S.selectiveSat/100)*
+              weight,
+              0,
+              1
+            ),
+
+            clamp(
+              hsv.v+
+              (S.selectiveLight/100)*
+              weight,
+              0,
+              1
+            )
+          );
+
+
+        r = rgb.r/255;
+        g = rgb.g/255;
+        b = rgb.b/255;
 
       }
 
     }
 
 
-    pixels[i] =
-      clamp(r) * 255;
+    d[i] =
+      clamp(
+        r*255,
+        0,
+        255
+      );
 
-    pixels[i+1] =
-      clamp(g) * 255;
+    d[i+1] =
+      clamp(
+        g*255,
+        0,
+        255
+      );
 
-    pixels[i+2] =
-      clamp(b) * 255;
+    d[i+2] =
+      clamp(
+        b*255,
+        0,
+        255
+      );
 
   }
 
 
-  return imageData;
+  return data;
 
 }
 
 
-/* -----------------------------
-   EFFECTS
------------------------------ */
+/* =========================================================
+   DETAIL EFFECTS
+========================================================= */
+
+function applyBlur(
+  context,
+  width,
+  height,
+  amount
+){
+
+  if(amount<=0){
+    return;
+  }
+
+
+  const temp =
+    document.createElement(
+      'canvas'
+    );
+
+
+  temp.width =
+    width;
+
+  temp.height =
+    height;
+
+
+  const tc =
+    temp.getContext('2d');
+
+
+  tc.filter =
+    `blur(${Math.min(
+      14,
+      amount/7
+    )}px)`;
+
+
+  tc.drawImage(
+    context.canvas,
+    0,
+    0
+  );
+
+
+  context.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  context.drawImage(
+    temp,
+    0,
+    0
+  );
+
+}
+
+
+function applyNoiseReduction(
+  context,
+  width,
+  height,
+  amount
+){
+
+  if(amount<=0){
+    return;
+  }
+
+
+  const temp =
+    document.createElement(
+      'canvas'
+    );
+
+
+  temp.width =
+    width;
+
+  temp.height =
+    height;
+
+
+  const tc =
+    temp.getContext('2d');
+
+
+  tc.filter =
+    `blur(${Math.min(
+      2,
+      amount/45
+    )}px)`;
+
+
+  tc.drawImage(
+    context.canvas,
+    0,
+    0
+  );
+
+
+  context.save();
+
+  context.globalAlpha =
+    amount/100;
+
+
+  context.drawImage(
+    temp,
+    0,
+    0
+  );
+
+
+  context.restore();
+
+}
+
 
 function sharpen(
   context,
   width,
   height,
   amount
-) {
+){
 
-  if (amount < 1) return;
+  if(amount<1){
+    return;
+  }
 
 
-  const source =
+  const sourceData =
     context.getImageData(
       0,
       0,
@@ -2756,87 +3972,62 @@ function sharpen(
     );
 
 
-  output.data.set(
-    source.data
-  );
+  const d =
+    sourceData.data;
 
-
-  const sourceData =
-    source.data;
-
-  const outputData =
+  const q =
     output.data;
+
+
+  q.set(d);
 
 
   const strength =
     amount/100*.65;
 
 
-  for (
+  for(
     let y=1;
     y<height-1;
     y++
-  ) {
+  ){
 
-    for (
+    for(
       let x=1;
       x<width-1;
       x++
-    ) {
+    ){
 
-      const index =
+      const i =
         (y*width+x)*4;
 
 
-      for (
+      for(
         let channel=0;
         channel<3;
         channel++
-      ) {
+      ){
 
-        const value =
-          sourceData[
-            index+channel
-          ];
-
-
-        const left =
-          sourceData[
-            index-4+channel
-          ];
-
-        const right =
-          sourceData[
-            index+4+channel
-          ];
-
-        const top =
-          sourceData[
-            index-width*4+channel
-          ];
-
-        const bottom =
-          sourceData[
-            index+width*4+channel
-          ];
-
-
-        outputData[
-          index+channel
-        ] =
+        q[i+channel] =
           clamp(
+
+            d[i+channel]*
+            (1+4*strength)
+
+            -
+
+            strength*
             (
-              value +
-              strength *
-              (
-                4*value -
-                left -
-                right -
-                top -
-                bottom
-              )
-            ) / 255
-          ) * 255;
+              d[i-4+channel]+
+              d[i+4+channel]+
+              d[i-width*4+channel]+
+              d[i+width*4+channel]
+            ),
+
+            0,
+            255
+
+          );
 
       }
 
@@ -2854,142 +4045,19 @@ function sharpen(
 }
 
 
-function blurCanvas(
-  context,
-  width,
-  height,
-  amount
-) {
-
-  if (amount <= 0) return;
-
-
-  const temporary =
-    document.createElement(
-      "canvas"
-    );
-
-
-  temporary.width =
-    width;
-
-  temporary.height =
-    height;
-
-
-  const temporaryContext =
-    temporary.getContext("2d");
-
-
-  temporaryContext.drawImage(
-    context.canvas,
-    0,
-    0
-  );
-
-
-  context.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-
-  context.filter =
-    `blur(${Math.max(.1,amount)}px)`;
-
-
-  context.drawImage(
-    temporary,
-    0,
-    0
-  );
-
-
-  context.filter =
-    "none";
-
-}
-
-
-function colorNoise(
-  context,
-  width,
-  height,
-  amount
-) {
-
-  if (amount <= 0) return;
-
-
-  const imageData =
-    context.getImageData(
-      0,
-      0,
-      width,
-      height
-    );
-
-
-  const pixels =
-    imageData.data;
-
-
-  const strength =
-    amount / 100;
-
-
-  for (
-    let i=0;
-    i<pixels.length;
-    i+=4
-  ) {
-
-    const variation =
-      (
-        Math.random()-.5
-      ) *
-      18 *
-      strength;
-
-
-    pixels[i] =
-      clamp(
-        pixels[i]/255 +
-        variation/255
-      ) * 255;
-
-
-    pixels[i+1] =
-      clamp(
-        pixels[i+1]/255 -
-        variation/255
-      ) * 255;
-
-  }
-
-
-  context.putImageData(
-    imageData,
-    0,
-    0
-  );
-
-}
-
-
 function grain(
   context,
   width,
   height,
   amount
-) {
+){
 
-  if (amount <= 0) return;
+  if(amount<=0){
+    return;
+  }
 
 
-  const imageData =
+  const data =
     context.getImageData(
       0,
       0,
@@ -2998,52 +4066,111 @@ function grain(
     );
 
 
-  const pixels =
-    imageData.data;
+  const d =
+    data.data;
 
 
-  const strength =
-    amount/100 * 28;
+  const size =
+    Math.max(
+      1,
+      S.grainSize/25
+    );
 
 
-  for (
-    let i=0;
-    i<pixels.length;
-    i+=4
-  ) {
-
-    const variation =
-      (
-        Math.random()-.5
-      ) *
-      strength;
+  const roughness =
+    S.grainRough/100;
 
 
-    pixels[i] =
-      clamp(
-        pixels[i]/255 +
-        variation/255
-      ) * 255;
+  const noiseAmount =
+    amount/100*28;
 
 
-    pixels[i+1] =
-      clamp(
-        pixels[i+1]/255 +
-        variation/255
-      ) * 255;
+  const step =
+    Math.max(
+      1,
+      Math.round(size)
+    );
 
 
-    pixels[i+2] =
-      clamp(
-        pixels[i+2]/255 +
-        variation/255
-      ) * 255;
+  for(
+    let y=0;
+    y<height;
+    y+=step
+  ){
+
+    for(
+      let x=0;
+      x<width;
+      x+=step
+    ){
+
+      const noise =
+        (
+          Math.random()-.5
+        )*
+        noiseAmount*
+        (
+          .5+
+          roughness
+        );
+
+
+      for(
+        let yy=0;
+        yy<step &&
+        y+yy<height;
+        yy++
+      ){
+
+        for(
+          let xx=0;
+          xx<step &&
+          x+xx<width;
+          xx++
+        ){
+
+          const i =
+            (
+              (y+yy)*
+              width+
+              x+xx
+            )*4;
+
+
+          d[i] =
+            clamp(
+              d[i]+noise,
+              0,
+              255
+            );
+
+
+          d[i+1] =
+            clamp(
+              d[i+1]+noise,
+              0,
+              255
+            );
+
+
+          d[i+2] =
+            clamp(
+              d[i+2]+noise,
+              0,
+              255
+            );
+
+        }
+
+      }
+
+    }
 
   }
 
 
   context.putImageData(
-    imageData,
+    data,
     0,
     0
   );
@@ -3051,165 +4178,151 @@ function grain(
 }
 
 
-/* -----------------------------
+/* =========================================================
    GEOMETRY
------------------------------ */
+========================================================= */
 
-function createGeometryCanvas() {
+function geometryCanvas(){
 
-  const angle =
-    (
-      S.rotate +
-      S.straighten
-    ) *
-    Math.PI /
+  const width =
+    source.width;
+
+  const height =
+    source.height;
+
+
+  const rotation =
+    S.rotate*
+    Math.PI/
     180;
 
 
-  const width =
-    sourceCanvas.width;
-
-  const height =
-    sourceCanvas.height;
+  const swap =
+    Math.abs(S.rotate)%180 === 90;
 
 
-  const rotatedWidth =
-    Math.abs(
-      Math.cos(angle)
-    ) *
-    width
-    +
-    Math.abs(
-      Math.sin(angle)
-    ) *
-    height;
+  const stageWidth =
+    swap
+      ? height
+      : width;
 
 
-  const rotatedHeight =
-    Math.abs(
-      Math.sin(angle)
-    ) *
-    width
-    +
-    Math.abs(
-      Math.cos(angle)
-    ) *
-    height;
+  const stageHeight =
+    swap
+      ? width
+      : height;
 
 
-  const result =
+  const temp =
     document.createElement(
-      "canvas"
+      'canvas'
     );
 
 
-  result.width =
-    Math.max(
-      1,
-      Math.ceil(rotatedWidth)
-    );
+  temp.width =
+    stageWidth;
+
+  temp.height =
+    stageHeight;
 
 
-  result.height =
-    Math.max(
-      1,
-      Math.ceil(rotatedHeight)
-    );
+  const tc =
+    temp.getContext('2d');
 
 
-  const resultContext =
-    result.getContext("2d");
-
-
-  resultContext.translate(
-    result.width/2,
-    result.height/2
+  tc.translate(
+    stageWidth/2,
+    stageHeight/2
   );
 
 
-  resultContext.rotate(
-    angle
+  tc.rotate(
+    rotation+
+    S.straighten*
+    Math.PI/
+    180
   );
 
 
-  resultContext.scale(
-    S.flipX ? -1 : 1,
-    S.flipY ? -1 : 1
+  tc.scale(
+    S.flipX?-1:1,
+    S.flipY?-1:1
   );
 
 
-  resultContext.drawImage(
-    sourceCanvas,
+  tc.drawImage(
+    source,
     -width/2,
     -height/2
   );
 
 
-  return result;
+  let cropWidth =
+    stageWidth;
 
-}
+  let cropHeight =
+    stageHeight;
 
+  let cropX = 0;
 
-function getCropBox(canvasValue) {
-
-  let width =
-    canvasValue.width;
-
-  let height =
-    canvasValue.height;
-
-  let x = 0;
-  let y = 0;
+  let cropY = 0;
 
 
-  if (
-    S.ratio !== "original"
-  ) {
+  if(
+    S.ratio !==
+    'original'
+  ){
 
     const parts =
       S.ratio
-        .split(":")
+        .split(':')
         .map(Number);
 
 
     const targetRatio =
-      parts[0] / parts[1];
+      parts[0]/
+      parts[1];
 
 
     const currentRatio =
-      width / height;
+      stageWidth/
+      stageHeight;
 
 
-    if (
+    if(
       currentRatio >
       targetRatio
-    ) {
+    ){
 
-      const newWidth =
-        height *
-        targetRatio;
+      cropWidth =
+        Math.round(
+          stageHeight*
+          targetRatio
+        );
 
 
-      x =
-        (width-newWidth)/2;
-
-      width =
-        newWidth;
+      cropX =
+        (
+          stageWidth-
+          cropWidth
+        )/2;
 
     }
 
-    else {
+    else{
 
-      const newHeight =
-        width /
-        targetRatio;
+      cropHeight =
+        Math.round(
+          stageWidth/
+          targetRatio
+        );
 
 
-      y =
-        (height-newHeight)/2;
-
-      height =
-        newHeight;
+      cropY =
+        (
+          stageHeight-
+          cropHeight
+        )/2;
 
     }
 
@@ -3217,1082 +4330,453 @@ function getCropBox(canvasValue) {
 
 
   return {
-    x,
-    y,
-    width,
-    height
+
+    canvas:temp,
+
+    width:cropWidth,
+
+    height:cropHeight,
+
+    x:cropX,
+
+    y:cropY
+
   };
 
 }
 
 
-/* -----------------------------
-   RENDER
------------------------------ */
-
-function render() {
-
-  if (!image) return;
-
-
-  $("status").textContent =
-    "Rendering...";
-
-
-  const geometry =
-    createGeometryCanvas();
-
-
-  const crop =
-    getCropBox(
-      geometry
-    );
-
-
-  const maximum =
-    window.innerWidth < 700
-      ? 760
-      : 1200;
-
-
-  const scale =
-    Math.min(
-      1,
-      maximum /
-      Math.max(
-        crop.width,
-        crop.height
-      )
-    );
-
-
-  const width =
-    Math.max(
-      1,
-      Math.round(
-        crop.width * scale
-      )
-    );
-
-
-  const height =
-    Math.max(
-      1,
-      Math.round(
-        crop.height * scale
-      )
-    );
-
-
-  canvas.width =
-    width;
-
-  canvas.height =
-    height;
-
-
-  ctx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-
-  ctx.drawImage(
-
-    geometry,
-
-    crop.x,
-    crop.y,
-    crop.width,
-    crop.height,
-
-    0,
-    0,
-    width,
-    height
-
-  );
-
-
-  if (showBefore) {
-
-    drawOverlays();
-
-    finishRender(
-      "Original"
-    );
-
-    return;
-
-  }
-
-
-  const pixels =
-    ctx.getImageData(
-      0,
-      0,
-      width,
-      height
-    );
-
-
-  const adjusted =
-    applyPixels(
-      pixels,
-      width,
-      height
-    );
-
-
-  ctx.putImageData(
-    adjusted,
-    0,
-    0
-  );
-
-
-  if (S.sharp > 0) {
-
-    sharpen(
-      ctx,
-      width,
-      height,
-      S.sharp
-    );
-
-  }
-
-
-  if (S.noise > 0) {
-
-    blurCanvas(
-      ctx,
-      width,
-      height,
-      S.noise / 35
-    );
-
-  }
-
-
-  if (S.colorNoise > 0) {
-
-    colorNoise(
-      ctx,
-      width,
-      height,
-      S.colorNoise
-    );
-
-  }
-
-
-  if (S.grain > 0) {
-
-    grain(
-      ctx,
-      width,
-      height,
-      S.grain
-    );
-
-  }
-
-
-  if (S.blur > 0) {
-
-    blurCanvas(
-      ctx,
-      width,
-      height,
-      Math.min(
-        12,
-        S.blur/8
-      )
-    );
-
-  }
-
-
-  drawOverlays();
-
-
-  canvas.style.transform =
-    `scale(${zoom})`;
-
-
-  $("zlabel").textContent =
-    `${Math.round(zoom*100)}%`;
-
-
-  finishRender(
-    "Ready"
-  );
-
-}
-
-
-/* -----------------------------
+/* =========================================================
    OVERLAYS
------------------------------ */
+========================================================= */
 
-function drawOverlays() {
+function drawOverlays(
+  context,
+  width,
+  height
+){
 
-  overlay.width =
-    canvas.width;
+  /* DRAW STROKES */
 
-  overlay.height =
-    canvas.height;
+  for(
+    const stroke of strokes
+  ){
+
+    context.save();
+
+    context.globalAlpha =
+      stroke.opacity/100;
+
+    context.strokeStyle =
+      stroke.color;
+
+    context.lineWidth =
+      Math.max(
+        1,
+        stroke.size*
+        width/
+        1000
+      );
+
+    context.lineCap =
+      'round';
+
+    context.lineJoin =
+      'round';
 
 
-  overlayCtx.clearRect(
-    0,
-    0,
-    overlay.width,
-    overlay.height
-  );
+    context.beginPath();
 
 
-  const width =
-    canvas.width;
+    stroke.points.forEach(
+      (point,index)=>{
 
-  const height =
-    canvas.height;
+        if(index===0){
+
+          context.moveTo(
+            point.x*width,
+            point.y*height
+          );
+
+        }
+
+        else{
+
+          context.lineTo(
+            point.x*width,
+            point.y*height
+          );
+
+        }
+
+      }
+    );
+
+
+    context.stroke();
+
+    context.restore();
+
+  }
 
 
   /* TEXT */
 
-  textLayers.forEach(
-    layer => {
+  for(
+    const text of texts
+  ){
 
-      const x =
-        layer.x * width;
+    context.save();
 
-      const y =
-        layer.y * height;
-
-
-      const size =
-        Math.max(
-          8,
-          layer.size *
-          (
-            width /
-            sourceCanvas.width
-          )
-        );
+    context.globalAlpha =
+      text.opacity/100;
 
 
-      const weight =
-        layer.bold
-          ? "700"
-          : "400";
+    context.font =
+
+      `${text.italic ? 'italic ' : ''}` +
+
+      `${text.bold ? '700 ' : '400 '}` +
+
+      `${text.size}px "${text.font}"`;
 
 
-      const fontStyle =
-        layer.italic
-          ? "italic"
-          : "normal";
+    context.textAlign =
+      text.align ||
+      'center';
+
+    context.textBaseline =
+      'middle';
+
+    context.lineJoin =
+      'round';
 
 
-      overlayCtx.save();
+    const x =
+      text.x*
+      width;
+
+    const y =
+      text.y*
+      height;
 
 
-      overlayCtx.globalAlpha =
-        clamp(
-          layer.opacity/100
-        );
-
-
-      overlayCtx.font =
-        `${fontStyle} ${weight} ${size}px "${layer.font}"`;
-
-
-      overlayCtx.textAlign =
-        layer.align;
-
-
-      overlayCtx.textBaseline =
-        "middle";
-
-
-      if (layer.stroke) {
-
-        overlayCtx.lineWidth =
-          Math.max(
-            2,
-            size*.05
-          );
-
-
-        overlayCtx.strokeStyle =
-          layer.stroke;
-
-
-        overlayCtx.strokeText(
-          layer.text,
-          x,
-          y
-        );
-
-      }
-
-
-      overlayCtx.fillStyle =
-        layer.color;
-
-
-      overlayCtx.fillText(
-        layer.text,
-        x,
-        y
+    context.lineWidth =
+      Math.max(
+        2,
+        text.size*.08
       );
 
 
-      overlayCtx.restore();
-
-    }
-  );
+    context.strokeStyle =
+      text.stroke;
 
 
-  /* DRAWING */
-
-  drawStrokes.forEach(
-    stroke => {
-
-      overlayCtx.save();
-
-      overlayCtx.globalAlpha =
-        stroke.opacity/100;
-
-      overlayCtx.strokeStyle =
-        stroke.color;
-
-      overlayCtx.lineWidth =
-        stroke.size;
-
-      overlayCtx.lineCap =
-        "round";
-
-      overlayCtx.lineJoin =
-        "round";
+    context.strokeText(
+      text.text,
+      x,
+      y
+    );
 
 
-      overlayCtx.beginPath();
+    context.fillStyle =
+      text.color;
 
 
-      stroke.points.forEach(
-        (point,index) => {
-
-          const x =
-            point.x *
-            width;
-
-          const y =
-            point.y *
-            height;
+    context.fillText(
+      text.text,
+      x,
+      y
+    );
 
 
-          if (index === 0) {
+    context.restore();
 
-            overlayCtx.moveTo(
-              x,
-              y
-            );
-
-          }
-
-          else {
-
-            overlayCtx.lineTo(
-              x,
-              y
-            );
-
-          }
-
-        }
-      );
-
-
-      overlayCtx.stroke();
-
-      overlayCtx.restore();
-
-    }
-  );
+  }
 
 }
 
 
-/* -----------------------------
-   POINTER POSITION
------------------------------ */
-
-function getPointerPosition(event) {
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-
-  return {
-
-    x: clamp(
-      (
-        event.clientX -
-        rect.left
-      ) /
-      rect.width
-    ),
-
-    y: clamp(
-      (
-        event.clientY -
-        rect.top
-      ) /
-      rect.height
-    )
-
-  };
-
-}
-
-
-/* -----------------------------
-   DIRECT PHOTO INTERACTION
------------------------------ */
-
-$("stage").addEventListener(
-  "pointerdown",
-  event => {
-
-    if (!image) return;
-
-
-    const position =
-      getPointerPosition(
-        event
-      );
-
-
-    /* TEXT MOVE */
-
-    if (
-      activeTool === "text"
-    ) {
-
-      const hit =
-        textLayers
-          .slice()
-          .reverse()
-          .find(
-            layer =>
-              Math.hypot(
-                layer.x-position.x,
-                layer.y-position.y
-              ) < .15
-          );
-
-
-      if (hit) {
-
-        selectedTextId =
-          hit.id;
-
-        pushHistory();
-
-        drawing = true;
-
-        $("stage").setPointerCapture(
-          event.pointerId
-        );
-
-        panel();
-
-      }
-
-      return;
-
-    }
-
-
-    /* DRAW */
-
-    if (
-      activeTool === "draw"
-    ) {
-
-      pushHistory();
-
-      drawing = true;
-
-
-      const brushColor =
-        $("brushColor")?.value ||
-        "#ffffff";
-
-
-      const brushSize =
-        (
-          Number(
-            $("brushSize")?.value ||
-            8
-          ) *
-          canvas.width /
-          1000
-        );
-
-
-      const opacity =
-        Number(
-          $("brushOpacity")?.value ||
-          100
-        );
-
-
-      drawStrokes.push({
-
-        color: brushColor,
-
-        size: Math.max(
-          1,
-          brushSize
-        ),
-
-        opacity,
-
-        points: [
-          position
-        ]
-
-      });
-
-
-      $("stage").setPointerCapture(
-        event.pointerId
-      );
-
-
-      schedule();
-
-      return;
-
-    }
-
-
-    /* SELECTIVE COLOR */
-
-    if (
-      activeTool ===
-      "selective" &&
-      selective.active
-    ) {
-
-      pushHistory();
-
-
-      const pixelX =
-        Math.floor(
-          position.x *
-          canvas.width
-        );
-
-
-      const pixelY =
-        Math.floor(
-          position.y *
-          canvas.height
-        );
-
-
-      const pixel =
-        ctx.getImageData(
-          pixelX,
-          pixelY,
-          1,
-          1
-        ).data;
-
-
-      selective.color =
-        "#" +
-        [
-          pixel[0],
-          pixel[1],
-          pixel[2]
-        ]
-          .map(
-            value =>
-              value
-                .toString(16)
-                .padStart(2,"0")
-          )
-          .join("");
-
-
-      panel();
-
-      schedule();
-
-    }
-
-  }
-);
-
-
-$("stage").addEventListener(
-  "pointermove",
-  event => {
-
-    if (!drawing) return;
-
-
-    const position =
-      getPointerPosition(
-        event
-      );
-
-
-    if (
-      activeTool === "draw"
-    ) {
-
-      const last =
-        drawStrokes[
-          drawStrokes.length-1
-        ];
-
-
-      if (last) {
-
-        last.points.push(
-          position
-        );
-
-      }
-
-
-      schedule();
-
-    }
-
-
-    if (
-      activeTool === "text"
-    ) {
-
-      const selected =
-        getSelectedText();
-
-
-      if (selected) {
-
-        selected.x =
-          position.x;
-
-        selected.y =
-          position.y;
-
-      }
-
-
-      schedule();
-
-    }
-
-  }
-);
-
-
-$("stage").addEventListener(
-  "pointerup",
-  () => {
-
-    drawing = false;
-
-  }
-);
-
-
-$("stage").addEventListener(
-  "pointercancel",
-  () => {
-
-    drawing = false;
-
-  }
-);
-
-
-/* -----------------------------
-   BUTTONS
------------------------------ */
-
-$("openTop").onclick =
-  () => $("fileInput").click();
-
-
-$("openEmpty").onclick =
-  () => $("fileInput").click();
-
-
-$("fileInput").onchange =
-  event => {
-
-    loadImage(
-      event.target.files[0]
-    );
-
-  };
-
-
-$("undo").onclick =
-  () => {
-
-    if (!history.length) return;
-
-    future.push(
-      snapshot()
-    );
-
-    restore(
-      history.pop()
-    );
-
-  };
-
-
-$("redo").onclick =
-  () => {
-
-    if (!future.length) return;
-
-    history.push(
-      snapshot()
-    );
-
-    restore(
-      future.pop()
-    );
-
-  };
-
-
-$("before").onclick =
-  () => {
-
-    showBefore =
-      !showBefore;
-
-    $("badge").style.display =
-      showBefore
-        ? "block"
-        : "none";
-
-    schedule();
-
-  };
-
-
-$("reset").onclick =
-  () => {
-
-    if (!image) return;
-
-    pushHistory();
-
-    resetEditor();
-
-  };
-
-
-$("zout").onclick =
-  () => {
-
-    zoom =
-      clamp(
-        zoom-.1,
-        .5,
-        2.5
-      );
-
-    render();
-
-  };
-
-
-$("zin").onclick =
-  () => {
-
-    zoom =
-      clamp(
-        zoom+.1,
-        .5,
-        2.5
-      );
-
-    render();
-
-  };
-
-
-$("fit").onclick =
-  () => {
-
-    zoom = 1;
-
-    render();
-
-  };
-
-
-$("full").onclick =
-  () => {
-
-    $("stage")
-      .requestFullscreen?.();
-
-  };
-
-
-/* -----------------------------
-   TOOL TABS
------------------------------ */
-
-$("tabs").addEventListener(
-  "click",
-  event => {
-
-    const button =
-      event.target.closest(
-        "[data-tool]"
-      );
-
-
-    if (!button) return;
-
-
-    activeTool =
-      button.dataset.tool;
-
-
-    document
-      .querySelectorAll(
-        "#tabs button"
-      )
-      .forEach(
-        item =>
-          item.classList.toggle(
-            "active",
-            item === button
-          )
-      );
-
-
-    panel();
-
-  }
-);
-
-
-/* -----------------------------
-   KEYBOARD UNDO / REDO
------------------------------ */
-
-document.addEventListener(
-  "keydown",
-  event => {
-
-    if (
-      (event.ctrlKey ||
-       event.metaKey) &&
-      event.key.toLowerCase() === "z"
-    ) {
-
-      event.preventDefault();
-
-      $("undo").click();
-
-    }
-
-    else if (
-      (event.ctrlKey ||
-       event.metaKey) &&
-      event.shiftKey &&
-      event.key.toLowerCase() === "z"
-    ) {
-
-      event.preventDefault();
-
-      $("redo").click();
-
-    }
-
-  }
-);
-
-
-/* -----------------------------
-   DRAG IMAGE
------------------------------ */
-
-$("stage").addEventListener(
-  "dragover",
-  event => {
-
-    event.preventDefault();
-
-  }
-);
-
-
-$("stage").addEventListener(
-  "drop",
-  event => {
-
-    event.preventDefault();
-
-    loadImage(
-      event.dataTransfer.files[0]
-    );
-
-  }
-);
-
-
-/* -----------------------------
-   HEX COLOR
------------------------------ */
-
-function hexToRGB(hex) {
-
-  const value =
-    hex.replace(
-      "#",
-      ""
-    );
-
-
-  return [
-
-    parseInt(
-      value.slice(0,2),
-      16
-    ) / 255,
-
-    parseInt(
-      value.slice(2,4),
-      16
-    ) / 255,
-
-    parseInt(
-      value.slice(4,6),
-      16
-    ) / 255
-
-  ];
-
-}
-
-
-/* -----------------------------
-   EXPORT
------------------------------ */
-
-function exportImage() {
-
-  if (!image) {
-
-    alert(
-      "Please open a photo first."
-    );
-
-    return;
-
+/* =========================================================
+   RENDER
+========================================================= */
+
+function renderToCanvas(
+  maxEdge=1100,
+  includeOverlays=true
+){
+
+  if(!image){
+    return null;
   }
 
 
-  $("status").textContent =
-    "Exporting...";
-
-
-  const format =
-    $("format")?.value ||
-    "image/jpeg";
-
-
-  const requestedSize =
-    Number(
-      $("size")?.value || 0
-    );
-
-
-  const quality =
-    Number(
-      $("quality")?.value || 90
-    ) / 100;
-
-
-  const previousZoom =
-    zoom;
-
-
-  zoom = 1;
-
-  render();
-
-
-  const maximum =
-    requestedSize ||
-    Math.max(
-      canvas.width,
-      canvas.height
-    );
+  const geometry =
+    geometryCanvas();
 
 
   const scale =
     Math.min(
       1,
-      maximum /
+      maxEdge/
       Math.max(
-        canvas.width,
-        canvas.height
+        geometry.width,
+        geometry.height
+      )
+    );
+
+
+  const width =
+    Math.max(
+      1,
+      Math.round(
+        geometry.width*
+        scale
+      )
+    );
+
+
+  const height =
+    Math.max(
+      1,
+      Math.round(
+        geometry.height*
+        scale
       )
     );
 
 
   const output =
     document.createElement(
-      "canvas"
+      'canvas'
     );
 
 
   output.width =
-    Math.max(
-      1,
-      Math.round(
-        canvas.width*scale
-      )
-    );
-
+    width;
 
   output.height =
-    Math.max(
-      1,
-      Math.round(
-        canvas.height*scale
-      )
+    height;
+
+
+  const context =
+    output.getContext(
+      '2d',
+      {
+        willReadFrequently:true
+      }
     );
 
 
-  const outputContext =
-    output.getContext("2d");
+  context.drawImage(
+
+    geometry.canvas,
+
+    geometry.x,
+    geometry.y,
+
+    geometry.width,
+    geometry.height,
+
+    0,
+    0,
+
+    width,
+    height
+
+  );
 
 
-  outputContext.drawImage(
-    canvas,
+  let data =
+    context.getImageData(
+      0,
+      0,
+      width,
+      height
+    );
+
+
+  data =
+    applyPixels(
+      data,
+      width,
+      height
+    );
+
+
+  context.putImageData(
+    data,
+    0,
+    0
+  );
+
+
+  applyNoiseReduction(
+    context,
+    width,
+    height,
+    S.noise
+  );
+
+
+  sharpen(
+    context,
+    width,
+    height,
+    S.sharp
+  );
+
+
+  grain(
+    context,
+    width,
+    height,
+    S.grain
+  );
+
+
+  applyBlur(
+    context,
+    width,
+    height,
+    S.blur*.55
+  );
+
+
+  if(includeOverlays){
+
+    drawOverlays(
+      context,
+      width,
+      height
+    );
+
+  }
+
+
+  return output;
+
+}
+
+
+function render(){
+
+  if(!image){
+    return;
+  }
+
+
+  setStatus(
+    'Rendering…'
+  );
+
+
+  if(showBefore){
+
+    const geometry =
+      geometryCanvas();
+
+
+    const scale =
+      Math.min(
+        1,
+        1100/
+        Math.max(
+          geometry.width,
+          geometry.height
+        )
+      );
+
+
+    const width =
+      Math.max(
+        1,
+        Math.round(
+          geometry.width*
+          scale
+        )
+      );
+
+
+    const height =
+      Math.max(
+        1,
+        Math.round(
+          geometry.height*
+          scale
+        )
+      );
+
+
+    canvas.width =
+      width;
+
+    canvas.height =
+      height;
+
+
+    ctx.clearRect(
+      0,
+      0,
+      width,
+      height
+    );
+
+
+    ctx.drawImage(
+
+      geometry.canvas,
+
+      geometry.x,
+      geometry.y,
+
+      geometry.width,
+      geometry.height,
+
+      0,
+      0,
+
+      width,
+      height
+
+    );
+
+
+    canvas.style.transform =
+      `scale(${zoom})`;
+
+
+    overlay.style.display =
+      'none';
+
+
+    setStatus(
+      'Original'
+    );
+
+
+    return;
+
+  }
+
+
+  const output =
+    renderToCanvas(
+      window.innerWidth<700
+        ? 720
+        : 1100,
+      true
+    );
+
+
+  canvas.width =
+    output.width;
+
+  canvas.height =
+    output.height;
+
+
+  ctx.clearRect(
     0,
     0,
     output.width,
@@ -4300,80 +4784,859 @@ function exportImage() {
   );
 
 
-  const extension =
-    format === "image/png"
-      ? "png"
-      : format === "image/webp"
-        ? "webp"
-        : "jpg";
+  ctx.drawImage(
+    output,
+    0,
+    0
+  );
 
 
-  const link =
-    document.createElement("a");
+  canvas.style.transform =
+    `scale(${zoom})`;
 
 
-  link.download =
-    `toolora-edited-${Date.now()}.${extension}`;
+  overlay.style.display =
+    'none';
 
 
-  link.href =
-    output.toDataURL(
-      format,
-      quality
-    );
+  $('zlabel').textContent =
+    `${Math.round(
+      zoom*100
+    )}%`;
 
 
-  link.click();
-
-
-  zoom =
-    previousZoom;
-
-
-  render();
-
-
-  $("status").textContent =
-    "Export complete";
+  setStatus(
+    'Ready'
+  );
 
 }
 
 
-/* -----------------------------
-   RENDER QUEUE
------------------------------ */
+/* =========================================================
+   STAGE COORDINATES
+========================================================= */
 
-function schedule() {
+function stagePoint(event){
 
-  if (renderQueued) return;
-
-
-  renderQueued = true;
+  const rect =
+    canvas.getBoundingClientRect();
 
 
-  requestAnimationFrame(
-    () => {
+  return {
 
-      renderQueued = false;
+    x:clamp(
+      (
+        event.clientX-
+        rect.left
+      )/
+      rect.width,
+      0,
+      1
+    ),
+
+    y:clamp(
+      (
+        event.clientY-
+        rect.top
+      )/
+      rect.height,
+      0,
+      1
+    )
+
+  };
+
+}
+
+
+/* =========================================================
+   TEXT HIT TEST
+========================================================= */
+
+function textAt(
+  x,
+  y
+){
+
+  for(
+    let i=texts.length-1;
+    i>=0;
+    i--
+  ){
+
+    const t =
+      texts[i];
+
+
+    const dx =
+      Math.abs(
+        x-t.x
+      );
+
+
+    const dy =
+      Math.abs(
+        y-t.y
+      );
+
+
+    const box =
+      Math.max(
+        .06,
+        t.size/
+        Math.max(
+          canvas.width,
+          canvas.height
+        )*
+        3
+      );
+
+
+    if(
+      dx<box &&
+      dy<box
+    ){
+
+      return t;
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =========================================================
+   FILE INPUT
+========================================================= */
+
+$('openTop')
+  .addEventListener(
+    'click',
+    () =>
+      $('fileInput').click()
+  );
+
+
+$('openEmpty')
+  .addEventListener(
+    'click',
+    () =>
+      $('fileInput').click()
+  );
+
+
+$('fileInput')
+  .addEventListener(
+    'change',
+    event=>{
+
+      loadImage(
+        event.target.files?.[0]
+      );
+
+      event.target.value = '';
+
+    }
+  );
+
+
+/* =========================================================
+   DRAG & DROP
+========================================================= */
+
+$('stage')
+  .addEventListener(
+    'dragover',
+    event=>{
+
+      event.preventDefault();
+
+      $('stage')
+        .classList
+        .add('dragover');
+
+    }
+  );
+
+
+$('stage')
+  .addEventListener(
+    'dragleave',
+    ()=>
+      $('stage')
+        .classList
+        .remove('dragover')
+  );
+
+
+$('stage')
+  .addEventListener(
+    'drop',
+    event=>{
+
+      event.preventDefault();
+
+      $('stage')
+        .classList
+        .remove('dragover');
+
+      loadImage(
+        event.dataTransfer.files?.[0]
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   PHOTO POINTER EVENTS
+========================================================= */
+
+$('stage')
+  .addEventListener(
+    'pointerdown',
+    event=>{
+
+      if(!image){
+        return;
+      }
+
+
+      const point =
+        stagePoint(event);
+
+
+      /* COLOR PICKER */
+
+      if(picking){
+
+        const x =
+          Math.round(
+            point.x*
+            (canvas.width-1)
+          );
+
+
+        const y =
+          Math.round(
+            point.y*
+            (canvas.height-1)
+          );
+
+
+        const pixel =
+          ctx.getImageData(
+            x,
+            y,
+            1,
+            1
+          ).data;
+
+
+        const hsv =
+          rgbToHsv(
+            pixel[0],
+            pixel[1],
+            pixel[2]
+          );
+
+
+        selectedColor = {
+
+          r:pixel[0],
+          g:pixel[1],
+          b:pixel[2],
+
+          ...hsv,
+
+          hex:
+            rgbToHex(
+              pixel[0],
+              pixel[1],
+              pixel[2]
+            )
+
+        };
+
+
+        picking = false;
+
+
+        $('pickerBadge')
+          .style
+          .display =
+          'none';
+
+
+        active =
+          'selective';
+
+
+        syncTabs();
+
+        panel();
+
+        schedule();
+
+        return;
+
+      }
+
+
+      /* TEXT */
+
+      if(active === 'text'){
+
+        const text =
+          textAt(
+            point.x,
+            point.y
+          );
+
+
+        if(text){
+
+          selectedTextId =
+            text.id;
+
+
+          dragText = {
+
+            text,
+
+            dx:
+              point.x-
+              text.x,
+
+            dy:
+              point.y-
+              text.y
+
+          };
+
+
+          push();
+
+
+          panel();
+
+
+          event.currentTarget
+            .setPointerCapture(
+              event.pointerId
+            );
+
+
+          return;
+
+        }
+
+      }
+
+
+      /* DRAW */
+
+      if(active === 'draw'){
+
+        push();
+
+        drawing = true;
+
+
+        event.currentTarget
+          .setPointerCapture(
+            event.pointerId
+          );
+
+
+        strokes.push({
+
+          points:[
+            point
+          ],
+
+          size:
+            S.brushSize,
+
+          opacity:
+            S.brushOpacity,
+
+          color:
+            S.brushColor
+
+        });
+
+
+        schedule();
+
+        return;
+
+      }
+
+    }
+  );
+
+
+$('stage')
+  .addEventListener(
+    'pointermove',
+    event=>{
+
+      if(!image){
+        return;
+      }
+
+
+      const point =
+        stagePoint(event);
+
+
+      if(dragText){
+
+        dragText.text.x =
+          clamp(
+            point.x-
+            dragText.dx,
+            0,
+            1
+          );
+
+
+        dragText.text.y =
+          clamp(
+            point.y-
+            dragText.dy,
+            0,
+            1
+          );
+
+
+        schedule();
+
+      }
+
+
+      else if(
+        drawing &&
+        strokes.length
+      ){
+
+        strokes
+          .at(-1)
+          .points
+          .push(point);
+
+        schedule();
+
+      }
+
+    }
+  );
+
+
+$('stage')
+  .addEventListener(
+    'pointerup',
+    ()=>{
+      dragText = null;
+      drawing = false;
+    }
+  );
+
+
+$('stage')
+  .addEventListener(
+    'pointercancel',
+    ()=>{
+      dragText = null;
+      drawing = false;
+    }
+  );
+
+
+/* =========================================================
+   TOOL TABS
+========================================================= */
+
+$('tabs')
+  .addEventListener(
+    'click',
+    event=>{
+
+      const button =
+        event.target.closest(
+          '[data-tool]'
+        );
+
+
+      if(!button){
+        return;
+      }
+
+
+      active =
+        button.dataset.tool;
+
+
+      syncTabs();
+
+      panel();
+
+    }
+  );
+
+
+function syncTabs(){
+
+  document
+    .querySelectorAll(
+      '#tabs button'
+    )
+    .forEach(button=>{
+
+      button.classList.toggle(
+        'active',
+        button.dataset.tool ===
+        active
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   UNDO / REDO
+========================================================= */
+
+$('undo')
+  .addEventListener(
+    'click',
+    ()=>{
+
+      if(!history.length){
+        return;
+      }
+
+
+      future.push(
+        snapshot()
+      );
+
+
+      restoreSnapshot(
+        history.pop()
+      );
+
+    }
+  );
+
+
+$('redo')
+  .addEventListener(
+    'click',
+    ()=>{
+
+      if(!future.length){
+        return;
+      }
+
+
+      history.push(
+        snapshot()
+      );
+
+
+      restoreSnapshot(
+        future.pop()
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   BEFORE
+========================================================= */
+
+$('before')
+  .addEventListener(
+    'click',
+    ()=>{
+
+      showBefore =
+        !showBefore;
+
+
+      $('beforeBadge')
+        .style
+        .display =
+        showBefore
+          ? 'block'
+          : 'none';
+
 
       render();
 
     }
   );
 
+
+/* =========================================================
+   ZOOM
+========================================================= */
+
+$('zout')
+  .addEventListener(
+    'click',
+    ()=>{
+
+      zoom =
+        clamp(
+          zoom-.1,
+          .5,
+          2.5
+        );
+
+      render();
+
+    }
+  );
+
+
+$('zin')
+  .addEventListener(
+    'click',
+    ()=>{
+
+      zoom =
+        clamp(
+          zoom+.1,
+          .5,
+          2.5
+        );
+
+      render();
+
+    }
+  );
+
+
+$('fit')
+  .addEventListener(
+    'click',
+    ()=>{
+
+      zoom = 1;
+
+      render();
+
+    }
+  );
+
+
+$('full')
+  .addEventListener(
+    'click',
+    ()=>{
+
+      $('stage')
+        .requestFullscreen?.();
+
+    }
+  );
+
+
+/* =========================================================
+   KEYBOARD
+========================================================= */
+
+document
+  .addEventListener(
+    'keydown',
+    event=>{
+
+      if(
+        (event.ctrlKey ||
+        event.metaKey) &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === 'z'
+      ){
+
+        event.preventDefault();
+
+        $('undo').click();
+
+      }
+
+
+      else if(
+        (event.ctrlKey ||
+        event.metaKey) &&
+        (
+          event.shiftKey &&
+          event.key.toLowerCase() === 'z'
+        )
+      ){
+
+        event.preventDefault();
+
+        $('redo').click();
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
+function exportImage(){
+
+  if(!image){
+
+    alert(
+      'Please open a photo first.'
+    );
+
+    return;
+
+  }
+
+
+  const max =
+    Number(
+      $('exportSize').value
+    )
+    ||
+    Math.max(
+      source.width,
+      source.height
+    );
+
+
+  const type =
+    $('format').value;
+
+
+  const quality =
+    Number(
+      $('quality').value
+    );
+
+
+  setStatus(
+    'Exporting…'
+  );
+
+
+  setTimeout(
+    ()=>{
+
+      try{
+
+        const output =
+          renderToCanvas(
+            max,
+            true
+          );
+
+
+        const extension =
+          type === 'image/png'
+            ? 'png'
+            : type === 'image/webp'
+              ? 'webp'
+              : 'jpg';
+
+
+        const link =
+          document.createElement(
+            'a'
+          );
+
+
+        link.download =
+          `toolora-edited-${Date.now()}.${extension}`;
+
+
+        link.href =
+          output.toDataURL(
+            type,
+            quality
+          );
+
+
+        link.click();
+
+
+        setStatus(
+          'Export complete'
+        );
+
+      }
+
+      catch(error){
+
+        console.error(error);
+
+        setStatus(
+          'Export failed'
+        );
+
+
+        alert(
+          'The photo is too large for this browser to export. Try a smaller export size.'
+        );
+
+      }
+
+    },
+    20
+  );
+
 }
 
 
-/* -----------------------------
-   INITIALIZE
------------------------------ */
+/* =========================================================
+   RESET BUTTON
+========================================================= */
 
-document
-  .querySelector(
-    '[data-tool="light"]'
-  )
-  .classList.add("active");
+$('reset')
+  .addEventListener(
+    'click',
+    ()=>{
+      push();
+      resetAll(false);
+    }
+  );
 
+
+/* =========================================================
+   WINDOW RESIZE
+========================================================= */
+
+window.addEventListener(
+  'resize',
+  ()=>{
+    if(image){
+      schedule();
+    }
+  }
+);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+syncTabs();
 
 panel();
 
