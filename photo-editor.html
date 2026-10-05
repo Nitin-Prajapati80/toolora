@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b0d10">
-<title>Toolora - Professional Photo Editor</title>
-<link rel="stylesheet" href="./css/photo-editor.css?v=5">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d10">
+  <title>Toolora - Professional Photo Editor</title>
+  <link rel="stylesheet" href="./css/photo-editor.css?v=10">
 </head>
 
 <body>
@@ -64,6 +64,14 @@
           Before
         </div>
 
+        <div id="cropOverlay" class="crop-overlay">
+          <div class="crop-grid"></div>
+          <span class="crop-handle tl"></span>
+          <span class="crop-handle tr"></span>
+          <span class="crop-handle bl"></span>
+          <span class="crop-handle br"></span>
+        </div>
+
       </div>
 
       <div class="status-bar">
@@ -115,6 +123,36 @@
           <span>Crop</span>
         </button>
 
+        <button data-tool="presets" type="button">
+          <b>★</b>
+          <span>Presets</span>
+        </button>
+
+        <button data-tool="profiles" type="button">
+          <b>◈</b>
+          <span>Profiles</span>
+        </button>
+
+        <button data-tool="mask" type="button">
+          <b>◌</b>
+          <span>Mask</span>
+        </button>
+
+        <button data-tool="retouch" type="button">
+          <b>⌾</b>
+          <span>Retouch</span>
+        </button>
+
+        <button data-tool="blur" type="button">
+          <b>◍</b>
+          <span>Blur</span>
+        </button>
+
+        <button data-tool="optics" type="button">
+          <b>◇</b>
+          <span>Optics</span>
+        </button>
+
         <button data-tool="text" type="button">
           <b>T</b>
           <span>Text</span>
@@ -128,11 +166,6 @@
         <button data-tool="selective" type="button">
           <b>◉</b>
           <span>Color Select</span>
-        </button>
-
-        <button data-tool="presets" type="button">
-          <b>★</b>
-          <span>Presets</span>
         </button>
 
         <button data-tool="layers" type="button">
@@ -153,6 +186,6 @@
 
 </div>
 
-<script src="./js/photo-editor.js?v=5"></script>
+<script src="./js/photo-editor.js?v=10"></script>
 </body>
 </html>
