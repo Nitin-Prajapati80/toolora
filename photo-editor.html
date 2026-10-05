@@ -1,90 +1,315 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Toolora Professional Photo Editor</title>
-<link rel="stylesheet" href="css/photo-editor.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d10">
+<title>Toolora - Professional Photo Editor</title>
+
+<link rel="stylesheet" href="./css/photo-editor.css?v=4">
 </head>
 
 <body>
+
 <div class="app">
 
-    <header class="topbar">
-        <button id="backBtn" class="top-btn">← Back</button>
+  <header class="topbar">
 
-        <div class="brand">
-            <strong>Toolora</strong>
-            <span>Photo Editor</span>
+    <a class="brand" href="index.html">Toolora</a>
+
+    <div class="top-actions">
+
+      <button class="top-btn" id="openTop" type="button">
+        Open
+      </button>
+
+      <button class="icon-btn" id="undo" type="button" aria-label="Undo">
+        ↶
+      </button>
+
+      <button class="icon-btn" id="redo" type="button" aria-label="Redo">
+        ↷
+      </button>
+
+      <button class="top-btn" id="before" type="button">
+        Before
+      </button>
+
+      <a class="back-link" href="index.html">
+        Back
+      </a>
+
+    </div>
+
+    <input
+      id="fileInput"
+      class="file-input"
+      type="file"
+      accept="image/*"
+    >
+
+  </header>
+
+
+  <main class="workspace">
+
+    <!-- PHOTO VIEWER -->
+
+    <section class="viewer">
+
+      <div class="viewer-head">
+
+        <div class="photo-info">
+
+          <strong id="name">
+            No photo
+          </strong>
+
+          <span id="meta">
+            Open an image to start
+          </span>
+
         </div>
 
-        <div class="top-actions">
-            <button id="openBtn" class="top-btn">Open</button>
-            <button id="undoBtn" class="top-btn" disabled>↶</button>
-            <button id="redoBtn" class="top-btn" disabled>↷</button>
-            <button id="beforeBtn" class="top-btn">Before</button>
+
+        <div class="zoom-tools">
+
+          <button id="zout" type="button">
+            −
+          </button>
+
+          <span id="zlabel">
+            100%
+          </span>
+
+          <button id="zin" type="button">
+            +
+          </button>
+
+          <button id="fit" type="button">
+            Fit
+          </button>
+
+          <button id="full" type="button" aria-label="Fullscreen">
+            ⛶
+          </button>
+
         </div>
 
-        <input id="fileInput" type="file" accept="image/*" hidden>
-    </header>
+      </div>
 
-    <main class="workspace">
 
-        <section class="preview-area">
+      <div id="stage" class="stage">
 
-            <div class="canvas-stage" id="stage">
-                <canvas id="imageCanvas"></canvas>
-                <canvas id="overlayCanvas"></canvas>
+        <div id="empty" class="empty-state">
 
-                <div id="emptyState" class="empty-state">
-                    <div class="empty-icon">＋</div>
-                    <h2>Open an image</h2>
-                    <p>Upload a photo to start editing.</p>
-                    <button id="openEmptyBtn" class="primary-btn">Choose Image</button>
-                </div>
-            </div>
+          <div class="empty-icon">
+            ✦
+          </div>
 
-            <div class="zoom-bar">
-                <button id="zoomOut">−</button>
-                <span id="zoomLabel">100%</span>
-                <button id="zoomIn">+</button>
-                <button id="fitBtn">Fit</button>
-                <button id="fullBtn">1:1</button>
-            </div>
+          <h1>
+            Professional Photo Editor
+          </h1>
 
-            <div class="status-bar">
-                <span id="imageInfo">No image</span>
-                <span id="statusText">Ready</span>
-            </div>
-        </section>
+          <p>
+            Edit photos directly in your browser.
+            Your image stays on this device.
+          </p>
 
-        <section class="editor-panel">
+          <button
+            id="openEmpty"
+            class="primary-btn"
+            type="button"
+          >
+            Open Photo
+          </button>
 
-            <nav class="tool-tabs" id="toolTabs">
-                <button data-tool="light">Light</button>
-                <button data-tool="color">Color</button>
-                <button data-tool="effects">Effects</button>
-                <button data-tool="detail">Detail</button>
-                <button data-tool="crop">Crop</button>
-                <button data-tool="text">Text</button>
-                <button data-tool="draw">Draw</button>
-                <button data-tool="selective">Color Select</button>
-                <button data-tool="presets">Presets</button>
-                <button data-tool="profiles">Profiles</button>
-                <button data-tool="mask">Mask</button>
-                <button data-tool="retouch">Retouch</button>
-                <button data-tool="blur">Blur</button>
-                <button data-tool="optics">Optics</button>
-                <button data-tool="layers">Layers</button>
-                <button data-tool="export">Export</button>
-            </nav>
+        </div>
 
-            <div id="controls" class="controls"></div>
 
-        </section>
-    </main>
+        <canvas id="canvas"></canvas>
+
+        <canvas id="overlay"></canvas>
+
+
+        <div id="pickerBadge" class="picker-badge">
+          Click a color in the photo
+        </div>
+
+
+        <div id="beforeBadge" class="before-badge">
+          Before
+        </div>
+
+      </div>
+
+
+      <div class="status-bar">
+
+        <span id="status">
+          Ready
+        </span>
+
+        <span>
+          Local processing
+        </span>
+
+      </div>
+
+    </section>
+
+
+    <!-- EDITOR -->
+
+    <aside class="editor">
+
+      <div class="panel-head">
+
+        <div>
+
+          <span id="eyebrow">
+            Adjust
+          </span>
+
+          <h2 id="title">
+            Light
+          </h2>
+
+        </div>
+
+        <button
+          id="reset"
+          class="reset-btn"
+          type="button"
+        >
+          Reset
+        </button>
+
+      </div>
+
+
+      <div
+        id="panel"
+        class="control-panel"
+      ></div>
+
+
+      <!-- TOOL BAR -->
+
+      <nav
+        id="tabs"
+        class="tool-tabs"
+        aria-label="Editing tools"
+      >
+
+        <button
+          data-tool="light"
+          type="button"
+        >
+          <b>☼</b>
+          <span>Light</span>
+        </button>
+
+
+        <button
+          data-tool="color"
+          type="button"
+        >
+          <b>◐</b>
+          <span>Color</span>
+        </button>
+
+
+        <button
+          data-tool="effects"
+          type="button"
+        >
+          <b>✧</b>
+          <span>Effects</span>
+        </button>
+
+
+        <button
+          data-tool="detail"
+          type="button"
+        >
+          <b>◒</b>
+          <span>Detail</span>
+        </button>
+
+
+        <button
+          data-tool="crop"
+          type="button"
+        >
+          <b>⌗</b>
+          <span>Crop</span>
+        </button>
+
+
+        <button
+          data-tool="text"
+          type="button"
+        >
+          <b>T</b>
+          <span>Text</span>
+        </button>
+
+
+        <button
+          data-tool="draw"
+          type="button"
+        >
+          <b>✎</b>
+          <span>Draw</span>
+        </button>
+
+
+        <button
+          data-tool="selective"
+          type="button"
+        >
+          <b>◉</b>
+          <span>Color Select</span>
+        </button>
+
+
+        <button
+          data-tool="presets"
+          type="button"
+        >
+          <b>★</b>
+          <span>Presets</span>
+        </button>
+
+
+        <button
+          data-tool="layers"
+          type="button"
+        >
+          <b>▣</b>
+          <span>Layers</span>
+        </button>
+
+
+        <button
+          data-tool="export"
+          type="button"
+        >
+          <b>⇩</b>
+          <span>Export</span>
+        </button>
+
+      </nav>
+
+    </aside>
+
+  </main>
+
 </div>
 
-<script src="js/photo-editor.js"></script>
+
+<script src="./js/photo-editor.js?v=4"></script>
+
 </body>
 </html>
