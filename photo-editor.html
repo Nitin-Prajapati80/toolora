@@ -1,490 +1,242 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#111318">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101217">
 <title>Toolora Photo Editor</title>
-<style>
-:root{color-scheme:dark;--bg:#111318;--panel:#191c23;--line:#30343e;--text:#f4f5f7;--muted:#a3a9b6;--accent:#8b7cff}
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Arial,sans-serif}
-button,input,select{font:inherit}
-button{cursor:pointer;color:var(--text);background:#262a34;border:1px solid var(--line);border-radius:9px;padding:9px 12px}
-button:hover{border-color:var(--accent)}
-button:disabled{opacity:.35;cursor:not-allowed}
-.app{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-header{height:58px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--line);gap:10px}
-.brand{font-size:20px;font-weight:800;letter-spacing:-.8px}
-.brand span{color:var(--accent)}
-.actions{display:flex;gap:6px;align-items:center}
-.actions button{padding:8px 10px}
-.workspace{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 350px;overflow:hidden}
-.viewer{min-width:0;min-height:0;display:flex;flex-direction:column;background:#0c0e12}
-.viewerbar{height:43px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;padding:0 14px;color:var(--muted);font-size:12px;gap:8px}
-.stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;overscroll-behavior:contain;background-color:#0c0e12;background-image:linear-gradient(45deg,#171a20 25%,transparent 25%),linear-gradient(-45deg,#171a20 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#171a20 75%),linear-gradient(-45deg,transparent 75%,#171a20 75%);background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0}
-#photo{display:none;max-width:95%;max-height:95%;width:auto;height:auto;object-fit:contain;box-shadow:0 10px 45px #0007;touch-action:none}
-.empty{text-align:center;padding:24px;max-width:350px}
-.empty h2{margin:10px 0;font-size:22px}
-.empty p{color:var(--muted);line-height:1.6;font-size:14px}
-.primary{background:var(--accent);border-color:var(--accent);color:white;font-weight:700}
-#file{display:none}
-.status{height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:var(--muted);font-size:11px;border-top:1px solid var(--line)}
-.editor{min-height:0;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--line);background:var(--panel)}
-.panelhead{height:62px;flex-shrink:0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
-.panelhead h2{font-size:17px;margin:2px 0}
-.panelhead small{color:var(--muted);font-size:11px}
-#controls{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
-.tabs{display:flex;overflow-x:auto;overflow-y:hidden;gap:5px;padding:9px;border-top:1px solid var(--line);flex-shrink:0;overscroll-behavior-x:contain;scrollbar-width:thin}
-.tabs button{flex:0 0 auto;min-width:63px;padding:9px 7px;font-size:11px}
-.tabs button.active{background:#3a345c;border-color:var(--accent);color:white}
-.group{margin-bottom:20px}
-.group h3{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:0 0 12px}
-.control{margin:0 0 17px}
-.control label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:9px;color:#e3e5eb}
-.control output{color:#c5bcff;font-variant-numeric:tabular-nums}
-input[type=range]{width:100%;accent-color:var(--accent);height:18px;display:block;cursor:pointer}
-input[type=text],input[type=number],select{width:100%;background:#101218;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:8px;min-width:0}
-input[type=color]{width:38px;height:30px;border:0;background:transparent;padding:0}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.row>*{flex:1}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.note{font-size:12px;line-height:1.6;color:var(--muted)}
-hr{border:0;border-top:1px solid var(--line);margin:16px 0}
-.preset{min-height:65px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px}
-button.selected{outline:1px solid var(--accent);background:#35304e}
-@media(max-width:760px){
- header{height:52px;padding:0 9px}
- .brand{font-size:18px}
- .actions{gap:4px}
- .actions button{padding:7px 8px;font-size:12px}
- .workspace{grid-template-columns:1fr;grid-template-rows:minmax(0,44%) minmax(0,56%)}
- .viewer{min-height:0}
- .viewerbar{height:33px;padding:0 10px}
- .stage{min-height:0}
- #photo{max-width:96%;max-height:96%}
- .editor{border-left:0;border-top:1px solid var(--line)}
- .panelhead{height:48px;padding:7px 12px}
- .panelhead h2{font-size:15px}
- #controls{padding:12px 14px}
- .tabs{padding:6px;gap:4px}
- .tabs button{min-width:57px;padding:7px 5px}
- .status{height:23px}
-}
-</style>
+
+<link rel="stylesheet" href="css/photo-editor.css">
 </head>
+
 <body>
+
 <div class="app">
-<header>
-  <div class="brand">Tool<span>ora</span></div>
-  <div class="actions">
-    <button id="open">Open Photo</button>
-    <input id="file" type="file" accept="image/*">
-    <button id="undo" disabled title="Undo">↶</button>
-    <button id="redo" disabled title="Redo">↷</button>
-    <button id="before" disabled>Before</button>
-    <button id="download" class="primary" disabled>Export</button>
-  </div>
-</header>
-<main class="workspace">
-  <section class="viewer">
-    <div class="viewerbar"><span id="filename">No photo loaded</span><span id="dimensions">Original</span></div>
-    <div class="stage" id="stage">
-      <div class="empty" id="empty">
-        <div style="font-size:42px">✦</div>
-        <h2>Professional Photo Editor</h2>
-        <p>Adjust light, color, details and effects. Add text, draw, crop and export your image.</p>
-        <button class="primary" id="openCenter">Choose a Photo</button>
-        <p>Your photo is processed locally in this browser.</p>
-      </div>
-      <canvas id="photo"></canvas>
+
+<header class="topbar">
+
+    <a href="index.html" class="brand">
+        Toolora
+    </a>
+
+    <div class="top-actions">
+
+        <button id="openBtn">Open</button>
+
+        <input
+            id="fileInput"
+            type="file"
+            accept="image/*"
+            hidden
+        >
+
+        <button id="undoBtn" disabled title="Undo">
+            ↶
+        </button>
+
+        <button id="redoBtn" disabled title="Redo">
+            ↷
+        </button>
+
+        <button id="beforeBtn" disabled>
+            Before
+        </button>
+
+        <button id="exportTop" disabled>
+            Export
+        </button>
+
+        <a href="index.html" class="back-btn">
+            Back
+        </a>
+
     </div>
-    <div class="status"><span id="status">Ready</span><span id="zoomLabel">Fit to screen</span></div>
-  </section>
-  <aside class="editor">
-    <div class="panelhead"><div><small>PHOTO WORKSPACE</small><h2 id="panelTitle">Light</h2></div><button id="reset">Reset Tool</button></div>
-    <div id="controls"><p class="note">Open a photo to begin editing.</p></div>
-    <nav class="tabs" id="tabs">
-      <button data-tool="light" class="active">☼<br>Light</button>
-      <button data-tool="color">◐<br>Color</button>
-      <button data-tool="effects">✧<br>Effects</button>
-      <button data-tool="detail">◒<br>Detail</button>
-      <button data-tool="crop">⌗<br>Crop</button>
-      <button data-tool="filters">◈<br>Filters</button>
-      <button data-tool="draw">✎<br>Draw</button>
-      <button data-tool="text">T<br>Text</button>
-      <button data-tool="shapes">◇<br>Shapes</button>
-      <button data-tool="blur">◍<br>Blur</button>
-      <button data-tool="export">⇩<br>Export</button>
+
+</header>
+
+
+<main class="workspace">
+
+<section class="viewer">
+
+    <div class="viewer-header">
+
+        <div>
+            <strong id="fileName">
+                No photo
+            </strong>
+
+            <small id="imageInfo">
+                Open an image to start
+            </small>
+        </div>
+
+        <div class="zoom-controls">
+
+            <button id="zoomOut">−</button>
+
+            <span id="zoomText">
+                Fit
+            </span>
+
+            <button id="zoomIn">+</button>
+
+            <button id="fitBtn">
+                Fit
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div id="stage" class="stage">
+
+        <div id="emptyState" class="empty-state">
+
+            <div class="empty-icon">
+                ✦
+            </div>
+
+            <h2>
+                Professional Photo Editor
+            </h2>
+
+            <p>
+                Edit photos locally with professional controls,
+                creative tools and precise adjustments.
+            </p>
+
+            <button id="openCenter" class="primary-btn">
+                Open Photo
+            </button>
+
+        </div>
+
+
+        <canvas id="editorCanvas"></canvas>
+
+        <div id="selectionBox" class="selection-box hidden">
+            <div class="resize-handle"></div>
+        </div>
+
+    </div>
+
+
+    <div class="viewer-status">
+
+        <span id="statusText">
+            Ready
+        </span>
+
+        <span>
+            Local processing
+        </span>
+
+    </div>
+
+</section>
+
+
+<aside class="editor-panel">
+
+    <div class="panel-header">
+
+        <div>
+            <small>
+                TOOLORA EDITOR
+            </small>
+
+            <h2 id="toolTitle">
+                Light
+            </h2>
+        </div>
+
+        <button id="resetTool">
+            Reset
+        </button>
+
+    </div>
+
+
+    <div id="controls" class="controls">
+
+        <div class="empty-controls">
+            Open a photo to begin.
+        </div>
+
+    </div>
+
+
+    <nav id="toolTabs" class="tool-tabs">
+
+        <button data-tool="light" class="active">
+            ☼
+            <span>Light</span>
+        </button>
+
+        <button data-tool="color">
+            ◐
+            <span>Color</span>
+        </button>
+
+        <button data-tool="target">
+            ◎
+            <span>Target</span>
+        </button>
+
+        <button data-tool="effects">
+            ✧
+            <span>Effects</span>
+        </button>
+
+        <button data-tool="detail">
+            ◒
+            <span>Detail</span>
+        </button>
+
+        <button data-tool="crop">
+            ⌗
+            <span>Crop</span>
+        </button>
+
+        <button data-tool="filters">
+            ◈
+            <span>Filters</span>
+        </button>
+
+        <button data-tool="draw">
+            ✎
+            <span>Draw</span>
+        </button>
+
+        <button data-tool="text">
+            T
+            <span>Text</span>
+        </button>
+
+        <button data-tool="shapes">
+            ◇
+            <span>Shapes</span>
+        </button>
+
+        <button data-tool="blur">
+            ◍
+            <span>Blur</span>
+        </button>
+
+        <button data-tool="export">
+            ⇩
+            <span>Export</span>
+        </button>
+
     </nav>
-  </aside>
+
+</aside>
+
 </main>
-</div>
-<script>
-"use strict";
-const $=id=>document.getElementById(id);
-const canvas=$("photo"),ctx=canvas.getContext("2d",{willReadFrequently:true});
-const state={
- exposure:0,contrast:0,highlights:0,shadows:0,whites:0,blacks:0,
- temperature:0,tint:0,vibrance:0,saturation:0,
- texture:0,clarity:0,dehaze:0,vignette:0,grain:0,
- sharpen:0,noise:0,blur:0,brightness:0,
- filter:"None",crop:"Free",format:"image/jpeg",quality:92,maxEdge:3000,
- brushSize:8,brushColor:"#ffffff",brushOpacity:100,toolMode:"draw"
-};
-let source=null,originalData=null,history=[],future=[],tool="light",raf=0;
-let drawing=false,lastPoint=null,annotations=[],beforeMode=false;
-const MAX_HISTORY=12;
-function say(s){$("status").textContent=s}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function snapshot(){
- if(!source)return;
- try{
-  history.push({image:canvas.toDataURL("image/png"),state:structuredClone(state),annotations:structuredClone(annotations)});
-  if(history.length>MAX_HISTORY)history.shift();
-  future=[];
-  updateHistoryButtons();
- }catch(e){say("Could not save history state")}
-}
-function updateHistoryButtons(){
- $("undo").disabled=!history.length;
- $("redo").disabled=!future.length;
-}
-function restore(entry){
- const im=new Image();
- im.onload=()=>{
-  canvas.width=im.naturalWidth;canvas.height=im.naturalHeight;
-  ctx.drawImage(im,0,0);
-  Object.assign(state,entry.state);
-  annotations=entry.annotations||[];
-  render();panel();updateHistoryButtons();
- };
- im.src=entry.image;
-}
-function undo(){
- if(!history.length)return;
- future.push({image:canvas.toDataURL("image/png"),state:structuredClone(state),annotations:structuredClone(annotations)});
- restore(history.pop());
-}
-function redo(){
- if(!future.length)return;
- history.push({image:canvas.toDataURL("image/png"),state:structuredClone(state),annotations:structuredClone(annotations)});
- restore(future.pop());
-}
-function fitCanvas(){
- if(!source)return;
- const max=window.innerWidth<760?1200:1800;
- const ratio=Math.min(1,max/Math.max(source.width,source.height));
- canvas.width=Math.max(1,Math.round(source.width*ratio));
- canvas.height=Math.max(1,Math.round(source.height*ratio));
- ctx.drawImage(source,0,0,canvas.width,canvas.height);
- originalData=ctx.getImageData(0,0,canvas.width,canvas.height);
- render();
-}
-function loadFile(file){
- if(!file||!file.type.startsWith("image/")){say("Please choose a valid image");return}
- const url=URL.createObjectURL(file),im=new Image();
- im.onload=()=>{
-  URL.revokeObjectURL(url);
-  source=document.createElement("canvas");
-  const max=2400,scale=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));
-  source.width=Math.max(1,Math.round(im.naturalWidth*scale));
-  source.height=Math.max(1,Math.round(im.naturalHeight*scale));
-  source.getContext("2d").drawImage(im,0,0,source.width,source.height);
-  annotations=[];history=[];future=[];
-  $("empty").style.display="none";canvas.style.display="block";
-  $("filename").textContent=file.name;
-  $("dimensions").textContent=im.naturalWidth+" × "+im.naturalHeight;
-  fitCanvas();panel();updateHistoryButtons();
-  $("download").disabled=false;$("before").disabled=false;
-  say("Photo loaded");
- };
- im.onerror=()=>{URL.revokeObjectURL(url);say("This image could not be opened")};
- im.src=url;
-}
-$("open").onclick=()=>$("file").click();
-$("openCenter").onclick=()=>$("file").click();
-$("file").onchange=e=>loadFile(e.target.files[0]);
-$("undo").onclick=undo;$("redo").onclick=redo;
-$("before").onclick=()=>{
- if(!source)return;
- beforeMode=!beforeMode;
- if(beforeMode){ctx.putImageData(originalData,0,0);$("before").textContent="After"}
- else{beforeMode=false;render();$("before").textContent="Before"}
-};
-function filterPixels(data){
- const d=data.data,w=data.width,h=data.height;
- const exp=Math.pow(2,state.exposure/100);
- const contrast=state.contrast/100;
- const sat=1+state.saturation/100;
- const vibr=state.vibrance/100;
- const temp=state.temperature*0.45,tint=state.tint*0.3;
- const bright=state.brightness;
- for(let i=0;i<d.length;i+=4){
-  let r=d[i],g=d[i+1],b=d[i+2];
-  r*=exp;g*=exp;b*=exp;
-  const avg=(r+g+b)/3;
-  r+=(avg-r)*(-state.shadows/140);
-  g+=(avg-g)*(-state.shadows/140);
-  b+=(avg-b)*(-state.shadows/140);
-  r+=(r-128)*contrast+bright;
-  g+=(g-128)*contrast+bright;
-  b+=(b-128)*contrast+bright;
-  const lum=.2126*r+.7152*g+.0722*b;
-  const hi=clamp((lum-128)/128,0,1);
-  r-=state.highlights*hi*.35;g-=state.highlights*hi*.35;b-=state.highlights*hi*.35;
-  r+=temp+tint;g-=tint*.6;b-=temp;
-  const l=.299*r+.587*g+.114*b;
-  const s=sat*(1+vibr*(1-Math.abs(2*l/255-1)));
-  r=l+(r-l)*s;g=l+(g-l)*s;b=l+(b-l)*s;
-  if(state.filter==="Mono"){r=g=b=l}
-  if(state.filter==="Warm"){r*=1.09;g*=1.02;b*=.91}
-  if(state.filter==="Cool"){r*=.92;g*=1.01;b*=1.1}
-  if(state.filter==="Vintage"){r=r*.92+15;g=g*.86+12;b=b*.72+8}
-  if(state.filter==="Fade"){r=r*.84+24;g=g*.84+24;b=b*.84+24}
-  if(state.filter==="Vivid"){r=l+(r-l)*1.25;g=l+(g-l)*1.25;b=l+(b-l)*1.25}
-  if(state.filter==="Cinematic"){r*=1.04;g*=.96;b*=1.05}
-  if(state.texture){const n=(Math.random()-.5)*state.texture*.14;r+=n;g+=n;b+=n}
-  if(state.grain){const n=(Math.random()-.5)*state.grain*.75;r+=n;g+=n;b+=n}
-  d[i]=clamp(r,0,255);d[i+1]=clamp(g,0,255);d[i+2]=clamp(b,0,255);
- }
- if(state.vignette){
-  const amount=state.vignette/100,cx=w/2,cy=h/2,max=Math.sqrt(cx*cx+cy*cy);
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-   const dist=Math.sqrt((x-cx)**2+(y-cy)**2)/max;
-   const f=1-amount*Math.pow(dist,2)*.85;
-   const i=(y*w+x)*4;
-   d[i]*=f;d[i+1]*=f;d[i+2]*=f;
-  }
- }
- return data;
-}
-function render(){
- if(!source||beforeMode)return;
- if(raf)cancelAnimationFrame(raf);
- raf=requestAnimationFrame(()=>{
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.drawImage(source,0,0,canvas.width,canvas.height);
-  let data=ctx.getImageData(0,0,canvas.width,canvas.height);
-  data=filterPixels(data);
-  ctx.putImageData(data,0,0);
-  if(state.blur>0){
-   const temp=document.createElement("canvas");temp.width=canvas.width;temp.height=canvas.height;
-   temp.getContext("2d").drawImage(canvas,0,0);
-   ctx.save();ctx.filter="blur("+state.blur+"px)";
-   ctx.drawImage(temp,0,0);ctx.restore();
-  }
-  if(state.sharpen>0)applySharpen();
-  drawAnnotations();
-  say("Preview updated");
- });
-}
-function applySharpen(){
- const w=canvas.width,h=canvas.height;
- const src=ctx.getImageData(0,0,w,h),out=ctx.createImageData(w,h),a=src.data,b=out.data;
- b.set(a);const strength=state.sharpen/100;
- for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
-  const i=(y*w+x)*4;
-  for(let c=0;c<3;c++){
-   const v=a[i+c]*5-a[i-4+c]-a[i+4+c]-a[i-w*4+c]-a[i+w*4+c];
-   b[i+c]=clamp(a[i+c]+(v-a[i+c])*strength,0,255);
-  }
- }
- ctx.putImageData(out,0,0);
-}
-function drawAnnotations(){
- annotations.forEach(a=>{
-  ctx.save();ctx.globalAlpha=(a.opacity??100)/100;
-  ctx.strokeStyle=a.color||"#ffffff";ctx.fillStyle=a.color||"#ffffff";
-  ctx.lineWidth=a.size||4;ctx.lineCap="round";ctx.lineJoin="round";
-  if(a.type==="text"){ctx.font=`${a.size*5}px sans-serif`;ctx.fillText(a.text,a.x,a.y)}
-  else if(a.type==="shape"){
-   ctx.beginPath();
-   if(a.shape==="circle")ctx.ellipse(a.x,a.y,a.w,a.h,0,0,Math.PI*2);
-   else ctx.rect(a.x,a.y,a.w,a.h);
-   ctx.stroke();
-  }else if(a.points?.length){
-   ctx.beginPath();ctx.moveTo(a.points[0].x,a.points[0].y);
-   a.points.forEach(p=>ctx.lineTo(p.x,p.y));ctx.stroke();
-  }
-  ctx.restore();
- });
-}
-const definitions={
- light:{title:"Light",items:[
-  ["exposure","Exposure",-100,100],["contrast","Contrast",-100,100],
-  ["highlights","Highlights",-100,100],["shadows","Shadows",-100,100],
-  ["whites","Whites",-100,100],["blacks","Blacks",-100,100],
-  ["brightness","Brightness",-100,100]
- ]},
- color:{title:"Color",items:[
-  ["temperature","Temperature",-100,100],["tint","Tint",-100,100],
-  ["vibrance","Vibrance",-100,100],["saturation","Saturation",-100,100]
- ]},
- effects:{title:"Effects",items:[
-  ["texture","Texture",0,100],["clarity","Clarity",-100,100],
-  ["dehaze","Dehaze",-100,100],["vignette","Vignette",0,100],
-  ["grain","Grain",0,100]
- ]},
- detail:{title:"Detail",items:[
-  ["sharpen","Sharpening",0,100],["noise","Noise Reduction",0,100]
- ]},
- blur:{title:"Blur",items:[["blur","Blur Amount",0,12]]}
-};
-function slider(key,label,min,max){
- return `<div class="control"><label for="${key}">${label}<output id="${key}Val">${state[key]}</output></label><input id="${key}" type="range" min="${min}" max="${max}" step="1" value="${state[key]}"></div>`;
-}
-function panel(){
- const root=$("controls");
- $("panelTitle").textContent=definitions[tool]?.title||tool[0].toUpperCase()+tool.slice(1);
- if(!source){root.innerHTML='<p class="note">Open a photo to begin editing.</p>';return}
- let html="";
- if(definitions[tool]){
-  html='<div class="group"><h3>Adjustments</h3>';
-  definitions[tool].items.forEach(a=>html+=slider(...a));html+='</div>';
- }else if(tool==="filters"){
-  html='<div class="group"><h3>Creative filters</h3><div class="grid2">';
-  ["None","Mono","Warm","Cool","Vintage","Fade","Vivid","Cinematic"].forEach(f=>html+=`<button class="preset ${state.filter===f?"selected":""}" data-filter="${f}">${f}</button>`);
-  html+='</div><p class="note">Filters combine with your current adjustments.</p></div>';
- }else if(tool==="crop"){
-  html=`<div class="group"><h3>Aspect Ratio</h3><select id="cropSelect">${["Free","1:1","4:5","3:4","16:9","9:16","3:2","2:3"].map(v=>`<option ${state.crop===v?"selected":""}>${v}</option>`).join("")}</select><p class="note">Crop is applied to the export. The preview stays fixed in its workspace.</p><button id="applyCrop" class="primary" style="width:100%">Apply Center Crop</button></div><hr><div class="grid2"><button id="rotateL">Rotate Left</button><button id="rotateR">Rotate Right</button><button id="flipH">Flip Horizontal</button><button id="flipV">Flip Vertical</button></div>`;
- }else if(tool==="draw"){
-  html=`<div class="group"><h3>Drawing Brush</h3><div class="control"><label>Brush Color</label><input id="brushColor" type="color" value="${state.brushColor}"></div>${slider("brushSize","Brush Size",1,60)}${slider("brushOpacity","Opacity",1,100)}<button id="clearDraw" style="width:100%">Clear Drawings</button><p class="note">Draw directly on the image with touch or mouse.</p></div>`;
- }else if(tool==="text"){
-  html=`<div class="group"><h3>Add Text</h3><div class="control"><label>Text</label><input id="textValue" type="text" placeholder="Enter your text"></div><div class="control"><label>Text Color</label><input id="textColor" type="color" value="#ffffff"></div><div class="control"><label>Text Size</label><input id="textSize" type="range" min="4" max="18" value="8"></div><button id="addText" class="primary" style="width:100%">Add Text to Center</button><p class="note">Text is placed near the center of the image.</p></div>`;
- }else if(tool==="shapes"){
-  html=`<div class="group"><h3>Add Shape</h3><div class="control"><label>Shape</label><select id="shapeType"><option value="rect">Rectangle</option><option value="circle">Circle</option></select></div><div class="control"><label>Shape Color</label><input id="shapeColor" type="color" value="#ffffff"></div><button id="addShape" class="primary" style="width:100%">Add Shape</button><p class="note">Adds a centered outline shape.</p></div>`;
- }else if(tool==="export"){
-  html=`<div class="group"><h3>Export Image</h3><div class="control"><label>File Format</label><select id="format"><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option></select></div><div class="control"><label>Quality <output id="qualityVal">${state.quality}</output></label><input id="quality" type="range" min="30" max="100" value="${state.quality}"></div><div class="control"><label>Maximum Long Edge</label><select id="maxEdge"><option value="1200">1200 px</option><option value="2000">2000 px</option><option value="3000" selected>3000 px</option><option value="original">Current working size</option></select></div><button id="exportNow" class="primary" style="width:100%">Download Edited Photo</button><p class="note">Export uses the current edited image and selected format.</p></div>`;
- }
- root.innerHTML=html;
- root.querySelectorAll('input[type="range"]').forEach(el=>{
-  el.addEventListener("input",()=>{
-   const k=el.id;
-   state[k]=Number(el.value);
-   const out=$(k+"Val");if(out)out.textContent=el.value;
-   render();
-  });
-  el.addEventListener("change",()=>snapshot());
- });
- root.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{
-  snapshot();state.filter=b.dataset.filter;panel();render();
- });
- bindPanelButtons();
-}
-function bindPanelButtons(){
- const on=(id,fn)=>{const el=$(id);if(el)el.onclick=fn};
- const val=id=>$(id)?.value;
- on("cropSelect",e=>state.crop=e.target.value);
- on("applyCrop",()=>{snapshot();applyCrop()});
- on("rotateL",()=>{snapshot();transformImage(-90)});
- on("rotateR",()=>{snapshot();transformImage(90)});
- on("flipH",()=>{snapshot();transformImage(0,true,false)});
- on("flipV",()=>{snapshot();transformImage(0,false,true)});
- on("brushColor",e=>state.brushColor=e.target.value);
- on("clearDraw",()=>{snapshot();annotations=[];render()});
- on("addText",()=>{
-  const text=val("textValue");if(!text?.trim())return;
-  snapshot();annotations.push({type:"text",text,x:canvas.width*.12,y:canvas.height*.5,color:val("textColor"),size:Number(val("textSize")),opacity:100});render();
- });
- on("addShape",()=>{
-  snapshot();annotations.push({type:"shape",shape:val("shapeType"),x:canvas.width*.5,y:canvas.height*.5,w:canvas.width*.18,h:canvas.height*.12,color:val("shapeColor"),size:Math.max(2,canvas.width*.003),opacity:100});render();
- });
- on("format",e=>state.format=e.target.value);
- on("quality",e=>{state.quality=Number(e.target.value);$("qualityVal").textContent=e.target.value});
- on("exportNow",exportImage);
-}
-function applyCrop(){
- const ratioMap={"1:1":1,"4:5":4/5,"3:4":3/4,"16:9":16/9,"9:16":9/16,"3:2":3/2,"2:3":2/3};
- const r=ratioMap[state.crop];if(!r)return;
- snapshot();
- let w=canvas.width,h=canvas.height;
- if(w/h>r)w=Math.round(h*r);else h=Math.round(w/r);
- const x=Math.floor((canvas.width-w)/2),y=Math.floor((canvas.height-h)/2);
- const temp=document.createElement("canvas");temp.width=w;temp.height=h;
- temp.getContext("2d").drawImage(canvas,x,y,w,h,0,0,w,h);
- source=document.createElement("canvas");source.width=w;source.height=h;
- source.getContext("2d").drawImage(temp,0,0);
- canvas.width=w;canvas.height=h;ctx.drawImage(source,0,0);
- originalData=ctx.getImageData(0,0,w,h);state.crop="Free";render();
-}
-function transformImage(deg,flipH=false,flipV=false){
- const old=document.createElement("canvas");old.width=canvas.width;old.height=canvas.height;old.getContext("2d").drawImage(canvas,0,0);
- const swap=Math.abs(deg)===90,w=swap?old.height:old.width,h=swap?old.width:old.height;
- source=document.createElement("canvas");source.width=w;source.height=h;
- const c=source.getContext("2d");c.translate(w/2,h/2);c.rotate(deg*Math.PI/180);c.scale(flipH?-1:1,flipV?-1:1);c.drawImage(old,-old.width/2,-old.height/2);
- canvas.width=w;canvas.height=h;ctx.drawImage(source,0,0);
- originalData=ctx.getImageData(0,0,w,h);render();
-}
-function point(e){
- const r=canvas.getBoundingClientRect();
- return {x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};
-}
-canvas.addEventListener("pointerdown",e=>{
- if(!source||!["draw"].includes(tool))return;
- drawing=true;canvas.setPointerCapture(e.pointerId);
- const p=point(e);lastPoint=p;
- annotations.push({type:"path",points:[p],color:state.brushColor,size:state.brushSize*Math.max(1,canvas.width/700),opacity:state.brushOpacity});
- render();
-});
-canvas.addEventListener("pointermove",e=>{
- if(!drawing||!lastPoint)return;
- const p=point(e),a=annotations[annotations.length-1];
- if(a?.type==="path"){a.points.push(p);lastPoint=p;render()}
-});
-function endDraw(){if(drawing){drawing=false;lastPoint=null;snapshot();}}
-canvas.addEventListener("pointerup",endDraw);
-canvas.addEventListener("pointercancel",endDraw);
-function exportImage(){
- if(!source)return;
- render();
- requestAnimationFrame(()=>{
-  const edge=Number($("maxEdge")?.value||state.maxEdge);
-  const scale=edge&&edge!==3000?Math.min(1,edge/Math.max(canvas.width,canvas.height)):Math.min(1,3000/Math.max(canvas.width,canvas.height));
-  const out=document.createElement("canvas");
-  out.width=Math.max(1,Math.round(canvas.width*scale));out.height=Math.max(1,Math.round(canvas.height*scale));
-  out.getContext("2d").drawImage(canvas,0,0,out.width,out.height);
-  const format=$("format")?.value||state.format;
-  const quality=Number($("quality")?.value||state.quality)/100;
-  out.toBlob(blob=>{
-   if(!blob){say("Export failed. Try another format.");return}
-   const url=URL.createObjectURL(blob),a=document.createElement("a");
-   a.href=url;a.download="toolora-edited-photo."+(format==="image/png"?"png":format==="image/webp"?"webp":"jpg");
-   a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);say("Export complete");
-  },format,quality);
- });
-}
-$("download").onclick=exportImage;
-$("reset").onclick=()=>{
- if(!source)return;
- snapshot();
- Object.keys(state).forEach(k=>{
-  if(typeof state[k]==="number")state[k]=0;
- });
- state.filter="None";state.crop="Free";state.quality=92;state.maxEdge=3000;
- annotations=[];render();panel();say("Tool settings reset");
-};
-$("tabs").addEventListener("click",e=>{
- const b=e.target.closest("button[data-tool]");if(!b)return;
- tool=b.dataset.tool;
- document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active",x===b));
- panel();
-});
-window.addEventListener("resize",()=>{
- if(!source)return;
- const old=document.createElement("canvas");old.width=canvas.width;old.height=canvas.height;old.getContext("2d").drawImage(canvas,0,0);
- const max=window.innerWidth<760?1200:1800,scale=Math.min(1,max/Math.max(source.width,source.height));
- canvas.width=Math.max(1,Math.round(source.width*scale));canvas.height=Math.max(1,Math.round(source.height*scale));
- ctx.drawImage(source,0,0,canvas.width,canvas.height);
- originalData=ctx.getImageData(0,0,canvas.width,canvas.height);render();
-});
-document.addEventListener("keydown",e=>{
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();undo()}
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="y"){e.preventDefault();redo()}
-});
-panel();
-</script>
+
+<script src="js/photo-editor.js"></script>
+
 </body>
 </html>
