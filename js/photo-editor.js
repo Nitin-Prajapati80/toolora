@@ -22,6 +22,13 @@ let showBefore=false;
 let history=[];
 let future=[];
 
+/* Touch zoom state */
+let drawing=false;
+const pointers=new Map();
+let pinchStartDistance=0;
+let pinchStartZoom=1;
+let pinchActive=false;
+
 const S={
   exposure:0,
   contrast:0,
@@ -56,8 +63,8 @@ const S={
   rotate:0,
   flipX:false,
   flipY:false,
-  profile:'natural',
 
+  profile:'natural',
   preset:'none',
   presetAmount:100,
 
@@ -129,67 +136,67 @@ function restore(x){
   panel();
 }
 
-function control(k,label,min,max,step=1){
-  return `
-    <div class="control">
-      <div class="ch">
-        <span>${label}</span>
-        <span class="val" id="v_${k}">${fmt(S[k])}</span>
-      </div>
-
-      <input
-        data-k="${k}"
-        type="range"
-        min="${min}"
-        max="${max}"
-        step="${step}"
-        value="${S[k]}"
-      >
-    </div>
-  `;
-}
-
 function fmt(v){
   v=Number(v);
   return `${v>0?'+':''}${Number.isInteger(v)?v:v.toFixed(1)}`;
 }
 
+function control(k,label,min,max,step=1){
+  return `
+  <div class="control">
+    <div class="ch">
+      <span>${label}</span>
+      <span class="val" id="v_${k}">${fmt(S[k])}</span>
+    </div>
+
+    <input
+      data-k="${k}"
+      type="range"
+      min="${min}"
+      max="${max}"
+      step="${step}"
+      value="${S[k]}"
+    >
+  </div>`;
+}
+
 function bind(){
 
-  document
-    .querySelectorAll('#panel input[data-k]')
-    .forEach(e=>{
+  document.querySelectorAll('#panel input[data-k]').forEach(e=>{
 
-      e.oninput=()=>{
-        S[e.dataset.k]=+e.value;
+    e.oninput=()=>{
 
-        const v=$('v_'+e.dataset.k);
+      S[e.dataset.k]=+e.value;
 
-        if(v){
-          v.textContent=fmt(e.value);
-        }
+      const v=$('v_'+e.dataset.k);
 
-        schedule();
-      };
+      if(v){
+        v.textContent=fmt(e.value);
+      }
 
-      e.onchange=push;
-    });
+      schedule();
+    };
 
-  document
-    .querySelectorAll('#panel [data-mix]')
-    .forEach(e=>{
+    e.onchange=push;
+  });
 
-      e.oninput=()=>{
-        S[e.dataset.mix+e.dataset.color]=+e.value;
-        schedule();
-      };
+  document.querySelectorAll('#panel [data-mix]').forEach(e=>{
 
-    });
+    e.oninput=()=>{
+
+      S[e.dataset.mix+e.dataset.color]=+e.value;
+
+      schedule();
+    };
+
+  });
 }
 
 function panel(){
 
-  const p=$('panel');
+  const p=$('controlPanel')||$('panel');
+
+  if(!p)return;
 
   $('eyebrow').textContent=names[active][0];
   $('title').textContent=names[active][1];
@@ -197,439 +204,451 @@ function panel(){
   let h='';
 
   if(active==='light'){
+
     h=`
-      <div class="section">
+    <div class="section">
 
-        <h3>Tone</h3>
+      <h3>Tone</h3>
 
-        ${control('exposure','Exposure',-100,100)}
-        ${control('contrast','Contrast',-100,100)}
-        ${control('highlights','Highlights',-100,100)}
-        ${control('shadows','Shadows',-100,100)}
-        ${control('whites','Whites',-100,100)}
-        ${control('blacks','Blacks',-100,100)}
+      ${control('exposure','Exposure',-100,100)}
+      ${control('contrast','Contrast',-100,100)}
+      ${control('highlights','Highlights',-100,100)}
+      ${control('shadows','Shadows',-100,100)}
+      ${control('whites','Whites',-100,100)}
+      ${control('blacks','Blacks',-100,100)}
 
-      </div>
+    </div>
 
-      <div class="section">
+    <div class="section">
 
-        <button class="btn" id="auto" style="width:100%">
-          Auto Tone
-        </button>
+      <button class="btn" id="auto" style="width:100%">
+        Auto Tone
+      </button>
 
-        <p class="note" style="margin-top:8px">
-          Auto uses the image histogram and applies a quick balanced correction.
-        </p>
+      <p class="note" style="margin-top:10px">
+        Auto uses the image histogram and applies a quick balanced correction.
+      </p>
 
-      </div>
-    `;
+    </div>`;
   }
 
   if(active==='color'){
+
     h=`
-      <div class="section">
+    <div class="section">
 
-        <h3>White Balance</h3>
+      <h3>White Balance</h3>
 
-        ${control('temp','Temperature',-100,100)}
-        ${control('tint','Tint',-100,100)}
-        ${control('vibrance','Vibrance',-100,100)}
-        ${control('saturation','Saturation',-100,100)}
+      ${control('temp','Temperature',-100,100)}
+      ${control('tint','Tint',-100,100)}
+      ${control('vibrance','Vibrance',-100,100)}
+      ${control('saturation','Saturation',-100,100)}
 
-      </div>
+    </div>
 
-      <div class="section">
+    <div class="section">
 
-        <h3>Color Mixer</h3>
+      <h3>Color Mixer</h3>
 
-        ${colors.map(c=>`
+      ${colors.map(c=>`
 
-          <div class="mixer">
+        <div class="mixer">
 
-            <span>
-              ${c[0].toUpperCase()+c.slice(1)}
-            </span>
+          <span>
+            ${c[0].toUpperCase()+c.slice(1)}
+          </span>
 
-            <input
-              data-mix="h_${c}"
-              data-color=""
-              type="range"
-              min="-30"
-              max="30"
-              value="${S['h_'+c]}"
-              title="Hue"
-            >
+          <input
+            data-mix="h_${c}"
+            data-color=""
+            type="range"
+            min="-30"
+            max="30"
+            value="${S['h_'+c]}"
+            title="Hue"
+          >
 
-            <input
-              data-mix="s_${c}"
-              data-color=""
-              type="range"
-              min="-100"
-              max="100"
-              value="${S['s_'+c]}"
-              title="Saturation"
-            >
+          <input
+            data-mix="s_${c}"
+            data-color=""
+            type="range"
+            min="-100"
+            max="100"
+            value="${S['s_'+c]}"
+            title="Saturation"
+          >
 
-            <input
-              data-mix="l_${c}"
-              data-color=""
-              type="range"
-              min="-100"
-              max="100"
-              value="${S['l_'+c]}"
-              title="Luminance"
-            >
+          <input
+            data-mix="l_${c}"
+            data-color=""
+            type="range"
+            min="-100"
+            max="100"
+            value="${S['l_'+c]}"
+            title="Luminance"
+          >
 
-          </div>
+        </div>
 
-        `).join('')}
+      `).join('')}
 
-        <p class="note">
-          Each color row contains Hue, Saturation and Luminance sliders.
-        </p>
+      <p class="note">
+        Each color row contains Hue, Saturation and Luminance sliders.
+      </p>
 
-      </div>
+    </div>
 
-      <div class="section">
+    <div class="section">
 
-        <h3>Color Grading</h3>
+      <h3>Color Grading</h3>
 
-        ${control('gradeShadow','Shadow Color',0,360)}
-        ${control('gradeShadowSat','Shadow Strength',0,100)}
+      ${control('gradeShadow','Shadow Color',0,360)}
+      ${control('gradeShadowSat','Shadow Strength',0,100)}
 
-        ${control('gradeMid','Midtone Color',0,360)}
-        ${control('gradeMidSat','Midtone Strength',0,100)}
+      ${control('gradeMid','Midtone Color',0,360)}
+      ${control('gradeMidSat','Midtone Strength',0,100)}
 
-        ${control('gradeHigh','Highlight Color',0,360)}
-        ${control('gradeHighSat','Highlight Strength',0,100)}
+      ${control('gradeHigh','Highlight Color',0,360)}
+      ${control('gradeHighSat','Highlight Strength',0,100)}
 
-        ${control('gradeBlend','Blending',0,100)}
-        ${control('gradeBalance','Balance',-100,100)}
+      ${control('gradeBlend','Blending',0,100)}
+      ${control('gradeBalance','Balance',-100,100)}
 
-      </div>
-    `;
+    </div>`;
   }
 
   if(active==='effects'){
+
     h=`
-      <div class="section">
+    <div class="section">
 
-        <h3>Effects</h3>
+      <h3>Effects</h3>
 
-        ${control('texture','Texture',-100,100)}
-        ${control('clarity','Clarity',-100,100)}
-        ${control('dehaze','Dehaze',-100,100)}
-        ${control('vignette','Vignette',-100,100)}
-        ${control('midpoint','Midpoint',0,100)}
-        ${control('feather','Feather',0,100)}
-        ${control('roundness','Roundness',-100,100)}
+      ${control('texture','Texture',-100,100)}
+      ${control('clarity','Clarity',-100,100)}
+      ${control('dehaze','Dehaze',-100,100)}
+      ${control('vignette','Vignette',-100,100)}
+      ${control('midpoint','Midpoint',0,100)}
+      ${control('feather','Feather',0,100)}
+      ${control('roundness','Roundness',-100,100)}
 
-      </div>
+    </div>
 
-      <div class="section">
+    <div class="section">
 
-        <h3>Grain</h3>
+      <h3>Grain</h3>
 
-        ${control('grain','Amount',0,100)}
-        ${control('grainSize','Size',0,100)}
-        ${control('grainRough','Roughness',0,100)}
+      ${control('grain','Amount',0,100)}
+      ${control('grainSize','Size',0,100)}
+      ${control('grainRough','Roughness',0,100)}
 
-      </div>
-    `;
+    </div>`;
   }
 
   if(active==='detail'){
+
     h=`
-      <div class="section">
+    <div class="section">
 
-        <h3>Detail</h3>
+      <h3>Detail</h3>
 
-        ${control('sharp','Sharpening',0,100)}
-        ${control('radius','Radius',.5,3,.1)}
-        ${control('noise','Noise Reduction',0,100)}
-        ${control('colorNoise','Color Noise',0,100)}
+      ${control('sharp','Sharpening',0,100)}
+      ${control('radius','Radius',.5,3,.1)}
+      ${control('noise','Noise Reduction',0,100)}
+      ${control('colorNoise','Color Noise',0,100)}
 
-      </div>
+    </div>
 
-      <p class="note">
-        Preview processing is capped for speed. Export uses the same edit state.
-      </p>
-    `;
+    <p class="note">
+      Preview processing is capped for speed. Export uses the same edit state.
+    </p>`;
   }
 
   if(active==='crop'){
+
     h=`
-      <div class="section">
+    <div class="section">
 
-        <h3>Crop & Geometry</h3>
+      <h3>Crop & Geometry</h3>
 
-        <div class="cropbox">
-          Centered crop preview
-        </div>
+      <div class="cropbox">
+        Centered crop preview
+      </div>
 
-        <select class="select" id="ratio">
-          <option value="original">Original</option>
-          <option value="1:1">1 : 1</option>
-          <option value="4:5">4 : 5</option>
-          <option value="3:4">3 : 4</option>
-          <option value="4:3">4 : 3</option>
-          <option value="16:9">16 : 9</option>
-          <option value="9:16">9 : 16</option>
-          <option value="2:3">2 : 3</option>
-        </select>
+      <select class="select" id="ratio">
 
-        ${control('straighten','Straighten',-10,10,.1)}
+        <option value="original">Original</option>
+        <option value="1:1">1 : 1</option>
+        <option value="4:5">4 : 5</option>
+        <option value="3:4">3 : 4</option>
+        <option value="4:3">4 : 3</option>
+        <option value="16:9">16 : 9</option>
+        <option value="9:16">9 : 16</option>
+        <option value="2:3">2 : 3</option>
 
-        <div class="grid2">
+      </select>
 
-          <button class="btn" id="rl">
-            Rotate Left
-          </button>
+      ${control('straighten','Straighten',-10,10,.1)}
 
-          <button class="btn" id="rr">
-            Rotate Right
-          </button>
+      <div class="grid2">
 
-          <button class="btn" id="fx">
-            Flip Horizontal
-          </button>
+        <button class="btn" id="rl">
+          Rotate Left
+        </button>
 
-          <button class="btn" id="fy">
-            Flip Vertical
-          </button>
+        <button class="btn" id="rr">
+          Rotate Right
+        </button>
 
-        </div>
+        <button class="btn" id="fx">
+          Flip Horizontal
+        </button>
+
+        <button class="btn" id="fy">
+          Flip Vertical
+        </button>
 
       </div>
-    `;
+
+    </div>`;
   }
 
   if(active==='presets'){
+
     h=`
-      <div class="section">
+    <div class="section">
 
-        <h3>Toolora Presets</h3>
+      <h3>Toolora Presets</h3>
 
-        <div class="presets">
+      <div class="presets">
 
-          ${[
-            ['clean','Clean','Balanced'],
-            ['warm','Warm','Soft warm'],
-            ['cool','Cool','Clean cool'],
-            ['cinematic','Cinematic','Moody'],
-            ['matte','Matte','Soft film'],
-            ['vivid','Vivid','Color punch'],
-            ['portrait','Portrait','Soft portrait'],
-            ['bw','B&W','Monochrome']
-          ].map(x=>`
+        ${[
+          ['clean','Clean','Balanced'],
+          ['warm','Warm','Soft warm'],
+          ['cool','Cool','Clean cool'],
+          ['cinematic','Cinematic','Moody'],
+          ['matte','Matte','Soft film'],
+          ['vivid','Vivid','Color punch'],
+          ['portrait','Portrait','Soft portrait'],
+          ['bw','B&W','Monochrome']
+        ].map(x=>`
 
-            <button
-              class="preset"
-              data-preset="${x[0]}"
-            >
-              <b>${x[1]}</b>
-              <small>${x[2]}</small>
-            </button>
+          <button class="preset" data-preset="${x[0]}">
+            <b>${x[1]}</b>
+            <small>${x[2]}</small>
+          </button>
 
-          `).join('')}
-
-        </div>
+        `).join('')}
 
       </div>
 
-      ${control('presetAmount','Preset Amount',0,100)}
-    `;
+    </div>
+
+    ${control('presetAmount','Preset Amount',0,100)}`;
   }
 
   if(active==='profiles'){
+
     h=`
-      <div class="section">
+    <div class="section">
 
-        <h3>Profiles</h3>
+      <h3>Profiles</h3>
 
-        <div class="grid2">
+      <div class="grid2">
 
-          ${[
-            ['natural','Natural'],
-            ['neutral','Neutral'],
-            ['vivid','Vivid'],
-            ['modern','Modern'],
-            ['film','Film'],
-            ['mono','Monochrome']
-          ].map(x=>`
+        ${[
+          ['natural','Natural'],
+          ['neutral','Neutral'],
+          ['vivid','Vivid'],
+          ['modern','Modern'],
+          ['film','Film'],
+          ['mono','Monochrome']
+        ].map(x=>`
 
-            <button
-              class="btn ${S.profile===x[0]?'active':''}"
-              data-profile="${x[0]}"
-            >
-              ${x[1]}
-            </button>
+          <button
+            class="btn ${S.profile===x[0]?'active':''}"
+            data-profile="${x[0]}"
+          >
+            ${x[1]}
+          </button>
 
-          `).join('')}
-
-        </div>
+        `).join('')}
 
       </div>
 
-      <p class="note">
-        Profiles change the base rendering character while keeping edits non-destructive.
-      </p>
-    `;
+    </div>
+
+    <p class="note">
+      Profiles change the base rendering character while keeping edits non-destructive.
+    </p>`;
   }
 
   if(active==='mask'){
+
     h=`
-      <div class="section">
+    <div class="section">
 
-        <h3>Local Mask</h3>
+      <h3>Local Mask</h3>
 
-        <div class="grid3">
+      <div class="grid3">
 
-          <button class="btn mask active" data-type="radial">
-            Radial
-          </button>
+        <button class="btn mask active" data-type="radial">
+          Radial
+        </button>
 
-          <button class="btn mask" data-type="linear">
-            Linear
-          </button>
+        <button class="btn mask" data-type="linear">
+          Linear
+        </button>
 
-          <button class="btn mask" data-type="brush">
-            Brush
-          </button>
-
-        </div>
-
-        ${control('maskAmount','Mask Amount',0,100)}
-        ${control('maskExposure','Local Exposure',-100,100)}
-        ${control('maskContrast','Local Contrast',-100,100)}
-        ${control('maskSaturation','Local Saturation',-100,100)}
-
-        <button class="btn" id="maskClear" style="width:100%">
-          Clear Mask
+        <button class="btn mask" data-type="brush">
+          Brush
         </button>
 
       </div>
 
-      <p class="note">
-        Radial and linear masks are real browser-side masks. AI subject/sky selection is intentionally not faked.
-      </p>
-    `;
+      ${control('maskAmount','Mask Amount',0,100)}
+      ${control('maskExposure','Local Exposure',-100,100)}
+      ${control('maskContrast','Local Contrast',-100,100)}
+      ${control('maskSaturation','Local Saturation',-100,100)}
+
+      <button class="btn" id="maskClear" style="width:100%">
+        Clear Mask
+      </button>
+
+    </div>
+
+    <p class="note">
+      Radial and linear masks are real browser-side masks. AI subject/sky selection is intentionally not faked.
+    </p>`;
   }
 
   if(active==='retouch'){
+
     h=`
-      <div class="section">
+    <div class="section">
 
-        <h3>Spot Blur Retouch</h3>
+      <h3>Spot Blur Retouch</h3>
 
-        ${control('retouchSize','Brush Size',5,100)}
+      ${control('retouchSize','Brush Size',5,100)}
 
-        <button class="btn" id="retouchClear" style="width:100%">
-          Clear Retouch
+      <button
+        class="btn"
+        id="retouchClear"
+        style="width:100%"
+      >
+        Clear Retouch
+      </button>
+
+    </div>
+
+    <p class="note">
+      Paint over an unwanted area on the photo to blur it locally. This is a safe browser retouch tool, not generative fill.
+    </p>`;
+  }
+
+  if(active==='blur'){
+
+    h=`
+    <div class="section">
+
+      <h3>Lens-style Blur</h3>
+
+      ${control('blur','Blur Amount',0,100)}
+      ${control('blurX','Focus X',0,100)}
+      ${control('blurY','Focus Y',0,100)}
+
+    </div>`;
+  }
+
+  if(active==='optics'){
+
+    h=`
+    <div class="section">
+
+      <h3>Optics</h3>
+
+      ${control('lensVignette','Lens Vignette',-100,100)}
+      ${control('defringe','Defringe',0,100)}
+
+    </div>
+
+    <p class="note">
+      Browser-safe optical compensation. Camera-specific lens profiles require external profile data.
+    </p>`;
+  }
+
+  if(active==='export'){
+
+    h=`
+    <div class="section">
+
+      <h3>Export</h3>
+
+      <div class="export">
+
+        <div class="grid2">
+
+          <div>
+
+            <div class="colorhead">
+              Format
+            </div>
+
+            <select class="select" id="format">
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+
+          </div>
+
+          <div>
+
+            <div class="colorhead">
+              Quality
+            </div>
+
+            <select class="select" id="quality">
+              <option value=".7">Standard</option>
+              <option value=".85" selected>High</option>
+              <option value=".95">Maximum</option>
+            </select>
+
+          </div>
+
+        </div>
+
+        <div
+          class="colorhead"
+          style="margin-top:12px"
+        >
+          Maximum long edge
+        </div>
+
+        <select class="select" id="size">
+
+          <option value="1600">1600 px</option>
+          <option value="2400" selected>2400 px</option>
+          <option value="3200">3200 px</option>
+          <option value="0">Original working size</option>
+
+        </select>
+
+        <button class="download" id="download">
+          Download Edited Photo
         </button>
 
       </div>
 
-      <p class="note">
-        Paint over an unwanted area on the photo to blur it locally. This is a safe browser retouch tool, not generative fill.
-      </p>
-    `;
-  }
+    </div>
 
-  if(active==='blur'){
-    h=`
-      <div class="section">
-
-        <h3>Lens-style Blur</h3>
-
-        ${control('blur','Blur Amount',0,100)}
-        ${control('blurX','Focus X',0,100)}
-        ${control('blurY','Focus Y',0,100)}
-
-      </div>
-    `;
-  }
-
-  if(active==='optics'){
-    h=`
-      <div class="section">
-
-        <h3>Optics</h3>
-
-        ${control('lensVignette','Lens Vignette',-100,100)}
-        ${control('defringe','Defringe',0,100)}
-
-      </div>
-
-      <p class="note">
-        Browser-safe optical compensation. Camera-specific lens profiles require external profile data.
-      </p>
-    `;
-  }
-
-  if(active==='export'){
-    h=`
-      <div class="section">
-
-        <h3>Export</h3>
-
-        <div class="export">
-
-          <div class="grid2">
-
-            <div>
-
-              <div class="colorhead">
-                Format
-              </div>
-
-              <select class="select" id="format">
-                <option value="image/jpeg">JPG</option>
-                <option value="image/png">PNG</option>
-                <option value="image/webp">WebP</option>
-              </select>
-
-            </div>
-
-            <div>
-
-              <div class="colorhead">
-                Quality
-              </div>
-
-              <select class="select" id="quality">
-                <option value=".7">Standard</option>
-                <option value=".85" selected>High</option>
-                <option value=".95">Maximum</option>
-              </select>
-
-            </div>
-
-          </div>
-
-          <div class="colorhead" style="margin-top:10px">
-            Maximum long edge
-          </div>
-
-          <select class="select" id="size">
-            <option value="1600">1600 px</option>
-            <option value="2400" selected>2400 px</option>
-            <option value="3200">3200 px</option>
-            <option value="0">Original working size</option>
-          </select>
-
-          <button class="download" id="download">
-            Download Edited Photo
-          </button>
-
-        </div>
-
-      </div>
-
-      <button class="btn danger" id="resetAll" style="width:100%">
-        Reset All Edits
-      </button>
-    `;
+    <button
+      class="btn danger"
+      id="resetAll"
+      style="width:100%"
+    >
+      Reset All Edits
+    </button>`;
   }
 
   p.innerHTML=h;
@@ -641,6 +660,7 @@ function panel(){
 function panelActions(){
 
   $('auto')?.addEventListener('click',()=>{
+
     push();
 
     S.exposure=0;
@@ -684,37 +704,31 @@ function panelActions(){
     schedule();
   });
 
-  document
-    .querySelectorAll('[data-preset]')
-    .forEach(b=>{
-      b.onclick=()=>preset(b.dataset.preset);
-    });
+  document.querySelectorAll('[data-preset]').forEach(b=>{
+    b.onclick=()=>preset(b.dataset.preset);
+  });
 
-  document
-    .querySelectorAll('[data-profile]')
-    .forEach(b=>{
-      b.onclick=()=>{
-        push();
-        S.profile=b.dataset.profile;
-        render();
-        panel();
-      };
-    });
+  document.querySelectorAll('[data-profile]').forEach(b=>{
+    b.onclick=()=>{
+      push();
+      S.profile=b.dataset.profile;
+      render();
+      panel();
+    };
+  });
 
-  document
-    .querySelectorAll('.mask')
-    .forEach(b=>{
-      b.onclick=()=>{
-        S.maskType=b.dataset.type;
+  document.querySelectorAll('.mask').forEach(b=>{
+    b.onclick=()=>{
+      S.maskType=b.dataset.type;
 
-        document
-          .querySelectorAll('.mask')
-          .forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.mask').forEach(x=>{
+        x.classList.remove('active');
+      });
 
-        b.classList.add('active');
-        schedule();
-      };
-    });
+      b.classList.add('active');
+      schedule();
+    };
+  });
 
   $('maskClear')?.addEventListener('click',()=>{
     push();
@@ -728,6 +742,7 @@ function panelActions(){
   });
 
   $('retouchClear')?.addEventListener('click',()=>{
+    push();
     retouch=[];
     render();
   });
@@ -759,78 +774,80 @@ function preset(n){
     grain:0
   };
 
-  Object.assign(z,{
+  Object.assign(
+    z,
+    {
+      clean:{
+        exposure:4,
+        contrast:5,
+        shadows:8,
+        vibrance:10,
+        texture:8
+      },
 
-    clean:{
-      exposure:4,
-      contrast:5,
-      shadows:8,
-      vibrance:10,
-      texture:8
-    },
+      warm:{
+        temp:16,
+        contrast:4,
+        highlights:-8,
+        shadows:8,
+        vibrance:8
+      },
 
-    warm:{
-      temp:16,
-      contrast:4,
-      highlights:-8,
-      shadows:8,
-      vibrance:8
-    },
+      cool:{
+        temp:-16,
+        contrast:5,
+        shadows:6,
+        vibrance:8
+      },
 
-    cool:{
-      temp:-16,
-      contrast:5,
-      shadows:6,
-      vibrance:8
-    },
+      cinematic:{
+        contrast:12,
+        highlights:-15,
+        blacks:-12,
+        clarity:10,
+        dehaze:7,
+        vignette:18,
+        saturation:-5
+      },
 
-    cinematic:{
-      contrast:12,
-      highlights:-15,
-      blacks:-12,
-      clarity:10,
-      dehaze:7,
-      vignette:18,
-      saturation:-5
-    },
+      matte:{
+        contrast:-8,
+        highlights:-12,
+        shadows:15,
+        blacks:18,
+        clarity:-4,
+        saturation:-4,
+        vignette:8
+      },
 
-    matte:{
-      contrast:-8,
-      highlights:-12,
-      shadows:15,
-      blacks:18,
-      clarity:-4,
-      saturation:-4,
-      vignette:8
-    },
+      vivid:{
+        contrast:7,
+        vibrance:28,
+        saturation:5,
+        clarity:6
+      },
 
-    vivid:{
-      contrast:7,
-      vibrance:28,
-      saturation:5,
-      clarity:6
-    },
+      portrait:{
+        exposure:5,
+        highlights:-8,
+        shadows:12,
+        temp:5,
+        vibrance:8,
+        texture:-10,
+        clarity:-5
+      },
 
-    portrait:{
-      exposure:5,
-      highlights:-8,
-      shadows:12,
-      temp:5,
-      vibrance:8,
-      texture:-10,
-      clarity:-5
-    },
+      bw:{
+        contrast:10,
+        highlights:-8,
+        shadows:8,
+        blacks:-12,
+        saturation:-100,
+        clarity:8
+      }
 
-    bw:{
-      contrast:10,
-      highlights:-8,
-      shadows:8,
-      blacks:-12,
-      saturation:-100,
-      clarity:8
-    }
-
-  }[n]);
+    }[n]
+  );
 
   Object.assign(S,z);
 
@@ -840,59 +857,16 @@ function preset(n){
   panel();
 }
 
-function load(file){
-
-  if(!file || !file.type.startsWith('image/')){
-    return;
-  }
-
-  const u=URL.createObjectURL(file);
-  const i=new Image();
-
-  i.onload=()=>{
-
-    URL.revokeObjectURL(u);
-
-    img=i;
-    fileName=file.name;
-
-    const max=1400;
-    const k=Math.min(
-      1,
-      max/Math.max(i.naturalWidth,i.naturalHeight)
-    );
-
-    src.width=Math.max(1,Math.round(i.naturalWidth*k));
-    src.height=Math.max(1,Math.round(i.naturalHeight*k));
-
-    sx.clearRect(0,0,src.width,src.height);
-    sx.drawImage(i,0,0,src.width,src.height);
-
-    $('name').textContent=file.name;
-    $('meta').textContent=`${i.naturalWidth} × ${i.naturalHeight}px`;
-
-    $('empty').style.display='none';
-    C.style.display='block';
-    O.style.display='block';
-
-    resetState(false);
-
-    render();
-  };
-
-  i.src=u;
-}
-
 function handleImageFile(file){
 
-  if(!file){
-    return;
-  }
+  if(!file)return;
 
   if(!file.type || !file.type.startsWith('image/')){
     alert('Please select a valid image file.');
     return;
   }
+
+  $('status-bar')?.classList.add('busy');
 
   $('status').textContent='Opening photo…';
 
@@ -906,8 +880,11 @@ function handleImageFile(file){
     img=i;
     fileName=file.name;
 
+    /*
+      Keep source smaller for faster browser processing.
+      Original dimensions are still shown to the user.
+    */
     const max=1400;
-
     const k=Math.min(
       1,
       max/Math.max(i.naturalWidth,i.naturalHeight)
@@ -950,13 +927,16 @@ function handleImageFile(file){
 
     showBefore=false;
 
-    $('beforeBadge').style.display='none';
+    if($('badge')){
+      $('badge').style.display='none';
+    }
 
     retouch=[];
 
     resetState(false);
 
     zoom=1;
+    applyZoomVisual();
 
     render();
 
@@ -965,6 +945,7 @@ function handleImageFile(file){
 
   i.onerror=()=>{
     URL.revokeObjectURL(url);
+
     $('status').textContent='Ready';
 
     alert(
@@ -991,7 +972,8 @@ fileInput.addEventListener(
   'change',
   e=>{
     handleImageFile(
-      e.target.files&&e.target.files[0]
+      e.target.files &&
+      e.target.files[0]
     );
 
     e.target.value='';
@@ -1008,7 +990,9 @@ $('stage').addEventListener(
 
 $('stage').addEventListener(
   'dragleave',
-  ()=>$('stage').classList.remove('dragover')
+  ()=>{
+    $('stage').classList.remove('dragover');
+  }
 );
 
 $('stage').addEventListener(
@@ -1019,12 +1003,43 @@ $('stage').addEventListener(
     $('stage').classList.remove('dragover');
 
     handleImageFile(
-      e.dataTransfer.files&&e.dataTransfer.files[0]
+      e.dataTransfer.files &&
+      e.dataTransfer.files[0]
     );
   }
 );
 
-function resetState(keepImage=true){
+function updateZoomLabel(){
+
+  const el=$('zlabel');
+
+  if(!el)return;
+
+  el.textContent=
+    zoom===1
+      ? '100%'
+      : `${Math.round(zoom*100)}%`;
+}
+
+function applyZoomVisual(){
+
+  zoom=clamp(
+    zoom,
+    .5,
+    4
+  );
+
+  /*
+    Important:
+    Zoom only changes the visual transform.
+    The image is NOT rendered again.
+  */
+  C.style.transform=`scale(${zoom})`;
+
+  updateZoomLabel();
+}
+
+function resetState(){
 
   for(const k of Object.keys(S)){
 
@@ -1049,12 +1064,12 @@ function resetState(keepImage=true){
 
       S[k]=
         k==='ratio'
-        ?'original'
-        :k==='profile'
-        ?'natural'
-        :k==='preset'
-        ?'none'
-        :'radial';
+          ? 'original'
+          : k==='profile'
+            ? 'natural'
+            : k==='preset'
+              ? 'none'
+              : 'radial';
     }
 
     else if(
@@ -1067,11 +1082,12 @@ function resetState(keepImage=true){
     ){
 
       S[k]=
-        k==='midpoint'||k==='feather'
-        ?50
-        :k==='grainSize'
-        ?25
-        :50;
+        k==='midpoint' ||
+        k==='feather'
+          ? 50
+          : k==='grainSize'
+            ? 25
+            : 50;
     }
 
     else if(k==='radius'){
@@ -1090,6 +1106,8 @@ function resetState(keepImage=true){
 
   zoom=1;
 
+  applyZoomVisual();
+
   panel();
   schedule();
 }
@@ -1101,9 +1119,7 @@ function resetAll(){
 
 function schedule(){
 
-  if(renderQueued){
-    return;
-  }
+  if(renderQueued)return;
 
   renderQueued=true;
 
@@ -1168,7 +1184,7 @@ function rgbh(r,g,b){
     }
   }
 
-  return [h,s,mx];
+  return[h,s,mx];
 }
 
 function hsv(h,s,v){
@@ -1180,7 +1196,7 @@ function hsv(h,s,v){
   const q=v*(1-f*s);
   const t=v*(1-(1-f)*s);
 
-  return [
+  return[
     [v,t,p],
     [q,v,p],
     [p,v,t],
@@ -1210,12 +1226,20 @@ function applyPixel(imgData,w,h){
 
   applyProfile(p);
 
-  const ex=Math.pow(2,p.exposure/50);
+  const ex=Math.pow(
+    2,
+    p.exposure/50
+  );
+
   const con=(100+p.contrast)/100;
   const sat=(100+p.saturation)/100;
   const vib=p.vibrance/100;
 
-  for(let i=0;i<d.length;i+=4){
+  for(
+    let i=0;
+    i<d.length;
+    i+=4
+  ){
 
     let r=d[i]/255;
     let g=d[i+1]/255;
@@ -1291,7 +1315,7 @@ function applyPixel(imgData,w,h){
       b=(b-.5)*(1+dh)+.5;
     }
 
-    let [
+    let[
       hh,
       ss,
       vv
@@ -1309,7 +1333,11 @@ function applyPixel(imgData,w,h){
 
     if(dh||ds||dl){
 
-      [r,g,b]=hsv(
+      [
+        r,
+        g,
+        b
+      ]=hsv(
         (hh+dh/360+1)%1,
         clamp(ss*(1+ds/100),0,1),
         clamp(vv*(1+dl/100),0,1)
@@ -1323,17 +1351,17 @@ function applyPixel(imgData,w,h){
 
     const gh=
       lum2<.35
-      ?S.gradeShadow
-      :lum2>.65
-      ?S.gradeHigh
-      :S.gradeMid;
+        ?S.gradeShadow
+        :lum2>.65
+          ?S.gradeHigh
+          :S.gradeMid;
 
     const gs=
       lum2<.35
-      ?S.gradeShadowSat
-      :lum2>.65
-      ?S.gradeHighSat
-      :S.gradeMidSat;
+        ?S.gradeShadowSat
+        :lum2>.65
+          ?S.gradeHighSat
+          :S.gradeMidSat;
 
     if(gs){
 
@@ -1351,8 +1379,11 @@ function applyPixel(imgData,w,h){
       b=b*(1-blend)+grgb[2]*blend;
     }
 
-    const x=(i/4%w)/w-.5;
-    const y=Math.floor(i/4/w)/h-.5;
+    const x=
+      (i/4%w)/w-.5;
+
+    const y=
+      Math.floor(i/4/w)/h-.5;
 
     const dist=
       Math.sqrt(x*x+y*y)*1.414;
@@ -1368,7 +1399,10 @@ function applyPixel(imgData,w,h){
         );
 
       const vvv=
-        1-p.vignette/100*edge*edge;
+        1-
+        p.vignette/100*
+        edge*
+        edge;
 
       r*=vvv;
       g*=vvv;
@@ -1379,18 +1413,18 @@ function applyPixel(imgData,w,h){
 
       let m=
         p.maskType==='radial'
-        ?1-clamp(
-          Math.sqrt(x*x+y*y)*2.1,
-          0,
-          1
-        )
-        :p.maskType==='linear'
-        ?clamp(
-          1-Math.abs(y)*2,
-          0,
-          1
-        )
-        :1;
+          ?1-clamp(
+            Math.sqrt(x*x+y*y)*2.1,
+            0,
+            1
+          )
+          :p.maskType==='linear'
+            ?clamp(
+              1-Math.abs(y)*2,
+              0,
+              1
+            )
+            :1;
 
       m*=p.maskAmount/100;
 
@@ -1399,7 +1433,8 @@ function applyPixel(imgData,w,h){
       b+=m*p.maskExposure/250;
 
       const mg=
-        1+m*p.maskContrast/100;
+        1+
+        m*p.maskContrast/100;
 
       r=(r-.5)*mg+.5;
       g=(g-.5)*mg+.5;
@@ -1411,7 +1446,8 @@ function applyPixel(imgData,w,h){
         .114*b;
 
       const ms=
-        1+m*p.maskSaturation/100;
+        1+
+        m*p.maskSaturation/100;
 
       r=gr+(r-gr)*ms;
       g=gr+(g-gr)*ms;
@@ -1423,49 +1459,56 @@ function applyPixel(imgData,w,h){
     d[i+2]=clamp(b*255,0,255);
   }
 
-  S.exposure=p.exposure;
-  S.contrast=p.contrast;
-  S.highlights=p.highlights;
-  S.shadows=p.shadows;
-  S.whites=p.whites;
-  S.blacks=p.blacks;
-  S.temp=p.temp;
-  S.tint=p.tint;
-  S.vibrance=p.vibrance;
-  S.saturation=p.saturation;
-  S.texture=p.texture;
-  S.clarity=p.clarity;
-  S.dehaze=p.dehaze;
-  S.vignette=p.vignette;
-
   return imgData;
 }
 
 function sharpen(c,w,h,a){
 
-  if(a<1){
-    return;
-  }
+  if(a<1)return;
 
-  const s=c.getImageData(0,0,w,h);
-  const o=c.createImageData(w,h);
+  const s=
+    c.getImageData(
+      0,
+      0,
+      w,
+      h
+    );
+
+  const o=
+    c.createImageData(
+      w,
+      h
+    );
 
   const d=s.data;
   const q=o.data;
 
-  const k=a/100*.7;
+  const k=
+    a/100*.7;
 
-  for(let y=1;y<h-1;y++){
+  for(
+    let y=1;
+    y<h-1;
+    y++
+  ){
 
-    for(let x=1;x<w-1;x++){
+    for(
+      let x=1;
+      x<w-1;
+      x++
+    ){
 
-      const i=(y*w+x)*4;
+      const i=
+        (y*w+x)*4;
 
-      for(let ch=0;ch<3;ch++){
+      for(
+        let ch=0;
+        ch<3;
+        ch++
+      ){
 
         q[i+ch]=clamp(
-          d[i+ch]*(1+4*k)
-          -
+          d[i+ch]*(1+4*k)-
           k*(
             d[i-4+ch]+
             d[i+4+ch]+
@@ -1486,18 +1529,29 @@ function sharpen(c,w,h,a){
 
 function grain(c,w,h,a){
 
-  if(!a){
-    return;
-  }
+  if(!a)return;
 
-  const q=c.getImageData(0,0,w,h);
+  const q=
+    c.getImageData(
+      0,
+      0,
+      w,
+      h
+    );
+
   const d=q.data;
 
-  const n=a/100*28;
+  const n=
+    a/100*28;
 
-  for(let i=0;i<d.length;i+=4){
+  for(
+    let i=0;
+    i<d.length;
+    i+=4
+  ){
 
-    const x=(Math.random()-.5)*n;
+    const x=
+      (Math.random()-.5)*n;
 
     d[i]=clamp(d[i]+x,0,255);
     d[i+1]=clamp(d[i+1]+x,0,255);
@@ -1519,6 +1573,7 @@ function retouchDraw(c,w,h){
     c.save();
 
     c.beginPath();
+
     c.arc(
       p.x,
       p.y,
@@ -1531,47 +1586,37 @@ function retouchDraw(c,w,h){
 
     c.filter=`blur(${blur}px)`;
 
-    const cp=document.createElement('canvas');
+    const cp=
+      document.createElement('canvas');
 
     cp.width=w;
     cp.height=h;
 
     cp
       .getContext('2d')
-      .drawImage(c.canvas,0,0);
+      .drawImage(
+        c.canvas,
+        0,
+        0
+      );
 
-    c.drawImage(cp,0,0);
+    c.drawImage(
+      cp,
+      0,
+      0
+    );
 
     c.restore();
   }
 }
 
-function updateZoomLabel(){
-
-  $('zlabel').textContent=
-    Math.round(zoom*100)+'%';
-}
-
-function applyZoomVisual(){
-
-  const transform=
-    `scale(${zoom})`;
-
-  C.style.transform=transform;
-  O.style.transform=transform;
-
-  updateZoomLabel();
-}
-
 function render(){
 
-  if(!img){
-    return;
-  }
+  if(!img)return;
 
   $('status').textContent='Rendering…';
 
-  const a=
+  let a=
     (S.rotate+S.straighten)*
     Math.PI/180;
 
@@ -1580,20 +1625,22 @@ function render(){
 
   const sw=
     (S.rotate%180)
-    ?H
-    :W;
+      ?H
+      :W;
 
   const sh=
     (S.rotate%180)
-    ?W
-    :H;
+      ?W
+      :H;
 
-  const t=document.createElement('canvas');
+  const t=
+    document.createElement('canvas');
 
   t.width=sw;
   t.height=sh;
 
-  const tc=t.getContext('2d');
+  const tc=
+    t.getContext('2d');
 
   tc.translate(
     sw/2,
@@ -1620,7 +1667,7 @@ function render(){
 
   if(S.ratio!=='original'){
 
-    const [
+    const[
       rw,
       rh
     ]=S.ratio
@@ -1632,25 +1679,30 @@ function render(){
 
     if(cr>tr){
 
-      cw=Math.round(sh*tr);
-      cx=(sw-cw)/2;
+      cw=
+        Math.round(sh*tr);
+
+      cx=
+        (sw-cw)/2;
 
     }else{
 
-      ch=Math.round(sw/tr);
-      cy=(sh-ch)/2;
+      ch=
+        Math.round(sw/tr);
+
+      cy=
+        (sh-ch)/2;
     }
   }
 
   /*
-    Smaller preview buffer keeps mobile editing smoother.
-    The source image itself is still kept separately.
+    Small preview canvas = faster editing.
+    The original image remains untouched.
   */
-
   const max=
     innerWidth<700
-    ?620
-    :900;
+      ?620
+      :900;
 
   const k=
     Math.min(
@@ -1719,8 +1771,6 @@ function render(){
 
     showOverlay();
 
-    applyZoomVisual();
-
     $('status').textContent='Original';
 
     return;
@@ -1788,7 +1838,10 @@ function render(){
   if(S.blur){
 
     ctx.filter=
-      `blur(${Math.min(10,S.blur/10)}px)`;
+      `blur(${Math.min(
+        10,
+        S.blur/10
+      )}px)`;
 
     const cp=
       document.createElement('canvas');
@@ -1834,6 +1887,9 @@ function render(){
   O.style.height=
     C.clientHeight+'px';
 
+  /*
+    Keep current zoom after every edit.
+  */
   applyZoomVisual();
 
   $('status').textContent='Ready';
@@ -1869,8 +1925,7 @@ function exportImage(){
     return;
   }
 
-  $('status').textContent=
-    'Exporting…';
+  $('status').textContent='Exporting…';
 
   const max=
     +$('size').value ||
@@ -1928,10 +1983,10 @@ function exportImage(){
 
   const ext=
     type==='image/png'
-    ?'png'
-    :type==='image/webp'
-    ?'webp'
-    :'jpg';
+      ?'png'
+      :type==='image/webp'
+        ?'webp'
+        :'jpg';
 
   const a=
     document.createElement('a');
@@ -1955,40 +2010,50 @@ function exportImage(){
     'Export complete';
 }
 
+/* Tool switching */
+
 $('tabs').addEventListener(
   'click',
   e=>{
     const b=
       e.target.closest('[data-tool]');
 
-    if(!b){
-      return;
-    }
+    if(!b)return;
 
-    active=b.dataset.tool;
+    active=
+      b.dataset.tool;
 
     document
-      .querySelectorAll('#tabs button')
-      .forEach(x=>
+      .querySelectorAll(
+        '#tabs button'
+      )
+      .forEach(x=>{
         x.classList.toggle(
           'active',
           x===b
-        )
-      );
+        );
+      });
 
     panel();
   }
 );
+
+/* Reset */
 
 $('reset').onclick=()=>{
   push();
   resetState(true);
 };
 
+/* Undo */
+
 $('undo').onclick=()=>{
+
   if(history.length){
 
-    future.push(snap());
+    future.push(
+      snap()
+    );
 
     restore(
       history.pop()
@@ -1996,10 +2061,15 @@ $('undo').onclick=()=>{
   }
 };
 
+/* Redo */
+
 $('redo').onclick=()=>{
+
   if(future.length){
 
-    history.push(snap());
+    history.push(
+      snap()
+    );
 
     restore(
       future.pop()
@@ -2007,20 +2077,28 @@ $('redo').onclick=()=>{
   }
 };
 
+/* Before */
+
 $('before').onclick=()=>{
 
   showBefore=!showBefore;
 
-  $('beforeBadge').style.display=
-    showBefore
-    ?'block'
-    :'none';
+  if($('badge')){
+    $('badge').style.display=
+      showBefore
+        ?'block'
+        :'none';
+  }
 
   render();
 };
 
-$('zout').onclick=()=>{
+/*
+  Desktop zoom buttons.
+  These do NOT render the photo again.
+*/
 
+$('zout').onclick=()=>{
   zoom=
     clamp(
       zoom-.1,
@@ -2032,7 +2110,6 @@ $('zout').onclick=()=>{
 };
 
 $('zin').onclick=()=>{
-
   zoom=
     clamp(
       zoom+.1,
@@ -2044,9 +2121,7 @@ $('zin').onclick=()=>{
 };
 
 $('fit').onclick=()=>{
-
   zoom=1;
-
   applyZoomVisual();
 };
 
@@ -2054,16 +2129,20 @@ $('full').onclick=()=>{
   $('stage').requestFullscreen?.();
 };
 
+/* Double click before/after */
+
 $('stage').ondblclick=()=>{
   $('before').click();
 };
+
+/* Keyboard */
 
 document.addEventListener(
   'keydown',
   e=>{
 
     if(
-      (e.ctrlKey||e.metaKey) &&
+      (e.ctrlKey||e.metaKey)&&
       e.key.toLowerCase()==='z'
     ){
 
@@ -2072,8 +2151,8 @@ document.addEventListener(
     }
 
     if(
-      (e.ctrlKey||e.metaKey) &&
-      e.shiftKey &&
+      (e.ctrlKey||e.metaKey)&&
+      e.shiftKey&&
       e.key.toLowerCase()==='z'
     ){
 
@@ -2083,19 +2162,9 @@ document.addEventListener(
   }
 );
 
-
-/*
-  Touch zoom and retouch share the same fixed photo stage.
-  The page never scrolls while interacting with the photo.
-*/
-
-let drawing=false;
-
-const pointers=new Map();
-
-let pinchStartDistance=0;
-let pinchStartZoom=1;
-let pinchActive=false;
+/* =========================================
+   MOBILE PINCH ZOOM
+   ========================================= */
 
 function pointerDistance(a,b){
 
@@ -2109,9 +2178,7 @@ $('stage').addEventListener(
   'pointerdown',
   e=>{
 
-    if(!img){
-      return;
-    }
+    if(!img)return;
 
     e.preventDefault();
 
@@ -2124,9 +2191,7 @@ $('stage').addEventListener(
     );
 
     /*
-      Second finger starts pinch mode.
-      Retouch drawing is cancelled so two fingers
-      can never accidentally paint on the image.
+      Two fingers = pinch zoom.
     */
 
     if(pointers.size===2){
@@ -2142,9 +2207,8 @@ $('stage').addEventListener(
 
       pinchActive=true;
 
-      const pts=[
-        ...pointers.values()
-      ];
+      const pts=
+        [...pointers.values()];
 
       pinchStartDistance=
         Math.max(
@@ -2160,15 +2224,18 @@ $('stage').addEventListener(
       return;
     }
 
+    /*
+      Retouch remains one-finger.
+    */
+
     if(active==='retouch'){
 
       drawing=true;
 
       try{
-        $('stage')
-          .setPointerCapture(
-            e.pointerId
-          );
+        $('stage').setPointerCapture(
+          e.pointerId
+        );
       }catch(_){}
 
       addRetouch(e);
@@ -2180,9 +2247,7 @@ $('stage').addEventListener(
   'pointermove',
   e=>{
 
-    if(!img){
-      return;
-    }
+    if(!img)return;
 
     if(
       pointers.has(
@@ -2200,10 +2265,8 @@ $('stage').addEventListener(
     }
 
     /*
-      IMPORTANT:
-      Pinch zoom changes only CSS transform.
-      It does NOT run the heavy photo render.
-      This makes finger zoom much smoother.
+      Pinch movement only changes
+      CSS scale. No canvas rendering.
     */
 
     if(
@@ -2211,9 +2274,10 @@ $('stage').addEventListener(
       pointers.size>=2
     ){
 
-      const pts=[
-        ...pointers.values()
-      ];
+      e.preventDefault();
+
+      const pts=
+        [...pointers.values()];
 
       const d=
         Math.max(
@@ -2266,12 +2330,17 @@ $('stage').addEventListener(
   endPointer
 );
 
+/* Retouch */
+
 function addRetouch(e){
 
   const r=
     C.getBoundingClientRect();
 
-  if(!r.width||!r.height){
+  if(
+    !r.width ||
+    !r.height
+  ){
     return;
   }
 
@@ -2291,16 +2360,14 @@ function addRetouch(e){
     r:Math.max(
       3,
       S.retouchSize*
-      C.width/
-      1000
+      C.width/1000
     )
   });
 
   schedule();
 }
 
-updateZoomLabel();
-
+/* Color grading defaults */
 
 Object.assign(
   S,
@@ -2319,13 +2386,18 @@ Object.assign(
 
 function init(){
 
-  document
-    .querySelector(
+  const first=
+    document.querySelector(
       '#tabs button[data-tool="light"]'
-    )
-    .classList.add('active');
+    );
+
+  if(first){
+    first.classList.add('active');
+  }
 
   panel();
+
+  updateZoomLabel();
 }
 
 init();
