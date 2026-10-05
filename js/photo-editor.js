@@ -1,3460 +1,2808 @@
-(() => {
-'use strict';
+"use strict";
 
-/* =========================================================
-   TOOLORA PHOTO EDITOR
-   Browser-side image editing engine
-========================================================= */
+/* Toolora Professional Photo Editor
+   Browser-only image editor.
+   No fake AI operations are used.
+*/
 
 const $ = id => document.getElementById(id);
-const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
 
-const C = $('canvas');
-const ctx = C.getContext('2d',{willReadFrequently:true});
+const imageCanvas = $("imageCanvas");
+const overlayCanvas = $("overlayCanvas");
+const imageCtx = imageCanvas.getContext("2d", { willReadFrequently:true });
+const overlayCtx = overlayCanvas.getContext("2d");
 
-const O = $('overlay');
-const ox = O.getContext('2d');
+const state = {
+    image:null,
+    sourceCanvas:null,
+    sourceWidth:0,
+    sourceHeight:0,
 
-const src = document.createElement('canvas');
-const sx = src.getContext('2d',{willReadFrequently:true});
+    tool:"light",
+    before:false,
 
-let img = null;
-let fileName = '';
-let rendering = false;
-let renderQueued = false;
+    zoom:1,
+    panX:0,
+    panY:0,
 
-let zoom = 1;
-let panX = 0;
-let panY = 0;
+    light:{
+        exposure:0,
+        contrast:0,
+        highlights:0,
+        shadows:0,
+        whites:0,
+        blacks:0
+    },
 
-let active = 'light';
-let showBefore = false;
-let cropGuide = false;
+    color:{
+        temperature:0,
+        tint:0,
+        vibrance:0,
+        saturation:0,
 
-let history = [];
-let future = [];
+        hue:0,
+        hueRange:30,
+        mixerSaturation:0,
+        mixerLightness:0,
 
-let retouch = [];
+        shadowHue:0,
+        shadowSat:0,
+        midHue:0,
+        midSat:0,
+        highlightHue:0,
+        highlightSat:0,
+        gradeBlend:50,
+        gradeBalance:0
+    },
 
-let specialPointer = null;
-let retouchDrawing = false;
+    effects:{
+        texture:0,
+        clarity:0,
+        dehaze:0,
+        vignette:0,
+        midpoint:50,
+        feather:50,
+        roundness:0,
+        grain:0,
+        grainSize:25,
+        grainRoughness:50
+    },
 
-const pointers = new Map();
-let gesture = null;
-let lastTap = 0;
+    detail:{
+        sharpening:0,
+        radius:1,
+        detail:25,
+        masking:0,
+        noiseReduction:0,
+        noiseDetail:50,
+        noiseContrast:0,
+        colorNoise:0,
+        colorDetail:50,
+        smoothness:50
+    },
 
-/* =========================================================
-   STATE
-========================================================= */
+    crop:{
+        ratio:"Free",
+        x:0,
+        y:0,
+        w:1,
+        h:1,
+        active:false,
+        dragging:false,
+        resizing:false,
+        handle:"",
+        startX:0,
+        startY:0,
+        startCrop:null,
+        straighten:0
+    },
 
-const S = {
-  exposure:0,
-  contrast:0,
-  highlights:0,
-  shadows:0,
-  whites:0,
-  blacks:0,
+    text:{
+        value:"",
+        font:"Arial",
+        size:48,
+        opacity:100,
+        bold:false,
+        italic:false,
+        align:"center",
+        color:"#ffffff",
+        stroke:"#000000",
+        strokeWidth:0,
+        layers:[],
+        selected:-1
+    },
 
-  temp:0,
-  tint:0,
-  vibrance:0,
-  saturation:0,
+    draw:{
+        size:12,
+        opacity:100,
+        color:"#ffffff",
+        strokes:[],
+        drawing:false,
+        current:null
+    },
 
-  h_red:0,
-  h_orange:0,
-  h_yellow:0,
-  h_green:0,
-  h_aqua:0,
-  h_blue:0,
-  h_purple:0,
-  h_magenta:0,
+    selective:{
+        picked:null,
+        range:30,
+        hue:0,
+        saturation:0,
+        lightness:0
+    },
 
-  s_red:0,
-  s_orange:0,
-  s_yellow:0,
-  s_green:0,
-  s_aqua:0,
-  s_blue:0,
-  s_purple:0,
-  s_magenta:0,
+    preset:{
+        name:"None",
+        amount:100
+    },
 
-  l_red:0,
-  l_orange:0,
-  l_yellow:0,
-  l_green:0,
-  l_aqua:0,
-  l_blue:0,
-  l_purple:0,
-  l_magenta:0,
+    profile:"Basic",
 
-  texture:0,
-  clarity:0,
-  dehaze:0,
-  vignette:0,
-  midpoint:50,
-  feather:50,
-  roundness:0,
+    mask:{
+        type:"None",
+        amount:50,
+        feather:50,
+        exposure:0,
+        contrast:0,
+        saturation:0,
+        hue:0,
+        texture:0,
+        clarity:0,
+        dehaze:0,
+        x:50,
+        y:50,
+        width:70,
+        height:70
+    },
 
-  grain:0,
-  grainSize:25,
-  grainRough:50,
+    retouch:{
+        size:30,
+        feather:70,
+        opacity:100,
+        strokes:[]
+    },
 
-  sharp:0,
-  radius:1,
-  noise:0,
-  colorNoise:0,
+    blur:{
+        amount:0,
+        focusX:50,
+        focusY:50,
+        focusSize:40,
+        feather:50
+    },
 
-  ratio:'original',
-  rotate:0,
-  straighten:0,
-  flipX:false,
-  flipY:false,
+    optics:{
+        vignette:0,
+        defringe:0,
+        distortion:0
+    },
 
-  profile:'natural',
-  preset:'none',
-  presetAmount:100,
+    history:[],
+    future:[],
 
-  blur:0,
-  blurX:50,
-  blurY:50,
-
-  lensVignette:0,
-  defringe:0,
-
-  maskType:'radial',
-  maskAmount:0,
-  maskExposure:0,
-  maskContrast:0,
-  maskSaturation:0,
-
-  retouchSize:30,
-
-  gradeShadow:0,
-  gradeShadowSat:0,
-  gradeMid:0,
-  gradeMidSat:0,
-  gradeHigh:0,
-  gradeHighSat:0,
-  gradeBlend:50,
-  gradeBalance:0,
-
-  drawSize:8,
-  drawOpacity:100,
-  drawColor:'#ffffff',
-
-  textSize:48,
-  textOpacity:100,
-  textFont:'Arial',
-  textColor:'#ffffff',
-  textStroke:'#000000',
-  textBold:false,
-  textItalic:false,
-  textAlign:'center',
-
-  selectiveR:0,
-  selectiveG:0,
-  selectiveB:0,
-  selectiveRange:35,
-  selectiveHue:0,
-  selectiveSat:0,
-  selectiveLight:0,
-  selectiveActive:false,
-
-  textLayers:[],
-  drawLayers:[],
-  selectedTextId:null
+    gesture:{
+        active:false,
+        lastX:0,
+        lastY:0,
+        startDistance:0,
+        startZoom:1
+    }
 };
 
-const names = {
-  light:['Adjust','Light'],
-  color:['Adjust','Color'],
-  effects:['Adjust','Effects'],
-  detail:['Adjust','Detail'],
-  crop:['Transform','Crop'],
-  presets:['Looks','Presets'],
-  profiles:['Looks','Profiles'],
-  mask:['Local','Mask'],
-  retouch:['Retouch','Spot Blur'],
-  blur:['Effects','Blur'],
-  optics:['Lens','Optics'],
-  text:['Overlay','Text'],
-  draw:['Overlay','Draw'],
-  selective:['Color','Color Select'],
-  layers:['Manage','Layers'],
-  export:['Output','Export']
+const profiles = {
+    Basic:{},
+    Modern:{contrast:8,saturation:5,clarity:5},
+    Vivid:{contrast:10,saturation:18,vibrance:20},
+    Portrait:{highlights:-8,shadows:12,saturation:4,clarity:-4},
+    Cinematic:{contrast:12,saturation:-8,vibrance:4,dehaze:7},
+    Vintage:{contrast:-8,saturation:-10,grain:10,vignette:10},
+    Matte:{contrast:-12,blacks:18,saturation:-5},
+    B&W:{saturation:-100,contrast:8},
+    Cool:{temperature:-18,shadowsHue:210,shadowsSat:10},
+    Warm:{temperature:18,highlightsHue:35,highlightsSat:12}
 };
 
-/* =========================================================
-   HISTORY
-========================================================= */
-
-function cloneState(){
-  return JSON.parse(JSON.stringify(S));
+function clamp(v,min=0,max=255){
+    return Math.max(min,Math.min(max,v));
 }
 
-function pushHistory(){
-  history.push(cloneState());
-
-  if(history.length > 40){
-    history.shift();
-  }
-
-  future = [];
+function clamp01(v){
+    return Math.max(0,Math.min(1,v));
 }
 
-function restoreState(state){
-  Object.assign(S,JSON.parse(JSON.stringify(state)));
-  render();
-  panel();
+function lerp(a,b,t){
+    return a+(b-a)*t;
+}
+
+function value(id){
+    const el=$(id);
+    return el ? Number(el.value) : 0;
+}
+
+function fmt(v){
+    return Number(v).toFixed(0);
+}
+
+function snapshot(){
+    if(!state.sourceCanvas) return;
+
+    const snap={
+        image:imageCanvas.toDataURL("image/png"),
+        text:JSON.parse(JSON.stringify(state.text.layers)),
+        draw:JSON.parse(JSON.stringify(state.draw.strokes)),
+        retouch:JSON.parse(JSON.stringify(state.retouch.strokes)),
+        crop:JSON.parse(JSON.stringify(state.crop))
+    };
+
+    state.history.push(snap);
+
+    if(state.history.length>30){
+        state.history.shift();
+    }
+
+    state.future=[];
+    updateHistoryButtons();
+}
+
+function restoreSnapshot(snap){
+    const img=new Image();
+
+    img.onload=()=>{
+        state.sourceCanvas=document.createElement("canvas");
+        state.sourceCanvas.width=img.width;
+        state.sourceCanvas.height=img.height;
+
+        const c=state.sourceCanvas.getContext("2d");
+        c.drawImage(img,0,0);
+
+        imageCanvas.width=img.width;
+        imageCanvas.height=img.height;
+
+        state.text.layers=JSON.parse(JSON.stringify(snap.text||[]));
+        state.draw.strokes=JSON.parse(JSON.stringify(snap.draw||[]));
+        state.retouch.strokes=JSON.parse(JSON.stringify(snap.retouch||[]));
+        state.crop=JSON.parse(JSON.stringify(snap.crop||state.crop));
+
+        render();
+        updateHistoryButtons();
+    };
+
+    img.src=snap.image;
 }
 
 function undo(){
-  if(!history.length) return;
+    if(!state.history.length) return;
 
-  future.push(cloneState());
-  const state = history.pop();
+    const current={
+        image:imageCanvas.toDataURL("image/png"),
+        text:JSON.parse(JSON.stringify(state.text.layers)),
+        draw:JSON.parse(JSON.stringify(state.draw.strokes)),
+        retouch:JSON.parse(JSON.stringify(state.retouch.strokes)),
+        crop:JSON.parse(JSON.stringify(state.crop))
+    };
 
-  Object.assign(S,JSON.parse(JSON.stringify(state)));
+    state.future.push(current);
 
-  render();
-  panel();
+    const snap=state.history.pop();
+    restoreSnapshot(snap);
 }
 
 function redo(){
-  if(!future.length) return;
+    if(!state.future.length) return;
 
-  history.push(cloneState());
-  const state = future.pop();
+    const current={
+        image:imageCanvas.toDataURL("image/png"),
+        text:JSON.parse(JSON.stringify(state.text.layers)),
+        draw:JSON.parse(JSON.stringify(state.draw.strokes)),
+        retouch:JSON.parse(JSON.stringify(state.retouch.strokes)),
+        crop:JSON.parse(JSON.stringify(state.crop))
+    };
 
-  Object.assign(S,JSON.parse(JSON.stringify(state)));
+    state.history.push(current);
 
-  render();
-  panel();
+    const snap=state.future.pop();
+    restoreSnapshot(snap);
 }
 
-/* =========================================================
-   UI HELPERS
-========================================================= */
-
-function fmt(value){
-  const n = Number(value);
-
-  if(!Number.isFinite(n)) return '0';
-
-  return `${n > 0 ? '+' : ''}${Number.isInteger(n) ? n : n.toFixed(1)}`;
+function updateHistoryButtons(){
+    $("undoBtn").disabled=!state.history.length;
+    $("redoBtn").disabled=!state.future.length;
 }
 
-function control(key,label,min,max,step=1){
-  return `
-    <div class="control">
-      <div class="ch">
-        <span>${label}</span>
-        <span class="val" id="v_${key}">${fmt(S[key])}</span>
-      </div>
-      <input
-        data-k="${key}"
-        type="range"
-        min="${min}"
-        max="${max}"
-        step="${step}"
-        value="${S[key]}"
-      >
-    </div>
-  `;
+function setStatus(text){
+    $("statusText").textContent=text;
 }
 
-function escapeHTML(value){
-  return String(value ?? '')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#039;');
+function openFile(file){
+    if(!file || !file.type.startsWith("image/")) return;
+
+    const reader=new FileReader();
+
+    reader.onload=e=>{
+        const img=new Image();
+
+        img.onload=()=>{
+            const max=1800;
+            const scale=Math.min(1,max/Math.max(img.width,img.height));
+
+            const w=Math.max(1,Math.round(img.width*scale));
+            const h=Math.max(1,Math.round(img.height*scale));
+
+            state.sourceCanvas=document.createElement("canvas");
+            state.sourceCanvas.width=w;
+            state.sourceCanvas.height=h;
+
+            const c=state.sourceCanvas.getContext("2d");
+            c.imageSmoothingEnabled=true;
+            c.imageSmoothingQuality="high";
+            c.drawImage(img,0,0,w,h);
+
+            imageCanvas.width=w;
+            imageCanvas.height=h;
+            overlayCanvas.width=w;
+            overlayCanvas.height=h;
+
+            state.image=img;
+            state.sourceWidth=w;
+            state.sourceHeight=h;
+
+            state.crop={
+                ratio:"Free",
+                x:0,
+                y:0,
+                w:1,
+                h:1,
+                active:false,
+                dragging:false,
+                resizing:false,
+                handle:"",
+                startX:0,
+                startY:0,
+                startCrop:null,
+                straighten:0
+            };
+
+            state.history=[];
+            state.future=[];
+            state.text.layers=[];
+            state.draw.strokes=[];
+            state.retouch.strokes=[];
+            state.text.selected=-1;
+            state.selective.picked=null;
+
+            $("emptyState").style.display="none";
+
+            $("imageInfo").textContent=`${img.width} × ${img.height}px`;
+            setStatus("Image loaded");
+
+            fitImage();
+            render();
+            updateHistoryButtons();
+        };
+
+        img.src=e.target.result;
+    };
+
+    reader.readAsDataURL(file);
 }
 
-/* =========================================================
-   PANEL
-========================================================= */
-
-function bindRangeControls(){
-  document.querySelectorAll('#panel input[data-k]').forEach(input => {
-
-    input.addEventListener('input',() => {
-      const key = input.dataset.k;
-      S[key] = Number(input.value);
-
-      const output = $('v_' + key);
-
-      if(output){
-        output.textContent = fmt(input.value);
-      }
-
-      schedule();
-    });
-
-    input.addEventListener('change',() => {
-      pushHistory();
-    });
-  });
-
-  document.querySelectorAll('#panel input[data-mix]').forEach(input => {
-
-    input.addEventListener('input',() => {
-      S[input.dataset.mix] = Number(input.value);
-      schedule();
-    });
-
-    input.addEventListener('change',pushHistory);
-  });
-}
-
-function panel(){
-
-  const p = $('panel');
-
-  $('eyebrow').textContent = names[active][0];
-  $('title').textContent = names[active][1];
-
-  let h = '';
-
-  if(active === 'light'){
-    h = `
-      <div class="section">
-        <h3>Tone</h3>
-        ${control('exposure','Exposure',-100,100)}
-        ${control('contrast','Contrast',-100,100)}
-        ${control('highlights','Highlights',-100,100)}
-        ${control('shadows','Shadows',-100,100)}
-        ${control('whites','Whites',-100,100)}
-        ${control('blacks','Blacks',-100,100)}
-      </div>
-
-      <div class="section">
-        <button class="btn" id="auto" style="width:100%">Auto Tone</button>
-        <p class="note">Balanced browser-side tone correction.</p>
-      </div>
-    `;
-  }
-
-  if(active === 'color'){
-    const colors = [
-      ['red','Red'],
-      ['orange','Orange'],
-      ['yellow','Yellow'],
-      ['green','Green'],
-      ['aqua','Aqua'],
-      ['blue','Blue'],
-      ['purple','Purple'],
-      ['magenta','Magenta']
-    ];
-
-    h = `
-      <div class="section">
-        <h3>White Balance</h3>
-        ${control('temp','Temperature',-100,100)}
-        ${control('tint','Tint',-100,100)}
-        ${control('vibrance','Vibrance',-100,100)}
-        ${control('saturation','Saturation',-100,100)}
-      </div>
-
-      <div class="section">
-        <h3>Color Mixer</h3>
-        ${colors.map(([key,label]) => `
-          <div class="mixer">
-            <span>${label}</span>
-            <input data-mix="h_${key}" type="range" min="-30" max="30" value="${S['h_'+key]}" title="${label} Hue">
-            <input data-mix="s_${key}" type="range" min="-100" max="100" value="${S['s_'+key]}" title="${label} Saturation">
-            <input data-mix="l_${key}" type="range" min="-100" max="100" value="${S['l_'+key]}" title="${label} Luminance">
-          </div>
-        `).join('')}
-        <p class="note">Hue, saturation and luminance are controlled independently.</p>
-      </div>
-
-      <div class="section">
-        <h3>Color Grading</h3>
-        ${control('gradeShadow','Shadow Hue',0,360)}
-        ${control('gradeShadowSat','Shadow Strength',0,100)}
-        ${control('gradeMid','Midtone Hue',0,360)}
-        ${control('gradeMidSat','Midtone Strength',0,100)}
-        ${control('gradeHigh','Highlight Hue',0,360)}
-        ${control('gradeHighSat','Highlight Strength',0,100)}
-        ${control('gradeBlend','Blending',0,100)}
-        ${control('gradeBalance','Balance',-100,100)}
-      </div>
-    `;
-  }
-
-  if(active === 'effects'){
-    h = `
-      <div class="section">
-        <h3>Effects</h3>
-        ${control('texture','Texture',-100,100)}
-        ${control('clarity','Clarity',-100,100)}
-        ${control('dehaze','Dehaze',-100,100)}
-        ${control('vignette','Vignette',-100,100)}
-        ${control('midpoint','Midpoint',0,100)}
-        ${control('feather','Feather',0,100)}
-        ${control('roundness','Roundness',-100,100)}
-      </div>
-
-      <div class="section">
-        <h3>Grain</h3>
-        ${control('grain','Amount',0,100)}
-        ${control('grainSize','Size',0,100)}
-        ${control('grainRough','Roughness',0,100)}
-      </div>
-    `;
-  }
-
-  if(active === 'detail'){
-    h = `
-      <div class="section">
-        <h3>Sharpening</h3>
-        ${control('sharp','Amount',0,100)}
-        ${control('radius','Radius',0.5,3,.1)}
-      </div>
-
-      <div class="section">
-        <h3>Noise Reduction</h3>
-        ${control('noise','Luminance Noise',0,100)}
-        ${control('colorNoise','Color Noise',0,100)}
-      </div>
-    `;
-  }
-
-  if(active === 'crop'){
-    h = `
-      <div class="section">
-        <h3>Crop & Geometry</h3>
-
-        <select class="select" id="ratio">
-          <option value="original">Original</option>
-          <option value="1:1">1 : 1</option>
-          <option value="4:5">4 : 5</option>
-          <option value="3:4">3 : 4</option>
-          <option value="4:3">4 : 3</option>
-          <option value="16:9">16 : 9</option>
-          <option value="9:16">9 : 16</option>
-          <option value="2:3">2 : 3</option>
-          <option value="3:2">3 : 2</option>
-        </select>
-
-        <div style="height:9px"></div>
-
-        ${control('straighten','Straighten',-10,10,.1)}
-
-        <div class="grid2">
-          <button class="btn" id="rl">Rotate Left</button>
-          <button class="btn" id="rr">Rotate Right</button>
-          <button class="btn" id="fx">Flip Horizontal</button>
-          <button class="btn" id="fy">Flip Vertical</button>
-        </div>
-
-        <div style="height:8px"></div>
-
-        <button class="btn" id="cropGuideBtn" style="width:100%">
-          ${cropGuide ? 'Hide Crop Guide' : 'Show Crop Guide'}
-        </button>
-      </div>
-
-      <p class="note">
-        Crop ratios are applied to the rendered image. Rotate and straighten are combined before cropping.
-      </p>
-    `;
-  }
-
-  if(active === 'presets'){
-    const presets = [
-      ['clean','Clean','Balanced'],
-      ['warm','Warm','Soft warm'],
-      ['cool','Cool','Clean cool'],
-      ['cinematic','Cinematic','Moody contrast'],
-      ['matte','Matte','Soft film'],
-      ['vivid','Vivid','Color punch'],
-      ['portrait','Portrait','Soft portrait'],
-      ['bw','B&W','Monochrome']
-    ];
-
-    h = `
-      <div class="section">
-        <h3>Toolora Presets</h3>
-        <div class="presets">
-          ${presets.map(x => `
-            <button class="preset" data-preset="${x[0]}">
-              <b>${x[1]}</b>
-              <small>${x[2]}</small>
-            </button>
-          `).join('')}
-        </div>
-      </div>
-
-      ${control('presetAmount','Preset Amount',0,100)}
-    `;
-  }
-
-  if(active === 'profiles'){
-    const profiles = [
-      ['natural','Natural'],
-      ['neutral','Neutral'],
-      ['vivid','Vivid'],
-      ['modern','Modern'],
-      ['film','Film'],
-      ['mono','Monochrome']
-    ];
-
-    h = `
-      <div class="section">
-        <h3>Profiles</h3>
-        <div class="grid2">
-          ${profiles.map(x => `
-            <button class="btn ${S.profile === x[0] ? 'active' : ''}" data-profile="${x[0]}">
-              ${x[1]}
-            </button>
-          `).join('')}
-        </div>
-      </div>
-
-      <p class="note">
-        Profiles change the rendering character without changing the original image.
-      </p>
-    `;
-  }
-
-  if(active === 'mask'){
-    h = `
-      <div class="section">
-        <h3>Local Mask</h3>
-
-        <div class="grid3">
-          <button class="btn mask ${S.maskType === 'radial' ? 'active' : ''}" data-type="radial">Radial</button>
-          <button class="btn mask ${S.maskType === 'linear' ? 'active' : ''}" data-type="linear">Linear</button>
-          <button class="btn mask ${S.maskType === 'brush' ? 'active' : ''}" data-type="brush">Brush</button>
-        </div>
-
-        <div style="height:10px"></div>
-
-        ${control('maskAmount','Mask Amount',0,100)}
-        ${control('maskExposure','Local Exposure',-100,100)}
-        ${control('maskContrast','Local Contrast',-100,100)}
-        ${control('maskSaturation','Local Saturation',-100,100)}
-
-        <button class="btn" id="maskClear" style="width:100%">Clear Mask</button>
-      </div>
-
-      <p class="note">
-        Radial and linear local masks work directly in the browser. AI subject or sky detection is not falsely simulated.
-      </p>
-    `;
-  }
-
-  if(active === 'retouch'){
-    h = `
-      <div class="section">
-        <h3>Spot Blur Retouch</h3>
-        ${control('retouchSize','Brush Size',5,100)}
-        <button class="btn" id="retouchClear" style="width:100%">Clear Retouch</button>
-      </div>
-
-      <p class="note">
-        Paint over an unwanted area to apply local blur.
-      </p>
-    `;
-  }
-
-  if(active === 'blur'){
-    h = `
-      <div class="section">
-        <h3>Lens-style Blur</h3>
-        ${control('blur','Blur Amount',0,100)}
-        ${control('blurX','Focus X',0,100)}
-        ${control('blurY','Focus Y',0,100)}
-      </div>
-
-      <p class="note">
-        Browser-side focus blur with an adjustable focus point.
-      </p>
-    `;
-  }
-
-  if(active === 'optics'){
-    h = `
-      <div class="section">
-        <h3>Optics</h3>
-        ${control('lensVignette','Lens Vignette',-100,100)}
-        ${control('defringe','Defringe',0,100)}
-      </div>
-
-      <p class="note">
-        Browser-safe optical corrections. Camera-specific lens profiles are not faked.
-      </p>
-    `;
-  }
-
-  if(active === 'text'){
-    const selected = S.textLayers.find(x => x.id === S.selectedTextId);
-
-    h = `
-      <div class="section">
-        <h3>Text Overlay</h3>
-
-        <textarea class="select" id="textValue" rows="3" placeholder="Enter text">${escapeHTML(selected ? selected.text : '')}</textarea>
-
-        <div style="height:9px"></div>
-
-        <label class="colorhead">
-          Font
-          <select class="select" id="textFont" style="margin-top:6px">
-            ${[
-              'Arial',
-              'Georgia',
-              'Verdana',
-              'Trebuchet MS',
-              'Courier New',
-              'Impact',
-              'Times New Roman',
-              'Tahoma',
-              'Palatino Linotype'
-            ].map(f => `
-              <option value="${escapeHTML(f)}" ${
-                selected
-                ? selected.font === f ? 'selected' : ''
-                : S.textFont === f ? 'selected' : ''
-              }>${escapeHTML(f)}</option>
-            `).join('')}
-          </select>
-        </label>
-
-        <div style="height:9px"></div>
-
-        ${control('textSize','Font Size',10,160)}
-        ${control('textOpacity','Opacity',0,100)}
-
-        <div class="grid2">
-          <button class="btn ${selected?.bold ? 'active' : ''}" id="textBold">Bold</button>
-          <button class="btn ${selected?.italic ? 'active' : ''}" id="textItalic">Italic</button>
-          <button class="btn ${selected?.align === 'left' ? 'active' : ''}" data-text-align="left">Left</button>
-          <button class="btn ${selected?.align === 'center' ? 'active' : ''}" data-text-align="center">Center</button>
-          <button class="btn ${selected?.align === 'right' ? 'active' : ''}" data-text-align="right">Right</button>
-        </div>
-
-        <div style="height:10px"></div>
-
-        <div class="grid2">
-          <label class="colorhead">
-            Text Color
-            <input id="textColor" type="color" value="${selected ? selected.color : S.textColor}">
-          </label>
-
-          <label class="colorhead">
-            Stroke Color
-            <input id="textStroke" type="color" value="${selected ? selected.stroke : S.textStroke}">
-          </label>
-        </div>
-
-        <div style="height:10px"></div>
-
-        <div class="grid2">
-          <button class="btn" id="addText">Add Text</button>
-          <button class="btn danger" id="deleteText">Delete</button>
-        </div>
-
-        <div style="height:7px"></div>
-
-        <button class="btn" id="clearText" style="width:100%">Clear Text</button>
-      </div>
-
-      <p class="note">
-        Add text and drag it anywhere on the photo.
-      </p>
-    `;
-  }
-
-  if(active === 'draw'){
-    h = `
-      <div class="section">
-        <h3>Drawing</h3>
-
-        ${control('drawSize','Brush Size',1,80)}
-        ${control('drawOpacity','Opacity',1,100)}
-
-        <label class="colorhead">
-          Brush Color
-          <input id="drawColor" type="color" value="${S.drawColor}">
-        </label>
-
-        <div style="height:10px"></div>
-
-        <div class="grid2">
-          <button class="btn" id="clearDraw">Clear Drawing</button>
-          <button class="btn" id="removeDraw">Remove Last</button>
-        </div>
-      </div>
-
-      <p class="note">
-        Draw directly over the image. Strokes are stored as editable overlay layers.
-      </p>
-    `;
-  }
-
-  if(active === 'selective'){
-    const hex =
-      '#' +
-      [S.selectiveR,S.selectiveG,S.selectiveB]
-        .map(v => Number(v).toString(16).padStart(2,'0'))
-        .join('');
-
-    h = `
-      <div class="section">
-        <h3>Selective Color</h3>
-
-        <button class="btn ${S.selectiveActive ? 'active' : ''}" id="pickColor" style="width:100%">
-          ${S.selectiveActive ? 'Pick Color From Photo' : 'Pick Color From Photo'}
-        </button>
-
-        <div class="colorhead" style="margin-top:10px">
-          Selected Color
-          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-            <span style="display:inline-block;width:30px;height:30px;border-radius:7px;background:${hex};border:1px solid #777"></span>
-            <span>${hex.toUpperCase()}</span>
-          </div>
-        </div>
-
-        ${control('selectiveRange','Color Range',1,100)}
-        ${control('selectiveHue','Hue',-100,100)}
-        ${control('selectiveSat','Saturation',-100,100)}
-        ${control('selectiveLight','Lightness',-100,100)}
-
-        <button class="btn" id="clearSelective" style="width:100%">
-          Clear Color Selection
-        </button>
-      </div>
-
-      <p class="note">
-        Activate the picker, then click a color directly in the photo.
-      </p>
-    `;
-  }
-
-  if(active === 'layers'){
-    const items = [
-      ...S.textLayers.map((x,i) => ({
-        type:'text',
-        id:x.id,
-        label:`Text ${i+1}`,
-        sub:x.text || 'Text layer'
-      })),
-      ...S.drawLayers.map((x,i) => ({
-        type:'draw',
-        id:i,
-        label:`Drawing ${i+1}`,
-        sub:`${x.points.length} points`
-      }))
-    ];
-
-    h = `
-      <div class="section">
-        <h3>Layers</h3>
-
-        ${
-          items.length
-          ? items.map(item => `
-              <button
-                class="btn layerItem"
-                data-layer-type="${item.type}"
-                data-layer-id="${escapeHTML(item.id)}"
-                style="width:100%;text-align:left;margin-bottom:6px"
-              >
-                <b>${escapeHTML(item.label)}</b><br>
-                <small>${escapeHTML(item.sub)}</small>
-              </button>
-            `).join('')
-          : '<p class="note">No overlay layers yet.</p>'
-        }
-
-        <button class="btn danger" id="clearLayers" style="width:100%;margin-top:8px">
-          Clear All Layers
-        </button>
-      </div>
-    `;
-  }
-
-  if(active === 'export'){
-    h = `
-      <div class="section">
-        <h3>Export</h3>
-
-        <div class="grid2">
-          <div>
-            <div class="colorhead">Format</div>
-            <select class="select" id="format">
-              <option value="image/jpeg">JPG</option>
-              <option value="image/png">PNG</option>
-              <option value="image/webp">WebP</option>
-            </select>
-          </div>
-
-          <div>
-            <div class="colorhead">Quality</div>
-            <select class="select" id="quality">
-              <option value=".7">Standard</option>
-              <option value=".85" selected>High</option>
-              <option value=".95">Maximum</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="colorhead" style="margin-top:10px">
-          Maximum long edge
-        </div>
-
-        <select class="select" id="size">
-          <option value="1600">1600 px</option>
-          <option value="2400" selected>2400 px</option>
-          <option value="3200">3200 px</option>
-          <option value="0">Original working size</option>
-        </select>
-
-        <button class="download" id="download">
-          Download Edited Photo
-        </button>
-      </div>
-
-      <button class="btn danger" id="resetAll" style="width:100%">
-        Reset All Edits
-      </button>
-    `;
-  }
-
-  p.innerHTML = h;
-
-  bindRangeControls();
-  panelActions();
-}
-
-/* =========================================================
-   PANEL ACTIONS
-========================================================= */
-
-function panelActions(){
-
-  $('auto')?.addEventListener('click',() => {
-    pushHistory();
-
-    S.exposure = 0;
-    S.contrast = 8;
-    S.highlights = -14;
-    S.shadows = 16;
-    S.whites = 4;
-    S.blacks = -5;
-
+$("openBtn").onclick=()=>$("fileInput").click();
+$("openEmptyBtn").onclick=()=>$("fileInput").click();
+
+$("fileInput").onchange=e=>{
+    openFile(e.target.files[0]);
+    e.target.value="";
+};
+
+$("backBtn").onclick=()=>{
+    window.location.href="index.html";
+};
+
+$("undoBtn").onclick=undo;
+$("redoBtn").onclick=redo;
+
+$("beforeBtn").onclick=()=>{
+    state.before=!state.before;
+    $("beforeBtn").textContent=state.before?"After":"Before";
     render();
-    panel();
-  });
+};
 
-  $('ratio')?.addEventListener('change',e => {
-    pushHistory();
-    S.ratio = e.target.value;
-    schedule();
-  });
+document.addEventListener("dragover",e=>e.preventDefault());
 
-  $('rl')?.addEventListener('click',() => {
-    pushHistory();
-    S.rotate = (S.rotate + 270) % 360;
-    panX = 0;
-    panY = 0;
-    render();
-  });
+document.addEventListener("drop",e=>{
+    e.preventDefault();
 
-  $('rr')?.addEventListener('click',() => {
-    pushHistory();
-    S.rotate = (S.rotate + 90) % 360;
-    panX = 0;
-    panY = 0;
-    render();
-  });
-
-  $('fx')?.addEventListener('click',() => {
-    pushHistory();
-    S.flipX = !S.flipX;
-    render();
-  });
-
-  $('fy')?.addEventListener('click',() => {
-    pushHistory();
-    S.flipY = !S.flipY;
-    render();
-  });
-
-  $('cropGuideBtn')?.addEventListener('click',() => {
-    cropGuide = !cropGuide;
-    updateCropGuide();
-    panel();
-  });
-
-  document.querySelectorAll('[data-preset]').forEach(button => {
-    button.addEventListener('click',() => {
-      applyPreset(button.dataset.preset);
-    });
-  });
-
-  document.querySelectorAll('[data-profile]').forEach(button => {
-    button.addEventListener('click',() => {
-      pushHistory();
-      S.profile = button.dataset.profile;
-      render();
-      panel();
-    });
-  });
-
-  document.querySelectorAll('.mask').forEach(button => {
-    button.addEventListener('click',() => {
-      pushHistory();
-      S.maskType = button.dataset.type;
-      render();
-      panel();
-    });
-  });
-
-  $('maskClear')?.addEventListener('click',() => {
-    pushHistory();
-
-    S.maskAmount = 0;
-    S.maskExposure = 0;
-    S.maskContrast = 0;
-    S.maskSaturation = 0;
-
-    render();
-    panel();
-  });
-
-  $('retouchClear')?.addEventListener('click',() => {
-    if(!retouch.length) return;
-
-    pushHistory();
-    retouch = [];
-    render();
-  });
-
-  $('textFont')?.addEventListener('change',e => {
-    const selected = getSelectedText();
-
-    if(selected){
-      pushHistory();
-      selected.font = e.target.value;
-      render();
-      panel();
-    }else{
-      S.textFont = e.target.value;
+    if(e.dataTransfer.files.length){
+        openFile(e.dataTransfer.files[0]);
     }
-  });
-
-  $('textColor')?.addEventListener('input',e => {
-    const selected = getSelectedText();
-
-    if(selected){
-      selected.color = e.target.value;
-      schedule();
-    }
-
-    S.textColor = e.target.value;
-  });
-
-  $('textStroke')?.addEventListener('input',e => {
-    const selected = getSelectedText();
-
-    if(selected){
-      selected.stroke = e.target.value;
-      schedule();
-    }
-
-    S.textStroke = e.target.value;
-  });
-
-  $('textBold')?.addEventListener('click',() => {
-    const selected = getSelectedText();
-    if(!selected) return;
-
-    pushHistory();
-    selected.bold = !selected.bold;
-    render();
-    panel();
-  });
-
-  $('textItalic')?.addEventListener('click',() => {
-    const selected = getSelectedText();
-    if(!selected) return;
-
-    pushHistory();
-    selected.italic = !selected.italic;
-    render();
-    panel();
-  });
-
-  document.querySelectorAll('[data-text-align]').forEach(button => {
-    button.addEventListener('click',() => {
-      const selected = getSelectedText();
-      if(!selected) return;
-
-      pushHistory();
-      selected.align = button.dataset.textAlign;
-
-      render();
-      panel();
-    });
-  });
-
-  $('addText')?.addEventListener('click',() => {
-    const value = $('textValue')?.value.trim();
-
-    if(!value){
-      alert('Please enter some text first.');
-      return;
-    }
-
-    pushHistory();
-
-    const id = 'text_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-
-    S.textLayers.push({
-      id,
-      text:value,
-      x:.5,
-      y:.5,
-      font:S.textFont,
-      size:S.textSize,
-      opacity:S.textOpacity,
-      color:S.textColor,
-      stroke:S.textStroke,
-      bold:S.textBold,
-      italic:S.textItalic,
-      align:S.textAlign
-    });
-
-    S.selectedTextId = id;
-
-    render();
-    panel();
-  });
-
-  $('deleteText')?.addEventListener('click',() => {
-    if(!S.selectedTextId) return;
-
-    pushHistory();
-
-    S.textLayers = S.textLayers.filter(x => x.id !== S.selectedTextId);
-    S.selectedTextId = null;
-
-    render();
-    panel();
-  });
-
-  $('clearText')?.addEventListener('click',() => {
-    if(!S.textLayers.length) return;
-
-    pushHistory();
-
-    S.textLayers = [];
-    S.selectedTextId = null;
-
-    render();
-    panel();
-  });
-
-  $('drawColor')?.addEventListener('input',e => {
-    S.drawColor = e.target.value;
-  });
-
-  $('clearDraw')?.addEventListener('click',() => {
-    if(!S.drawLayers.length) return;
-
-    pushHistory();
-    S.drawLayers = [];
-
-    render();
-    panel();
-  });
-
-  $('removeDraw')?.addEventListener('click',() => {
-    if(!S.drawLayers.length) return;
-
-    pushHistory();
-    S.drawLayers.pop();
-
-    render();
-    panel();
-  });
-
-  $('pickColor')?.addEventListener('click',() => {
-    S.selectiveActive = true;
-
-    $('pickerBadge').style.display = 'block';
-    $('status').textContent = 'Click a color in the photo';
-  });
-
-  $('clearSelective')?.addEventListener('click',() => {
-    pushHistory();
-
-    S.selectiveR = 0;
-    S.selectiveG = 0;
-    S.selectiveB = 0;
-    S.selectiveRange = 35;
-    S.selectiveHue = 0;
-    S.selectiveSat = 0;
-    S.selectiveLight = 0;
-    S.selectiveActive = false;
-
-    $('pickerBadge').style.display = 'none';
-
-    render();
-    panel();
-  });
-
-  document.querySelectorAll('[data-layer-type="text"]').forEach(button => {
-    button.addEventListener('click',() => {
-      S.selectedTextId = button.dataset.layerId;
-      active = 'text';
-      setActiveTab();
-      panel();
-      render();
-    });
-  });
-
-  document.querySelectorAll('[data-layer-type="draw"]').forEach(button => {
-    button.addEventListener('click',() => {
-      active = 'draw';
-      setActiveTab();
-      panel();
-    });
-  });
-
-  $('clearLayers')?.addEventListener('click',() => {
-    if(!S.textLayers.length && !S.drawLayers.length) return;
-
-    pushHistory();
-
-    S.textLayers = [];
-    S.drawLayers = [];
-    S.selectedTextId = null;
-
-    render();
-    panel();
-  });
-
-  $('download')?.addEventListener('click',exportImage);
-  $('resetAll')?.addEventListener('click',resetAll);
-}
-
-/* =========================================================
-   PRESETS
-========================================================= */
-
-function applyPreset(name){
-
-  pushHistory();
-
-  const presets = {
-    clean:{
-      exposure:4,
-      contrast:5,
-      shadows:8,
-      vibrance:10,
-      texture:8
-    },
-
-    warm:{
-      temp:16,
-      contrast:4,
-      highlights:-8,
-      shadows:8,
-      vibrance:8
-    },
-
-    cool:{
-      temp:-16,
-      contrast:5,
-      shadows:6,
-      vibrance:8
-    },
-
-    cinematic:{
-      contrast:12,
-      highlights:-15,
-      blacks:-12,
-      clarity:10,
-      dehaze:7,
-      vignette:18,
-      saturation:-5
-    },
-
-    matte:{
-      contrast:-8,
-      highlights:-12,
-      shadows:15,
-      blacks:18,
-      clarity:-4,
-      saturation:-4,
-      vignette:8
-    },
-
-    vivid:{
-      contrast:7,
-      vibrance:28,
-      saturation:5,
-      clarity:6
-    },
-
-    portrait:{
-      exposure:5,
-      highlights:-8,
-      shadows:12,
-      temp:5,
-      vibrance:8,
-      texture:-10,
-      clarity:-5
-    },
-
-    bw:{
-      contrast:10,
-      highlights:-8,
-      shadows:8,
-      blacks:-12,
-      saturation:-100,
-      clarity:8
-    }
-  };
-
-  const values = presets[name];
-
-  if(!values) return;
-
-  const amount = clamp(S.presetAmount / 100,0,1);
-
-  Object.keys(values).forEach(key => {
-    const current = Number(S[key]) || 0;
-    const target = Number(values[key]);
-
-    S[key] = current + (target - current) * amount;
-  });
-
-  S.preset = name;
-
-  render();
-  panel();
-}
-
-/* =========================================================
-   IMAGE LOADING
-========================================================= */
-
-function handleImageFile(file){
-
-  if(!file) return;
-
-  if(!file.type || !file.type.startsWith('image/')){
-    alert('Please select a valid image file.');
-    return;
-  }
-
-  $('status').textContent = 'Opening photo...';
-
-  const url = URL.createObjectURL(file);
-  const image = new Image();
-
-  image.onload = () => {
-
-    URL.revokeObjectURL(url);
-
-    img = image;
-    fileName = file.name;
-
-    const max = 1800;
-
-    const scale = Math.min(
-      1,
-      max / Math.max(image.naturalWidth,image.naturalHeight)
-    );
-
-    src.width = Math.max(1,Math.round(image.naturalWidth * scale));
-    src.height = Math.max(1,Math.round(image.naturalHeight * scale));
-
-    sx.clearRect(0,0,src.width,src.height);
-
-    sx.drawImage(
-      image,
-      0,
-      0,
-      src.width,
-      src.height
-    );
-
-    $('name').textContent = file.name;
-    $('meta').textContent =
-      `${image.naturalWidth} × ${image.naturalHeight}px`;
-
-    $('empty').style.display = 'none';
-
-    C.style.display = 'block';
-    O.style.display = 'block';
-
-    showBefore = false;
-    $('beforeBadge').style.display = 'none';
-
-    retouch = [];
-
-    resetState(false);
-
-    zoom = 1;
-    panX = 0;
-    panY = 0;
-
-    render();
-
-    $('status').textContent = 'Ready';
-  };
-
-  image.onerror = () => {
-    URL.revokeObjectURL(url);
-    $('status').textContent = 'Ready';
-    alert('The selected image could not be opened.');
-  };
-
-  image.src = url;
-}
-
-$('openTop').addEventListener('click',() => $('fileInput').click());
-$('openEmpty').addEventListener('click',() => $('fileInput').click());
-
-$('fileInput').addEventListener('change',e => {
-  handleImageFile(e.target.files?.[0]);
-  e.target.value = '';
 });
 
-/* =========================================================
-   RESET
-========================================================= */
+function fitImage(){
+    if(!state.sourceCanvas) return;
 
-function resetState(clearHistory=true){
+    const rect=$("stage").getBoundingClientRect();
 
-  const fresh = {
-    exposure:0,
-    contrast:0,
-    highlights:0,
-    shadows:0,
-    whites:0,
-    blacks:0,
-    temp:0,
-    tint:0,
-    vibrance:0,
-    saturation:0,
+    const sx=(rect.width-30)/imageCanvas.width;
+    const sy=(rect.height-30)/imageCanvas.height;
 
-    texture:0,
-    clarity:0,
-    dehaze:0,
-    vignette:0,
-    midpoint:50,
-    feather:50,
-    roundness:0,
+    state.zoom=Math.max(.05,Math.min(sx,sy));
+    state.panX=0;
+    state.panY=0;
 
-    grain:0,
-    grainSize:25,
-    grainRough:50,
-
-    sharp:0,
-    radius:1,
-    noise:0,
-    colorNoise:0,
-
-    ratio:'original',
-    rotate:0,
-    straighten:0,
-    flipX:false,
-    flipY:false,
-
-    profile:'natural',
-    preset:'none',
-    presetAmount:100,
-
-    blur:0,
-    blurX:50,
-    blurY:50,
-
-    lensVignette:0,
-    defringe:0,
-
-    maskType:'radial',
-    maskAmount:0,
-    maskExposure:0,
-    maskContrast:0,
-    maskSaturation:0,
-
-    retouchSize:30,
-
-    gradeShadow:0,
-    gradeShadowSat:0,
-    gradeMid:0,
-    gradeMidSat:0,
-    gradeHigh:0,
-    gradeHighSat:0,
-    gradeBlend:50,
-    gradeBalance:0,
-
-    drawSize:8,
-    drawOpacity:100,
-    drawColor:'#ffffff',
-
-    textSize:48,
-    textOpacity:100,
-    textFont:'Arial',
-    textColor:'#ffffff',
-    textStroke:'#000000',
-    textBold:false,
-    textItalic:false,
-    textAlign:'center',
-
-    selectiveR:0,
-    selectiveG:0,
-    selectiveB:0,
-    selectiveRange:35,
-    selectiveHue:0,
-    selectiveSat:0,
-    selectiveLight:0,
-    selectiveActive:false,
-
-    textLayers:[],
-    drawLayers:[],
-    selectedTextId:null
-  };
-
-  Object.keys(fresh).forEach(key => {
-    S[key] = fresh[key];
-  });
-
-  [
-    'red',
-    'orange',
-    'yellow',
-    'green',
-    'aqua',
-    'blue',
-    'purple',
-    'magenta'
-  ].forEach(color => {
-    S['h_'+color] = 0;
-    S['s_'+color] = 0;
-    S['l_'+color] = 0;
-  });
-
-  retouch = [];
-
-  if(clearHistory){
-    history = [];
-    future = [];
-  }
-
-  cropGuide = false;
-
-  zoom = 1;
-  panX = 0;
-  panY = 0;
-
-  panel();
-  schedule();
+    updateTransform();
 }
 
-function resetAll(){
-  pushHistory();
-  resetState(false);
+function updateTransform(){
+    imageCanvas.style.transform=
+        `translate3d(${state.panX}px,${state.panY}px,0) scale(${state.zoom})`;
+
+    overlayCanvas.style.transform=
+        `translate3d(${state.panX}px,${state.panY}px,0) scale(${state.zoom})`;
+
+    $("zoomLabel").textContent=`${Math.round(state.zoom*100)}%`;
 }
 
-/* =========================================================
-   RENDER QUEUE
-========================================================= */
+$("zoomIn").onclick=()=>{
+    state.zoom=Math.min(5,state.zoom*1.2);
+    updateTransform();
+};
 
-function schedule(){
+$("zoomOut").onclick=()=>{
+    state.zoom=Math.max(.2,state.zoom/1.2);
+    updateTransform();
+};
 
-  if(renderQueued) return;
+$("fitBtn").onclick=fitImage;
 
-  renderQueued = true;
+$("fullBtn").onclick=()=>{
+    state.zoom=1;
+    state.panX=0;
+    state.panY=0;
+    updateTransform();
+};
 
-  requestAnimationFrame(() => {
-    renderQueued = false;
+function distance(a,b){
+    return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+}
+
+$("stage").addEventListener("pointerdown",e=>{
+    if(!state.sourceCanvas) return;
+
+    if(state.tool==="text"){
+        handleTextPointerDown(e);
+        return;
+    }
+
+    if(state.tool==="draw"){
+        startDraw(e);
+        return;
+    }
+
+    if(state.tool==="retouch"){
+        startRetouch(e);
+        return;
+    }
+
+    if(state.tool==="selective"){
+        pickColor(e);
+        return;
+    }
+
+    if(state.tool==="crop"){
+        startCropPointer(e);
+        return;
+    }
+
+    state.gesture.active=true;
+    state.gesture.lastX=e.clientX;
+    state.gesture.lastY=e.clientY;
+
+    $("stage").setPointerCapture?.(e.pointerId);
+});
+
+$("stage").addEventListener("pointermove",e=>{
+    if(!state.sourceCanvas) return;
+
+    if(state.tool==="text"){
+        moveTextPointer(e);
+        return;
+    }
+
+    if(state.tool==="draw"){
+        continueDraw(e);
+        return;
+    }
+
+    if(state.tool==="retouch"){
+        continueRetouch(e);
+        return;
+    }
+
+    if(state.tool==="crop"){
+        moveCropPointer(e);
+        return;
+    }
+
+    if(!state.gesture.active) return;
+
+    const dx=e.clientX-state.gesture.lastX;
+    const dy=e.clientY-state.gesture.lastY;
+
+    state.panX+=dx;
+    state.panY+=dy;
+
+    state.gesture.lastX=e.clientX;
+    state.gesture.lastY=e.clientY;
+
+    updateTransform();
+});
+
+$("stage").addEventListener("pointerup",e=>{
+    if(state.tool==="draw"){
+        finishDraw();
+        return;
+    }
+
+    if(state.tool==="retouch"){
+        finishRetouch();
+        return;
+    }
+
+    if(state.tool==="crop"){
+        finishCropPointer();
+        return;
+    }
+
+    state.gesture.active=false;
+});
+
+$("stage").addEventListener("pointercancel",()=>{
+    state.gesture.active=false;
+    state.draw.drawing=false;
+    state.retouch.drawing=false;
+});
+
+$("stage").addEventListener("wheel",e=>{
+    if(!state.sourceCanvas) return;
+
+    e.preventDefault();
+
+    state.zoom*=e.deltaY<0?1.08:.92;
+    state.zoom=Math.max(.2,Math.min(5,state.zoom));
+
+    updateTransform();
+},{passive:false});
+
+function canvasPoint(e){
+    const rect=imageCanvas.getBoundingClientRect();
+
+    return {
+        x:(e.clientX-rect.left)/rect.width*imageCanvas.width,
+        y:(e.clientY-rect.top)/rect.height*imageCanvas.height
+    };
+}
+
+function buildControl(label,id,min,max,step,val,suffix="",callback){
+    return `
+    <div class="control">
+        <div class="control-head">
+            <label>${label}</label>
+            <span class="value" id="${id}Value">${fmt(val)}${suffix}</span>
+        </div>
+        <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}">
+    </div>`;
+}
+
+function bindRange(id,callback,suffix=""){
+    const el=$(id);
+    if(!el) return;
+
+    const out=$(id+"Value");
+
+    const update=()=>{
+        const v=Number(el.value);
+
+        if(out) out.textContent=fmt(v)+suffix;
+
+        callback(v);
+        render();
+    };
+
+    el.addEventListener("input",update);
+
+    el.addEventListener("change",()=>{
+        snapshot();
+        update();
+    });
+}
+
+function panel(title,description,body){
+    return `
+        <h2 class="panel-title">${title}</h2>
+        <p class="panel-description">${description}</p>
+        ${body}
+    `;
+}
+
+function renderPanel(tool){
+    const c=$("controls");
+
+    if(tool==="light"){
+        c.innerHTML=panel(
+            "Light",
+            "Adjust brightness, contrast and tonal range.",
+            `<div class="control-group">
+                <h3 class="group-title">Tone</h3>
+                ${buildControl("Exposure","exposure",-100,100,1,0)}
+                ${buildControl("Contrast","contrast",-100,100,1,0)}
+                ${buildControl("Highlights","highlights",-100,100,1,0)}
+                ${buildControl("Shadows","shadows",-100,100,1,0)}
+                ${buildControl("Whites","whites",-100,100,1,0)}
+                ${buildControl("Blacks","blacks",-100,100,1,0)}
+            </div>
+            <button id="autoLight" class="action-btn primary">Auto Light</button>`
+        );
+
+        bindRange("exposure",v=>state.light.exposure=v);
+        bindRange("contrast",v=>state.light.contrast=v);
+        bindRange("highlights",v=>state.light.highlights=v);
+        bindRange("shadows",v=>state.light.shadows=v);
+        bindRange("whites",v=>state.light.whites=v);
+        bindRange("blacks",v=>state.light.blacks=v);
+
+        $("autoLight").onclick=()=>{
+            snapshot();
+
+            const data=imageCtx.getImageData(
+                0,0,imageCanvas.width,imageCanvas.height
+            ).data;
+
+            let total=0;
+            const step=Math.max(4,Math.floor(data.length/40000));
+
+            for(let i=0;i<data.length;i+=step*4){
+                total+=(data[i]+data[i+1]+data[i+2])/3;
+            }
+
+            const avg=total/(data.length/(step*4));
+            state.light.exposure=clamp((128-avg)/1.8,-50,50);
+            renderPanel("light");
+            render();
+        };
+    }
+
+    if(tool==="color"){
+        c.innerHTML=panel(
+            "Color",
+            "Control white balance, vibrance, saturation, HSL and color grading.",
+            `<div class="control-group">
+                <h3 class="group-title">Basic Color</h3>
+                ${buildControl("Temperature","temperature",-100,100,1,0)}
+                ${buildControl("Tint","tint",-100,100,1,0)}
+                ${buildControl("Vibrance","vibrance",-100,100,1,0)}
+                ${buildControl("Saturation","saturation",-100,100,1,0)}
+            </div>
+
+            <div class="control-group">
+                <h3 class="group-title">Color Mixer</h3>
+                ${buildControl("Target Hue","mixerHue",-180,180,1,0)}
+                ${buildControl("Color Range","mixerRange",1,90,1,30)}
+                ${buildControl("Mixer Saturation","mixerSat",-100,100,1,0)}
+                ${buildControl("Mixer Lightness","mixerLight",-100,100,1,0)}
+            </div>
+
+            <div class="control-group">
+                <h3 class="group-title">Color Grading</h3>
+                ${buildControl("Shadow Hue","shadowHue",0,360,1,0)}
+                ${buildControl("Shadow Saturation","shadowSat",0,100,1,0)}
+                ${buildControl("Midtone Hue","midHue",0,360,1,0)}
+                ${buildControl("Midtone Saturation","midSat",0,100,1,0)}
+                ${buildControl("Highlight Hue","highlightHue",0,360,1,0)}
+                ${buildControl("Highlight Saturation","highlightSat",0,100,1,0)}
+                ${buildControl("Blending","gradeBlend",0,100,1,50)}
+                ${buildControl("Balance","gradeBalance",-100,100,1,0)}
+            </div>`
+        );
+
+        bindRange("temperature",v=>state.color.temperature=v);
+        bindRange("tint",v=>state.color.tint=v);
+        bindRange("vibrance",v=>state.color.vibrance=v);
+        bindRange("saturation",v=>state.color.saturation=v);
+        bindRange("mixerHue",v=>state.color.hue=v);
+        bindRange("mixerRange",v=>state.color.hueRange=v);
+        bindRange("mixerSat",v=>state.color.mixerSaturation=v);
+        bindRange("mixerLight",v=>state.color.mixerLightness=v);
+        bindRange("shadowHue",v=>state.color.shadowHue=v);
+        bindRange("shadowSat",v=>state.color.shadowSat=v);
+        bindRange("midHue",v=>state.color.midHue=v);
+        bindRange("midSat",v=>state.color.midSat=v);
+        bindRange("highlightHue",v=>state.color.highlightHue=v);
+        bindRange("highlightSat",v=>state.color.highlightSat=v);
+        bindRange("gradeBlend",v=>state.color.gradeBlend=v);
+        bindRange("gradeBalance",v=>state.color.gradeBalance=v);
+    }
+
+    if(tool==="effects"){
+        c.innerHTML=panel(
+            "Effects",
+            "Add local-looking texture, clarity, haze control, vignette and grain.",
+            `<div class="control-group">
+                <h3 class="group-title">Effects</h3>
+                ${buildControl("Texture","texture",-100,100,1,0)}
+                ${buildControl("Clarity","clarity",-100,100,1,0)}
+                ${buildControl("Dehaze","dehaze",-100,100,1,0)}
+                ${buildControl("Vignette","vignette",-100,100,1,0)}
+                ${buildControl("Midpoint","midpoint",0,100,1,50)}
+                ${buildControl("Feather","feather",0,100,1,50)}
+                ${buildControl("Roundness","roundness",-100,100,1,0)}
+            </div>
+
+            <div class="control-group">
+                <h3 class="group-title">Grain</h3>
+                ${buildControl("Amount","grain",0,100,1,0)}
+                ${buildControl("Size","grainSize",1,100,1,25)}
+                ${buildControl("Roughness","grainRough",0,100,1,50)}
+            </div>`
+        );
+
+        bindRange("texture",v=>state.effects.texture=v);
+        bindRange("clarity",v=>state.effects.clarity=v);
+        bindRange("dehaze",v=>state.effects.dehaze=v);
+        bindRange("vignette",v=>state.effects.vignette=v);
+        bindRange("midpoint",v=>state.effects.midpoint=v);
+        bindRange("feather",v=>state.effects.feather=v);
+        bindRange("roundness",v=>state.effects.roundness=v);
+        bindRange("grain",v=>state.effects.grain=v);
+        bindRange("grainSize",v=>state.effects.grainSize=v);
+        bindRange("grainRough",v=>state.effects.grainRough=v);
+    }
+
+    if(tool==="detail"){
+        c.innerHTML=panel(
+            "Detail",
+            "Sharpen fine details and reduce luminance or color noise.",
+            `<div class="control-group">
+                <h3 class="group-title">Sharpening</h3>
+                ${buildControl("Amount","sharpening",0,100,1,0)}
+                ${buildControl("Radius","radius",0.5,3,.1,1)}
+                ${buildControl("Detail","detail",0,100,1,25)}
+                ${buildControl("Masking","masking",0,100,1,0)}
+            </div>
+
+            <div class="control-group">
+                <h3 class="group-title">Noise Reduction</h3>
+                ${buildControl("Luminance","noiseReduction",0,100,1,0)}
+                ${buildControl("Detail","noiseDetail",0,100,1,50)}
+                ${buildControl("Contrast","noiseContrast",-100,100,1,0)}
+                ${buildControl("Color","colorNoise",0,100,1,0)}
+                ${buildControl("Color Detail","colorDetail",0,100,1,50)}
+                ${buildControl("Smoothness","smoothness",0,100,1,50)}
+            </div>`
+        );
+
+        bindRange("sharpening",v=>state.detail.sharpening=v);
+        bindRange("radius",v=>state.detail.radius=v);
+        bindRange("detail",v=>state.detail.detail=v);
+        bindRange("masking",v=>state.detail.masking=v);
+        bindRange("noiseReduction",v=>state.detail.noiseReduction=v);
+        bindRange("noiseDetail",v=>state.detail.noiseDetail=v);
+        bindRange("noiseContrast",v=>state.detail.noiseContrast=v);
+        bindRange("colorNoise",v=>state.detail.colorNoise=v);
+        bindRange("colorDetail",v=>state.detail.colorDetail=v);
+        bindRange("smoothness",v=>state.detail.smoothness=v);
+    }
+
+    if(tool==="crop"){
+        c.innerHTML=panel(
+            "Crop & Transform",
+            "Crop, straighten, rotate and flip the image.",
+            `<div class="crop-info">
+                Drag inside the image to move the crop.
+                Drag a corner handle to resize it.
+            </div>
+
+            <div class="control-group">
+                <h3 class="group-title">Aspect Ratio</h3>
+                <select id="cropRatio">
+                    <option>Free</option>
+                    <option>Original</option>
+                    <option>1:1</option>
+                    <option>4:5</option>
+                    <option>3:4</option>
+                    <option>4:3</option>
+                    <option>16:9</option>
+                    <option>9:16</option>
+                    <option>3:2</option>
+                    <option>2:3</option>
+                </select>
+            </div>
+
+            ${buildControl("Straighten","straighten",-15,15,.1,0)}
+
+            <div class="button-grid">
+                <button id="rotateLeft" class="action-btn">Rotate Left</button>
+                <button id="rotateRight" class="action-btn">Rotate Right</button>
+                <button id="flipH" class="action-btn">Flip Horizontal</button>
+                <button id="flipV" class="action-btn">Flip Vertical</button>
+                <button id="resetCrop" class="action-btn">Reset Crop</button>
+                <button id="applyCrop" class="action-btn primary">Apply Crop</button>
+            </div>`
+        );
+
+        $("cropRatio").value=state.crop.ratio;
+
+        $("cropRatio").onchange=()=>{
+            snapshot();
+            state.crop.ratio=$("cropRatio").value;
+            initializeCrop();
+            render();
+        };
+
+        bindRange("straighten",v=>{
+            state.crop.straighten=v;
+        });
+
+        $("rotateLeft").onclick=()=>{
+            snapshot();
+            rotateImage(-90);
+        };
+
+        $("rotateRight").onclick=()=>{
+            snapshot();
+            rotateImage(90);
+        };
+
+        $("flipH").onclick=()=>{
+            snapshot();
+            flipImage(true,false);
+        };
+
+        $("flipV").onclick=()=>{
+            snapshot();
+            flipImage(false,true);
+        };
+
+        $("resetCrop").onclick=()=>{
+            snapshot();
+            initializeCrop();
+            state.crop.straighten=0;
+            render();
+        };
+
+        $("applyCrop").onclick=()=>{
+            snapshot();
+            applyCrop();
+        };
+
+        initializeCrop();
+    }
+
+    if(tool==="text"){
+        c.innerHTML=panel(
+            "Text",
+            "Add editable text, drag it anywhere on the photo and style it.",
+            `<div class="control-group">
+                <h3 class="group-title">Content</h3>
+                <textarea id="textValue" placeholder="Enter text"></textarea>
+                <button id="addText" class="action-btn primary" style="margin-top:8px">Add Text</button>
+            </div>
+
+            <div class="control-group">
+                <h3 class="group-title">Typography</h3>
+                <select id="textFont">
+                    <option>Arial</option>
+                    <option>Helvetica</option>
+                    <option>Georgia</option>
+                    <option>Times New Roman</option>
+                    <option>Verdana</option>
+                    <option>Trebuchet MS</option>
+                    <option>Courier New</option>
+                    <option>Impact</option>
+                </select>
+
+                ${buildControl("Font Size","textSize",8,220,1,48)}
+                ${buildControl("Opacity","textOpacity",0,100,1,100)}
+                ${buildControl("Stroke Width","textStroke",0,20,1,0)}
+
+                <div class="check-row">
+                    <input id="textBold" type="checkbox">
+                    <label for="textBold">Bold</label>
+                </div>
+
+                <div class="check-row">
+                    <input id="textItalic" type="checkbox">
+                    <label for="textItalic">Italic</label>
+                </div>
+
+                <select id="textAlign">
+                    <option value="left">Left</option>
+                    <option value="center" selected>Center</option>
+                    <option value="right">Right</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <h3 class="group-title">Colors</h3>
+                <div class="color-row">
+                    <span>Text Color</span>
+                    <input id="textColor" type="color" value="#ffffff">
+                </div>
+                <div class="color-row">
+                    <span>Stroke Color</span>
+                    <input id="textStrokeColor" type="color" value="#000000">
+                </div>
+            </div>
+
+            <button id="deleteText" class="action-btn danger">Delete Selected Text</button>
+            <button id="clearText" class="action-btn danger" style="margin-top:7px">Clear All Text</button>`
+        );
+
+        bindTextControls();
+    }
+
+    if(tool==="draw"){
+        c.innerHTML=panel(
+            "Draw",
+            "Draw freehand strokes directly over the photo.",
+            `<div class="control-group">
+                ${buildControl("Brush Size","drawSize",1,120,1,12)}
+                ${buildControl("Opacity","drawOpacity",1,100,1,100)}
+                <div class="color-row">
+                    <span>Brush Color</span>
+                    <input id="drawColor" type="color" value="#ffffff">
+                </div>
+            </div>
+
+            <div class="button-grid">
+                <button id="clearDraw" class="action-btn danger">Clear Drawing</button>
+                <button id="undoDraw" class="action-btn">Remove Last</button>
+            </div>`
+        );
+
+        bindRange("drawSize",v=>state.draw.size=v);
+        bindRange("drawOpacity",v=>state.draw.opacity=v);
+
+        $("drawColor").oninput=e=>{
+            state.draw.color=e.target.value;
+        };
+
+        $("clearDraw").onclick=()=>{
+            if(!state.draw.strokes.length)return;
+            snapshot();
+            state.draw.strokes=[];
+            render();
+        };
+
+        $("undoDraw").onclick=()=>{
+            if(!state.draw.strokes.length)return;
+            snapshot();
+            state.draw.strokes.pop();
+            render();
+        };
+    }
+
+    if(tool==="selective"){
+        c.innerHTML=panel(
+            "Color Select",
+            "Click a color directly in the photo, then adjust that color range.",
+            `<div class="picked-color" id="pickedColor">Click a color on the image</div>
+
+            ${buildControl("Color Range","selectRange",1,100,1,30)}
+            ${buildControl("Hue","selectHue",-180,180,1,0)}
+            ${buildControl("Saturation","selectSat",-100,100,1,0)}
+            ${buildControl("Lightness","selectLight",-100,100,1,0)}
+
+            <button id="clearColorSelect" class="action-btn">Clear Selection</button>`
+        );
+
+        bindRange("selectRange",v=>state.selective.range=v);
+        bindRange("selectHue",v=>state.selective.hue=v);
+        bindRange("selectSat",v=>state.selective.saturation=v);
+        bindRange("selectLight",v=>state.selective.lightness=v);
+
+        $("clearColorSelect").onclick=()=>{
+            state.selective.picked=null;
+            $("pickedColor").textContent="Click a color on the image";
+            $("stage").classList.remove("color-picking");
+            render();
+        };
+
+        $("stage").classList.add("color-picking");
+    }else{
+        $("stage").classList.remove("color-picking");
+    }
+
+    if(tool==="presets"){
+        c.innerHTML=panel(
+            "Presets",
+            "Apply quick professional looks and control their intensity.",
+            `<div class="control-group">
+                <select id="presetName">
+                    <option>None</option>
+                    <option>Clean</option>
+                    <option>Warm</option>
+                    <option>Cool</option>
+                    <option>Cinematic</option>
+                    <option>Matte</option>
+                    <option>Vivid</option>
+                    <option>Portrait</option>
+                    <option>B&W</option>
+                </select>
+                ${buildControl("Preset Amount","presetAmount",0,100,1,100)}
+                <button id="applyPreset" class="action-btn primary">Apply Preset</button>
+                <button id="resetAdjustments" class="action-btn" style="margin-top:7px">Reset Adjustments</button>
+            </div>`
+        );
+
+        $("presetName").value=state.preset.name;
+
+        bindRange("presetAmount",v=>state.preset.amount=v);
+
+        $("presetName").onchange=e=>{
+            state.preset.name=e.target.value;
+        };
+
+        $("applyPreset").onclick=()=>{
+            snapshot();
+            applyPreset(state.preset.name,state.preset.amount/100);
+        };
+
+        $("resetAdjustments").onclick=()=>{
+            snapshot();
+            resetAdjustments();
+            render();
+        };
+    }
+
+    if(tool==="profiles"){
+        c.innerHTML=panel(
+            "Profiles",
+            "Choose a base rendering style for the image.",
+            `<select id="profileSelect">
+                <option>Basic</option>
+                <option>Modern</option>
+                <option>Vivid</option>
+                <option>Portrait</option>
+                <option>Cinematic</option>
+                <option>Vintage</option>
+                <option>Matte</option>
+                <option>B&W</option>
+                <option>Cool</option>
+                <option>Warm</option>
+            </select>
+
+            <button id="applyProfile" class="action-btn primary" style="margin-top:10px">
+                Apply Profile
+            </button>`
+        );
+
+        $("profileSelect").value=state.profile;
+
+        $("profileSelect").onchange=e=>{
+            state.profile=e.target.value;
+        };
+
+        $("applyProfile").onclick=()=>{
+            snapshot();
+            applyProfile(state.profile);
+        };
+    }
+
+    if(tool==="mask"){
+        c.innerHTML=panel(
+            "Mask",
+            "Create browser-side radial or linear local adjustment masks.",
+            `<select id="maskType">
+                <option>None</option>
+                <option>Radial</option>
+                <option>Linear</option>
+            </select>
+
+            ${buildControl("Mask Amount","maskAmount",0,100,1,50)}
+            ${buildControl("Feather","maskFeather",0,100,1,50)}
+            ${buildControl("Exposure","maskExposure",-100,100,1,0)}
+            ${buildControl("Contrast","maskContrast",-100,100,1,0)}
+            ${buildControl("Saturation","maskSaturation",-100,100,1,0)}
+            ${buildControl("Hue","maskHue",-180,180,1,0)}
+            ${buildControl("Texture","maskTexture",-100,100,1,0)}
+            ${buildControl("Clarity","maskClarity",-100,100,1,0)}
+            ${buildControl("Dehaze","maskDehaze",-100,100,1,0)}
+            
+            <div class="control-group">
+                <h3 class="group-title">Mask Position</h3>
+                ${buildControl("Center X","maskX",0,100,1,50)}
+                ${buildControl("Center Y","maskY",0,100,1,50)}
+                ${buildControl("Width","maskWidth",5,100,1,70)}
+                ${buildControl("Height","maskHeight",5,100,1,70)}
+            </div>`
+        );
+
+        $("maskType").value=state.mask.type;
+
+        $("maskType").onchange=e=>{
+            state.mask.type=e.target.value;
+            render();
+        };
+
+        bindRange("maskAmount",v=>state.mask.amount=v);
+        bindRange("maskFeather",v=>state.mask.feather=v);
+        bindRange("maskExposure",v=>state.mask.exposure=v);
+        bindRange("maskContrast",v=>state.mask.contrast=v);
+        bindRange("maskSaturation",v=>state.mask.saturation=v);
+        bindRange("maskHue",v=>state.mask.hue=v);
+        bindRange("maskTexture",v=>state.mask.texture=v);
+        bindRange("maskClarity",v=>state.mask.clarity=v);
+        bindRange("maskDehaze",v=>state.mask.dehaze=v);
+        bindRange("maskX",v=>state.mask.x=v);
+        bindRange("maskY",v=>state.mask.y=v);
+        bindRange("maskWidth",v=>state.mask.width=v);
+        bindRange("maskHeight",v=>state.mask.height=v);
+    }
+
+    if(tool==="retouch"){
+        c.innerHTML=panel(
+            "Retouch",
+            "Paint over small areas for browser-side local healing/softening.",
+            `${buildControl("Brush Size","retouchSize",2,160,1,30)}
+            ${buildControl("Feather","retouchFeather",0,100,1,70)}
+            ${buildControl("Opacity","retouchOpacity",1,100,1,100)}
+
+            <button id="clearRetouch" class="action-btn danger">Clear Retouch</button>`
+        );
+
+        bindRange("retouchSize",v=>state.retouch.size=v);
+        bindRange("retouchFeather",v=>state.retouch.feather=v);
+        bindRange("retouchOpacity",v=>state.retouch.opacity=v);
+
+        $("clearRetouch").onclick=()=>{
+            if(!state.retouch.strokes.length)return;
+            snapshot();
+            state.retouch.strokes=[];
+            render();
+        };
+    }
+
+    if(tool==="blur"){
+        c.innerHTML=panel(
+            "Lens Blur",
+            "Create a depth-style focus effect using a soft radial focus area.",
+            `${buildControl("Blur Amount","blurAmount",0,100,1,0)}
+            ${buildControl("Focus X","focusX",0,100,1,50)}
+            ${buildControl("Focus Y","focusY",0,100,1,50)}
+            ${buildControl("Focus Size","focusSize",5,100,1,40)}
+            ${buildControl("Focus Feather","focusFeather",0,100,1,50)}`
+        );
+
+        bindRange("blurAmount",v=>state.blur.amount=v);
+        bindRange("focusX",v=>state.blur.focusX=v);
+        bindRange("focusY",v=>state.blur.focusY=v);
+        bindRange("focusSize",v=>state.blur.focusSize=v);
+        bindRange("focusFeather",v=>state.blur.feather=v);
+    }
+
+    if(tool==="optics"){
+        c.innerHTML=panel(
+            "Optics",
+            "Apply browser-side lens and edge corrections.",
+            `${buildControl("Vignette","lensVignette",-100,100,1,0)}
+            ${buildControl("Defringe","defringe",0,100,1,0)}
+            ${buildControl("Distortion","distortion",-100,100,1,0)}`
+        );
+
+        bindRange("lensVignette",v=>state.optics.vignette=v);
+        bindRange("defringe",v=>state.optics.defringe=v);
+        bindRange("distortion",v=>state.optics.distortion=v);
+    }
+
+    if(tool==="layers"){
+        let html=panel(
+            "Layers",
+            "Manage text and drawing overlays.",
+            `<div class="layer-list">`
+        );
+
+        state.text.layers.forEach((l,i)=>{
+            html+=`
+            <button class="layer-item" data-text-layer="${i}">
+                Text: ${escapeHtml(l.text.slice(0,30))}
+            </button>`;
+        });
+
+        state.draw.strokes.forEach((s,i)=>{
+            html+=`
+            <button class="layer-item" data-draw-layer="${i}">
+                Brush Stroke ${i+1}
+            </button>`;
+        });
+
+        html+=`
+            </div>
+            <button id="clearLayers" class="action-btn danger">Clear All Layers</button>
+        `;
+
+        c.innerHTML=html;
+
+        document.querySelectorAll("[data-text-layer]").forEach(btn=>{
+            btn.onclick=()=>{
+                state.text.selected=Number(btn.dataset.textLayer);
+                state.tool="text";
+                renderPanel("text");
+                render();
+            };
+        });
+
+        $("clearLayers").onclick=()=>{
+            if(!state.text.layers.length&&!state.draw.strokes.length)return;
+
+            snapshot();
+            state.text.layers=[];
+            state.draw.strokes=[];
+            render();
+            renderPanel("layers");
+        };
+    }
+
+    if(tool==="export"){
+        c.innerHTML=panel(
+            "Export",
+            "Save your edited image in a standard browser-supported format.",
+            `<div class="control-group">
+                <h3 class="group-title">Format</h3>
+                <select id="exportFormat">
+                    <option value="image/jpeg">JPG</option>
+                    <option value="image/png">PNG</option>
+                    <option value="image/webp">WebP</option>
+                </select>
+            </div>
+
+            ${buildControl("Quality","exportQuality",10,100,1,92)}
+
+            <div class="control-group">
+                <h3 class="group-title">Maximum Edge</h3>
+                <select id="exportSize">
+                    <option value="original">Original</option>
+                    <option value="4096">4096 px</option>
+                    <option value="3000">3000 px</option>
+                    <option value="2048">2048 px</option>
+                    <option value="1600">1600 px</option>
+                    <option value="1080">1080 px</option>
+                </select>
+            </div>
+
+            <label class="check-row">
+                <input id="includeOverlays" type="checkbox" checked>
+                Include text and drawing layers
+            </label>
+
+            <button id="downloadImage" class="action-btn primary">Download Image</button>`
+        );
+
+        bindRange("exportQuality",v=>{}, "%");
+
+        $("downloadImage").onclick=exportImage;
+    }
+}
+
+function escapeHtml(str){
+    return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+}
+
+function switchTool(tool){
+    state.tool=tool;
+
+    document.querySelectorAll("#toolTabs button").forEach(btn=>{
+        btn.classList.toggle("active",btn.dataset.tool===tool);
+    });
+
+    renderPanel(tool);
     render();
-  });
 }
 
-/* =========================================================
-   COLOR HELPERS
-========================================================= */
+document.querySelectorAll("#toolTabs button").forEach(btn=>{
+    btn.onclick=()=>switchTool(btn.dataset.tool);
+});
 
-function rgbToHsv(r,g,b){
+function resetAdjustments(){
+    state.light={
+        exposure:0,
+        contrast:0,
+        highlights:0,
+        shadows:0,
+        whites:0,
+        blacks:0
+    };
 
-  const max = Math.max(r,g,b);
-  const min = Math.min(r,g,b);
-  const d = max - min;
+    state.color={
+        temperature:0,
+        tint:0,
+        vibrance:0,
+        saturation:0,
+        hue:0,
+        hueRange:30,
+        mixerSaturation:0,
+        mixerLightness:0,
+        shadowHue:0,
+        shadowSat:0,
+        midHue:0,
+        midSat:0,
+        highlightHue:0,
+        highlightSat:0,
+        gradeBlend:50,
+        gradeBalance:0
+    };
 
-  let h = 0;
+    state.effects={
+        texture:0,
+        clarity:0,
+        dehaze:0,
+        vignette:0,
+        midpoint:50,
+        feather:50,
+        roundness:0,
+        grain:0,
+        grainSize:25,
+        grainRoughness:50
+    };
 
-  if(d){
-    if(max === r){
-      h = ((g-b)/d + (g < b ? 6 : 0)) / 6;
-    }else if(max === g){
-      h = ((b-r)/d + 2) / 6;
-    }else{
-      h = ((r-g)/d + 4) / 6;
-    }
-  }
-
-  return [
-    h,
-    max ? d/max : 0,
-    max
-  ];
+    state.detail={
+        sharpening:0,
+        radius:1,
+        detail:25,
+        masking:0,
+        noiseReduction:0,
+        noiseDetail:50,
+        noiseContrast:0,
+        colorNoise:0,
+        colorDetail:50,
+        smoothness:50
+    };
 }
 
-function hsvToRgb(h,s,v){
+function applyPreset(name,amount){
+    resetAdjustments();
 
-  h = ((h % 1) + 1) % 1;
+    const a=amount;
 
-  const i = Math.floor(h * 6);
-  const f = h * 6 - i;
+    const presets={
+        Clean:{
+            contrast:8,
+            saturation:3,
+            clarity:4
+        },
+        Warm:{
+            temperature:25,
+            saturation:5,
+            highlights:5,
+            vignette:4
+        },
+        Cool:{
+            temperature:-25,
+            saturation:3,
+            shadows:-5
+        },
+        Cinematic:{
+            contrast:15,
+            saturation:-8,
+            dehaze:10,
+            vignette:12,
+            highlights:-10,
+            shadows:8
+        },
+        Matte:{
+            contrast:-12,
+            blacks:20,
+            saturation:-5
+        },
+        Vivid:{
+            contrast:10,
+            saturation:20,
+            vibrance:25,
+            clarity:7
+        },
+        Portrait:{
+            highlights:-10,
+            shadows:12,
+            saturation:4,
+            clarity:-5
+        },
+        "B&W":{
+            saturation:-100,
+            contrast:10
+        }
+    };
 
-  const p = v * (1-s);
-  const q = v * (1-f*s);
-  const t = v * (1-(1-f)*s);
+    const p=presets[name];
 
-  const values = [
-    [v,t,p],
-    [q,v,p],
-    [p,v,t],
-    [p,q,v],
-    [t,p,v],
-    [v,p,q]
-  ];
+    if(p){
+        if(p.contrast)state.light.contrast=p.contrast*a;
+        if(p.highlights)state.light.highlights=p.highlights*a;
+        if(p.shadows)state.light.shadows=p.shadows*a;
+        if(p.blacks)state.light.blacks=p.blacks*a;
+        if(p.temperature)state.color.temperature=p.temperature*a;
+        if(p.saturation)state.color.saturation=p.saturation*a;
+        if(p.vibrance)state.color.vibrance=p.vibrance*a;
+        if(p.clarity)state.effects.clarity=p.clarity*a;
+        if(p.dehaze)state.effects.dehaze=p.dehaze*a;
+        if(p.vignette)state.effects.vignette=p.vignette*a;
+    }
 
-  return values[i % 6];
+    state.preset.name=name;
+    render();
 }
 
-function colorBand(h){
+function applyProfile(name){
+    const p=profiles[name]||{};
 
-  if(h < .04 || h > .96) return 'red';
-  if(h < .11) return 'orange';
-  if(h < .19) return 'yellow';
-  if(h < .43) return 'green';
-  if(h < .53) return 'aqua';
-  if(h < .70) return 'blue';
-  if(h < .85) return 'purple';
+    resetAdjustments();
 
-  return 'magenta';
+    if(p.contrast)state.light.contrast=p.contrast;
+    if(p.saturation)state.color.saturation=p.saturation;
+    if(p.vibrance)state.color.vibrance=p.vibrance;
+    if(p.clarity)state.effects.clarity=p.clarity;
+    if(p.dehaze)state.effects.dehaze=p.dehaze;
+    if(p.temperature)state.color.temperature=p.temperature;
+    if(p.highlights)state.light.highlights=p.highlights;
+    if(p.shadows)state.light.shadows=p.shadows;
+    if(p.blacks)state.light.blacks=p.blacks;
+    if(p.grain)state.effects.grain=p.grain;
+    if(p.vignette)state.effects.vignette=p.vignette;
+
+    if(name==="B&W"){
+        state.color.saturation=-100;
+    }
+
+    render();
 }
 
-/* =========================================================
-   PROFILE
-========================================================= */
+function bindTextControls(){
+    const layer=state.text.selected>=0?
+        state.text.layers[state.text.selected]:null;
 
-function profileValues(){
+    $("textValue").value=layer?layer.text:"";
+    $("textFont").value=layer?layer.font:"Arial";
+    $("textSize").value=layer?layer.size:48;
+    $("textOpacity").value=layer?layer.opacity:100;
+    $("textStroke").value=layer?layer.strokeWidth:0;
+    $("textBold").checked=layer?layer.bold:false;
+    $("textItalic").checked=layer?layer.italic:false;
+    $("textAlign").value=layer?layer.align:"center";
+    $("textColor").value=layer?layer.color:"#ffffff";
+    $("textStrokeColor").value=layer?layer.stroke:"#000000";
 
-  const p = {...S};
+    bindRange("textSize",v=>{
+        if(layer)layer.size=v;
+        state.text.size=v;
+    });
 
-  if(p.profile === 'neutral'){
-    p.contrast -= 3;
-    p.saturation -= 3;
-  }
+    bindRange("textOpacity",v=>{
+        if(layer)layer.opacity=v;
+        state.text.opacity=v;
+    });
 
-  if(p.profile === 'vivid'){
-    p.vibrance += 12;
-    p.saturation += 5;
-    p.contrast += 5;
-  }
+    bindRange("textStroke",v=>{
+        if(layer)layer.strokeWidth=v;
+        state.text.strokeWidth=v;
+    });
 
-  if(p.profile === 'modern'){
-    p.contrast += 5;
-    p.clarity += 7;
-    p.vibrance += 7;
-  }
+    $("textFont").onchange=e=>{
+        if(layer)layer.font=e.target.value;
+        state.text.font=e.target.value;
+        render();
+    };
 
-  if(p.profile === 'film'){
-    p.contrast += 4;
-    p.saturation -= 5;
-    p.temp += 4;
-    p.grain += 5;
-  }
+    $("textBold").onchange=e=>{
+        if(layer)layer.bold=e.target.checked;
+        state.text.bold=e.target.checked;
+        render();
+    };
 
-  if(p.profile === 'mono'){
-    p.saturation = -100;
-  }
+    $("textItalic").onchange=e=>{
+        if(layer)layer.italic=e.target.checked;
+        state.text.italic=e.target.checked;
+        render();
+    };
 
-  return p;
+    $("textAlign").onchange=e=>{
+        if(layer)layer.align=e.target.value;
+        state.text.align=e.target.value;
+        render();
+    };
+
+    $("textColor").oninput=e=>{
+        if(layer)layer.color=e.target.value;
+        state.text.color=e.target.value;
+        render();
+    };
+
+    $("textStrokeColor").oninput=e=>{
+        if(layer)layer.stroke=e.target.value;
+        state.text.stroke=e.target.value;
+        render();
+    };
+
+    $("textValue").oninput=e=>{
+        if(layer){
+            layer.text=e.target.value;
+            render();
+        }
+    };
+
+    $("addText").onclick=()=>{
+        const text=$("textValue").value.trim();
+
+        if(!text)return;
+
+        snapshot();
+
+        const layer={
+            id:Date.now(),
+            text,
+            x:imageCanvas.width/2,
+            y:imageCanvas.height/2,
+            font:state.text.font,
+            size:state.text.size,
+            opacity:state.text.opacity,
+            bold:state.text.bold,
+            italic:state.text.italic,
+            align:state.text.align,
+            color:state.text.color,
+            stroke:state.text.stroke,
+            strokeWidth:state.text.strokeWidth
+        };
+
+        state.text.layers.push(layer);
+        state.text.selected=state.text.layers.length-1;
+
+        renderPanel("text");
+        render();
+    };
+
+    $("deleteText").onclick=()=>{
+        if(state.text.selected<0)return;
+
+        snapshot();
+        state.text.layers.splice(state.text.selected,1);
+        state.text.selected=-1;
+        renderPanel("text");
+        render();
+    };
+
+    $("clearText").onclick=()=>{
+        if(!state.text.layers.length)return;
+
+        snapshot();
+        state.text.layers=[];
+        state.text.selected=-1;
+        render();
+    };
 }
 
-/* =========================================================
-   PIXEL ENGINE
-========================================================= */
+function drawTextLayer(ctx,l){
+    ctx.save();
 
-function applyPixel(imageData,w,h){
+    ctx.globalAlpha=clamp01(l.opacity/100);
 
-  const d = imageData.data;
-  const p = profileValues();
+    const style=
+        `${l.italic?"italic ":""}${l.bold?"bold ":""}${l.size}px ${l.font}`;
 
-  const exposure = Math.pow(2,p.exposure/50);
-  const contrast = (100+p.contrast)/100;
-  const saturation = (100+p.saturation)/100;
+    ctx.font=style;
+    ctx.textAlign=l.align;
+    ctx.textBaseline="middle";
 
-  for(let i=0;i<d.length;i+=4){
-
-    let r = d[i]/255;
-    let g = d[i+1]/255;
-    let b = d[i+2]/255;
-
-    r *= exposure;
-    g *= exposure;
-    b *= exposure;
-
-    const lum =
-      .2126*r +
-      .7152*g +
-      .0722*b;
-
-    const highlight = p.highlights/120;
-    const shadow = p.shadows/120;
-
-    if(lum > .5){
-      r += highlight*(r-.5);
-      g += highlight*(g-.5);
-      b += highlight*(b-.5);
-    }else{
-      r += shadow*(.5-r);
-      g += shadow*(.5-g);
-      b += shadow*(.5-b);
+    if(l.strokeWidth>0){
+        ctx.lineWidth=l.strokeWidth*2;
+        ctx.strokeStyle=l.stroke;
+        ctx.strokeText(l.text,l.x,l.y);
     }
 
-    const wb = (p.whites+p.blacks)/255;
+    ctx.fillStyle=l.color;
+    ctx.fillText(l.text,l.x,l.y);
 
-    r += wb;
-    g += wb;
-    b += wb;
-
-    r = (r-.5)*contrast+.5;
-    g = (g-.5)*contrast+.5;
-    b = (b-.5)*contrast+.5;
-
-    r += p.temp*.0009;
-    b -= p.temp*.0009;
-    g += p.tint*.00045;
-
-    const gray =
-      .299*r +
-      .587*g +
-      .114*b;
-
-    const vibrance =
-      1 +
-      (p.vibrance/100) *
-      (1-Math.abs(2*lum-1))*.7;
-
-    r = gray+(r-gray)*saturation*vibrance;
-    g = gray+(g-gray)*saturation*vibrance;
-    b = gray+(b-gray)*saturation*vibrance;
-
-    const effect =
-      (p.texture+p.clarity)/900;
-
-    const average = (r+g+b)/3;
-
-    r += (r-average)*effect;
-    g += (g-average)*effect;
-    b += (b-average)*effect;
-
-    if(p.dehaze){
-      const amount = p.dehaze/140;
-
-      r = (r-.5)*(1+amount)+.5;
-      g = (g-.5)*(1+amount)+.5;
-      b = (b-.5)*(1+amount)+.5;
-    }
-
-    let [hh,ss,vv] = rgbToHsv(
-      clamp(r,0,1),
-      clamp(g,0,1),
-      clamp(b,0,1)
-    );
-
-    const band = colorBand(hh);
-
-    const hs = S['h_'+band];
-    const ssShift = S['s_'+band];
-    const ls = S['l_'+band];
-
-    if(hs || ssShift || ls){
-      [r,g,b] = hsvToRgb(
-        hh+hs/360,
-        clamp(ss*(1+ssShift/100),0,1),
-        clamp(vv*(1+ls/100),0,1)
-      );
-    }
-
-    /* Selective color */
-
-    if(
-      S.selectiveActive &&
-      (
-        S.selectiveHue ||
-        S.selectiveSat ||
-        S.selectiveLight
-      )
-    ){
-
-      const sr = S.selectiveR/255;
-      const sg = S.selectiveG/255;
-      const sb = S.selectiveB/255;
-
-      const distance = Math.sqrt(
-        Math.pow(r-sr,2) +
-        Math.pow(g-sg,2) +
-        Math.pow(b-sb,2)
-      );
-
-      const range =
-        Math.max(.01,S.selectiveRange/100);
-
-      const mask =
-        clamp(1-distance/range,0,1);
-
-      if(mask > 0){
-
-        const [sh,ssv,sv] =
-          rgbToHsv(
-            clamp(r,0,1),
-            clamp(g,0,1),
-            clamp(b,0,1)
-          );
-
-        const q = hsvToRgb(
-          sh+S.selectiveHue/360,
-          clamp(ssv*(1+S.selectiveSat/100),0,1),
-          clamp(sv+S.selectiveLight/200,0,1)
-        );
-
-        r = r*(1-mask)+q[0]*mask;
-        g = g*(1-mask)+q[1]*mask;
-        b = b*(1-mask)+q[2]*mask;
-      }
-    }
-
-    /* Color grading */
-
-    const gradeLum =
-      .2126*r +
-      .7152*g +
-      .0722*b;
-
-    let gradeHue = 0;
-    let gradeSat = 0;
-
-    if(gradeLum < .35){
-      gradeHue = S.gradeShadow;
-      gradeSat = S.gradeShadowSat;
-    }else if(gradeLum > .65){
-      gradeHue = S.gradeHigh;
-      gradeSat = S.gradeHighSat;
-    }else{
-      gradeHue = S.gradeMid;
-      gradeSat = S.gradeMidSat;
-    }
-
-    if(gradeSat){
-
-      const color = hsvToRgb(
-        gradeHue/360,
-        gradeSat/100,
-        Math.max(.25,gradeLum)
-      );
-
-      const blend =
-        (S.gradeBlend/100)*.35;
-
-      r = r*(1-blend)+color[0]*blend;
-      g = g*(1-blend)+color[1]*blend;
-      b = b*(1-blend)+color[2]*blend;
-    }
-
-    /* Vignette */
-
-    const px = ((i/4)%w)/w-.5;
-    const py = Math.floor((i/4)/w)/h-.5;
-
-    const distance =
-      Math.sqrt(
-        px*px+py*py
-      )*1.414;
-
-    if(p.vignette){
-
-      const start =
-        p.midpoint/100*.65;
-
-      const softness =
-        Math.max(.05,p.feather/100);
-
-      const edge =
-        clamp(
-          (distance-start)/softness,
-          0,
-          1
-        );
-
-      const factor =
-        1-
-        p.vignette/100*
-        edge*edge;
-
-      r *= factor;
-      g *= factor;
-      b *= factor;
-    }
-
-    /* Local mask */
-
-    if(p.maskAmount){
-
-      let mask = 0;
-
-      if(p.maskType === 'radial'){
-        mask =
-          1-
-          clamp(
-            Math.sqrt(px*px+py*py)*2.1,
-            0,
-            1
-          );
-      }else if(p.maskType === 'linear'){
-        mask =
-          clamp(
-            1-Math.abs(py)*2,
-            0,
-            1
-          );
-      }else{
-        mask = 1;
-      }
-
-      mask *= p.maskAmount/100;
-
-      const localExposure =
-        p.maskExposure/250*mask;
-
-      r += localExposure;
-      g += localExposure;
-      b += localExposure;
-
-      const localContrast =
-        1+mask*p.maskContrast/100;
-
-      r=(r-.5)*localContrast+.5;
-      g=(g-.5)*localContrast+.5;
-      b=(b-.5)*localContrast+.5;
-
-      const localGray =
-        .299*r+.587*g+.114*b;
-
-      const localSat =
-        1+mask*p.maskSaturation/100;
-
-      r=localGray+(r-localGray)*localSat;
-      g=localGray+(g-localGray)*localSat;
-      b=localGray+(b-localGray)*localSat;
-    }
-
-    d[i] = clamp(r*255,0,255);
-    d[i+1] = clamp(g*255,0,255);
-    d[i+2] = clamp(b*255,0,255);
-  }
-
-  return imageData;
+    ctx.restore();
 }
 
-/* =========================================================
-   FILTERS
-========================================================= */
+function renderOverlays(){
+    overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
 
-function applyBlur(ctx2,w,h,amount){
+    if(!state.sourceCanvas)return;
 
-  if(amount <= 0) return;
+    state.text.layers.forEach((l,i)=>{
+        drawTextLayer(overlayCtx,l);
 
-  const temp = document.createElement('canvas');
+        if(state.tool==="text"&&i===state.text.selected){
+            overlayCtx.save();
+            overlayCtx.strokeStyle="rgba(255,255,255,.65)";
+            overlayCtx.setLineDash([7,5]);
 
-  temp.width = w;
-  temp.height = h;
+            const m=overlayCtx.measureText(l.text);
+            let x=l.x;
 
-  const tc = temp.getContext('2d');
+            if(l.align==="center")x-=m.width/2;
+            if(l.align==="right")x-=m.width;
 
-  tc.drawImage(ctx2.canvas,0,0);
-
-  ctx2.save();
-  ctx2.clearRect(0,0,w,h);
-
-  const radius =
-    Math.max(1,amount*.18);
-
-  ctx2.filter =
-    `blur(${radius}px)`;
-
-  ctx2.drawImage(temp,0,0);
-
-  ctx2.filter = 'none';
-  ctx2.restore();
-}
-
-function sharpen(ctx2,w,h,amount){
-
-  if(amount <= 0) return;
-
-  const imageData =
-    ctx2.getImageData(0,0,w,h);
-
-  const srcData =
-    new Uint8ClampedArray(imageData.data);
-
-  const d = imageData.data;
-
-  const strength =
-    amount/100*.8;
-
-  for(let y=1;y<h-1;y++){
-
-    for(let x=1;x<w-1;x++){
-
-      const i=(y*w+x)*4;
-
-      for(let c=0;c<3;c++){
-
-        const value =
-          srcData[i+c]*5 -
-          srcData[i-4+c] -
-          srcData[i+4+c] -
-          srcData[i-w*4+c] -
-          srcData[i+w*4+c];
-
-        d[i+c] =
-          clamp(
-            srcData[i+c]*(1-strength)+
-            value*strength,
-            0,
-            255
-          );
-      }
-    }
-  }
-
-  ctx2.putImageData(imageData,0,0);
-}
-
-function addGrain(ctx2,w,h,amount,size,roughness){
-
-  if(amount <= 0) return;
-
-  const data =
-    ctx2.getImageData(0,0,w,h);
-
-  const d = data.data;
-
-  const strength =
-    amount/100*35;
-
-  const rough =
-    .5+(roughness/100);
-
-  const sizeFactor =
-    Math.max(.5,size/25);
-
-  for(let i=0;i<d.length;i+=4){
-
-    const n =
-      (Math.random()-.5)*
-      strength*
-      rough*
-      sizeFactor;
-
-    d[i] = clamp(d[i]+n,0,255);
-    d[i+1] = clamp(d[i+1]+n,0,255);
-    d[i+2] = clamp(d[i+2]+n,0,255);
-  }
-
-  ctx2.putImageData(data,0,0);
-}
-
-/* =========================================================
-   RETOUCH
-========================================================= */
-
-function applyRetouch(ctx2){
-
-  if(!retouch.length) return;
-
-  const copy =
-    document.createElement('canvas');
-
-  copy.width = C.width;
-  copy.height = C.height;
-
-  const cc = copy.getContext('2d');
-
-  cc.drawImage(C,0,0);
-
-  retouch.forEach(point => {
-
-    const r = point.r;
-
-    ctx2.save();
-
-    ctx2.beginPath();
-    ctx2.arc(point.x,point.y,r,0,Math.PI*2);
-    ctx2.clip();
-
-    ctx2.filter =
-      `blur(${Math.max(2,r*.12)}px)`;
-
-    ctx2.drawImage(copy,0,0);
-
-    ctx2.restore();
-  });
-}
-
-/* =========================================================
-   TRANSFORM
-========================================================= */
-
-function getTransformedSource(){
-
-  const angle =
-    (S.rotate+S.straighten)*
-    Math.PI/180;
-
-  const sw = src.width;
-  const sh = src.height;
-
-  const sin = Math.abs(Math.sin(angle));
-  const cos = Math.abs(Math.cos(angle));
-
-  const W =
-    Math.max(
-      1,
-      Math.ceil(sw*cos+sh*sin)
-    );
-
-  const H =
-    Math.max(
-      1,
-      Math.ceil(sw*sin+sh*cos)
-    );
-
-  const canvas =
-    document.createElement('canvas');
-
-  canvas.width = W;
-  canvas.height = H;
-
-  const c = canvas.getContext('2d');
-
-  c.save();
-
-  c.translate(W/2,H/2);
-  c.rotate(angle);
-
-  c.scale(
-    S.flipX ? -1 : 1,
-    S.flipY ? -1 : 1
-  );
-
-  c.drawImage(
-    src,
-    -sw/2,
-    -sh/2
-  );
-
-  c.restore();
-
-  return canvas;
-}
-
-/* =========================================================
-   OVERLAY LAYERS
-========================================================= */
-
-function getSelectedText(){
-  return S.textLayers.find(
-    x => x.id === S.selectedTextId
-  );
-}
-
-function drawTextLayer(context,layer,width,height){
-
-  context.save();
-
-  const size =
-    layer.size *
-    (width/Math.max(1,C.width));
-
-  const weight =
-    layer.bold ? '700' : '400';
-
-  const style =
-    layer.italic ? 'italic ' : '';
-
-  context.font =
-    `${style}${weight} ${size}px ${layer.font}`;
-
-  context.textAlign =
-    layer.align || 'center';
-
-  context.textBaseline = 'middle';
-
-  context.globalAlpha =
-    clamp(layer.opacity/100,0,1);
-
-  const x = layer.x*width;
-  const y = layer.y*height;
-
-  const lines =
-    String(layer.text || '').split('\n');
-
-  const lineHeight =
-    size*1.2;
-
-  lines.forEach((line,index) => {
-
-    const yy =
-      y+
-      (index-(lines.length-1)/2)*
-      lineHeight;
-
-    if(layer.stroke){
-
-      context.lineWidth =
-        Math.max(1,size*.07);
-
-      context.strokeStyle =
-        layer.stroke;
-
-      context.strokeText(
-        line,
-        x,
-        yy
-      );
-    }
-
-    context.fillStyle =
-      layer.color;
-
-    context.fillText(
-      line,
-      x,
-      yy
-    );
-  });
-
-  context.restore();
-}
-
-function drawDrawLayer(context,layer,width,height){
-
-  if(!layer.points.length) return;
-
-  context.save();
-
-  context.strokeStyle =
-    layer.color;
-
-  context.globalAlpha =
-    clamp(layer.opacity/100,0,1);
-
-  context.lineWidth =
-    Math.max(
-      .5,
-      layer.size*
-      width/
-      Math.max(1,C.width)
-    );
-
-  context.lineCap = 'round';
-  context.lineJoin = 'round';
-
-  context.beginPath();
-
-  layer.points.forEach((point,index) => {
-
-    const x=point.x*width;
-    const y=point.y*height;
-
-    if(index===0){
-      context.moveTo(x,y);
-    }else{
-      context.lineTo(x,y);
-    }
-  });
-
-  context.stroke();
-
-  context.restore();
-}
-
-function showOverlay(){
-
-  if(!img){
-    return;
-  }
-
-  O.width = C.width;
-  O.height = C.height;
-
-  ox.clearRect(0,0,O.width,O.height);
-
-  S.textLayers.forEach(layer => {
-    drawTextLayer(
-      ox,
-      layer,
-      O.width,
-      O.height
-    );
-  });
-
-  S.drawLayers.forEach(layer => {
-    drawDrawLayer(
-      ox,
-      layer,
-      O.width,
-      O.height
-    );
-  });
-
-  const selected =
-    getSelectedText();
-
-  if(
-    active === 'text' &&
-    selected
-  ){
-
-    ox.save();
-
-    const x =
-      selected.x*O.width;
-
-    const y =
-      selected.y*O.height;
-
-    ox.strokeStyle =
-      'rgba(255,255,255,.65)';
-
-    ox.setLineDash([5,5]);
-
-    ox.strokeRect(
-      x-20,
-      y-selected.size*.7,
-      40,
-      selected.size*1.4
-    );
-
-    ox.restore();
-  }
-
-  O.style.display='block';
-}
-
-/* =========================================================
-   CROP GUIDE
-========================================================= */
-
-function updateCropGuide(){
-
-  const guide = $('cropOverlay');
-
-  if(!guide || !img || active !== 'crop' || !cropGuide){
-    if(guide) guide.style.display='none';
-    return;
-  }
-
-  const rect =
-    C.getBoundingClientRect();
-
-  if(!rect.width || !rect.height){
-    guide.style.display='none';
-    return;
-  }
-
-  guide.style.display='block';
-
-  guide.style.width =
-    rect.width+'px';
-
-  guide.style.height =
-    rect.height+'px';
-
-  guide.style.left =
-    (rect.left-
-     $('stage').getBoundingClientRect().left+
-     $('stage').scrollLeft)+'px';
-
-  guide.style.top =
-    (rect.top-
-     $('stage').getBoundingClientRect().top+
-     $('stage').scrollTop)+'px';
-
-  guide.style.transform =
-    `translate3d(${panX}px,${panY}px,0) scale(${zoom})`;
-
-  guide.style.transformOrigin='center center';
-}
-
-/* =========================================================
-   CANVAS TRANSFORM
-========================================================= */
-
-function updateCanvasTransform(){
-
-  const transform =
-    `translate3d(${panX}px,${panY}px,0) scale(${zoom})`;
-
-  C.style.transform = transform;
-  O.style.transform = transform;
-
-  $('zlabel').textContent =
-    `${Math.round(zoom*100)}%`;
-
-  updateCropGuide();
-}
-
-/* =========================================================
-   MAIN RENDER
-========================================================= */
-
-function render(){
-
-  if(rendering || !img) return;
-
-  rendering = true;
-
-  const transformed =
-    getTransformedSource();
-
-  const rotatedWidth =
-    transformed.width;
-
-  const rotatedHeight =
-    transformed.height;
-
-  let cropWidth =
-    rotatedWidth;
-
-  let cropHeight =
-    rotatedHeight;
-
-  let cropX = 0;
-  let cropY = 0;
-
-  if(S.ratio !== 'original'){
-
-    const parts =
-      S.ratio.split(':').map(Number);
-
-    const target =
-      parts[0]/parts[1];
-
-    const current =
-      rotatedWidth/rotatedHeight;
-
-    if(current > target){
-
-      cropWidth =
-        Math.round(
-          rotatedHeight*target
-        );
-
-      cropX =
-        (rotatedWidth-cropWidth)/2;
-
-    }else{
-
-      cropHeight =
-        Math.round(
-          rotatedWidth/target
-        );
-
-      cropY =
-        (rotatedHeight-cropHeight)/2;
-    }
-  }
-
-  const maxPreview =
-    window.innerWidth < 700
-      ? 700
-      : 1200;
-
-  const scale =
-    Math.min(
-      1,
-      maxPreview/
-      Math.max(
-        cropWidth,
-        cropHeight
-      )
-    );
-
-  const width =
-    Math.max(
-      1,
-      Math.round(cropWidth*scale)
-    );
-
-  const height =
-    Math.max(
-      1,
-      Math.round(cropHeight*scale)
-    );
-
-  C.width = width;
-  C.height = height;
-
-  ctx.clearRect(0,0,width,height);
-
-  ctx.drawImage(
-    transformed,
-    cropX,
-    cropY,
-    cropWidth,
-    cropHeight,
-    0,
-    0,
-    width,
-    height
-  );
-
-  if(!showBefore){
-
-    let data =
-      ctx.getImageData(
-        0,
-        0,
-        width,
-        height
-      );
-
-    data =
-      applyPixel(
-        data,
-        width,
-        height
-      );
-
-    ctx.putImageData(
-      data,
-      0,
-      0
-    );
-
-    if(S.noise > 0){
-
-      applyBlur(
-        ctx,
-        width,
-        height,
-        S.noise
-      );
-    }
-
-    if(S.colorNoise > 0){
-
-      const data2 =
-        ctx.getImageData(
-          0,
-          0,
-          width,
-          height
-        );
-
-      const d=data2.data;
-
-      const amount =
-        S.colorNoise/100;
-
-      for(let i=0;i<d.length;i+=4){
-
-        const gray =
-          .299*d[i]+
-          .587*d[i+1]+
-          .114*d[i+2];
-
-        d[i] =
-          d[i]*(1-amount)+gray*amount;
-
-        d[i+1] =
-          d[i+1]*(1-amount)+gray*amount;
-
-        d[i+2] =
-          d[i+2]*(1-amount)+gray*amount;
-      }
-
-      ctx.putImageData(data2,0,0);
-    }
-
-    if(S.sharp > 0){
-      sharpen(ctx,width,height,S.sharp);
-    }
-
-    if(S.grain > 0){
-      addGrain(
-        ctx,
-        width,
-        height,
-        S.grain,
-        S.grainSize,
-        S.grainRough
-      );
-    }
-
-    if(S.blur > 0){
-
-      applyBlur(
-        ctx,
-        width,
-        height,
-        S.blur
-      );
-    }
-
-    if(S.lensVignette){
-
-      const data3 =
-        ctx.getImageData(
-          0,
-          0,
-          width,
-          height
-        );
-
-      const d=data3.data;
-
-      const amount =
-        S.lensVignette/100;
-
-      for(let y=0;y<height;y++){
-
-        for(let x=0;x<width;x++){
-
-          const i=(y*width+x)*4;
-
-          const dx =
-            x/width-.5;
-
-          const dy =
-            y/height-.5;
-
-          const dist =
-            Math.min(
-              1,
-              Math.sqrt(dx*dx+dy*dy)*1.6
+            overlayCtx.strokeRect(
+                x-8,
+                l.y-l.size/2-8,
+                m.width+16,
+                l.size+16
             );
 
-          const factor =
-            1-
-            amount*
-            dist*
-            dist*.45;
-
-          d[i] =
-            clamp(d[i]*factor,0,255);
-
-          d[i+1] =
-            clamp(d[i+1]*factor,0,255);
-
-          d[i+2] =
-            clamp(d[i+2]*factor,0,255);
+            overlayCtx.restore();
         }
-      }
+    });
 
-      ctx.putImageData(data3,0,0);
+    state.draw.strokes.forEach(stroke=>{
+        if(!stroke.points.length)return;
+
+        overlayCtx.save();
+
+        overlayCtx.globalAlpha=stroke.opacity/100;
+        overlayCtx.strokeStyle=stroke.color;
+        overlayCtx.lineWidth=stroke.size;
+        overlayCtx.lineCap="round";
+        overlayCtx.lineJoin="round";
+
+        overlayCtx.beginPath();
+
+        stroke.points.forEach((p,i)=>{
+            if(i===0)overlayCtx.moveTo(p.x,p.y);
+            else overlayCtx.lineTo(p.x,p.y);
+        });
+
+        overlayCtx.stroke();
+        overlayCtx.restore();
+    });
+
+    if(state.tool==="crop"&&state.crop.active){
+        drawCropOverlay();
     }
-
-    if(S.defringe > 0){
-
-      const data4 =
-        ctx.getImageData(
-          0,
-          0,
-          width,
-          height
-        );
-
-      const d=data4.data;
-
-      const amount =
-        S.defringe/100*.12;
-
-      for(let i=0;i<d.length;i+=4){
-
-        const avg =
-          (d[i]+d[i+1]+d[i+2])/3;
-
-        d[i] =
-          d[i]*(1-amount)+avg*amount;
-
-        d[i+2] =
-          d[i+2]*(1-amount)+avg*amount;
-      }
-
-      ctx.putImageData(data4,0,0);
-    }
-
-    if(retouch.length){
-      applyRetouch(ctx);
-    }
-  }
-
-  showOverlay();
-
-  $('beforeBadge').style.display =
-    showBefore ? 'block' : 'none';
-
-  $('status').textContent =
-    showBefore ? 'Original' : 'Ready';
-
-  updateCanvasTransform();
-
-  rendering = false;
 }
 
-/* =========================================================
-   EXPORT
-========================================================= */
+function handleTextPointerDown(e){
+    const p=canvasPoint(e);
 
-function drawFinalOverlay(target){
+    for(let i=state.text.layers.length-1;i>=0;i--){
+        const l=state.text.layers[i];
 
-  if(!O.width || !O.height) return;
+        overlayCtx.font=
+            `${l.italic?"italic ":""}${l.bold?"bold ":""}${l.size}px ${l.font}`;
 
-  target.save();
+        const width=overlayCtx.measureText(l.text).width;
 
-  target.drawImage(
-    O,
-    0,
-    0,
-    target.canvas.width,
-    target.canvas.height
-  );
+        let left=l.x-width/2;
 
-  target.restore();
+        if(l.align==="left")left=l.x;
+        if(l.align==="right")left=l.x-width;
+
+        if(
+            p.x>=left-15 &&
+            p.x<=left+width+15 &&
+            p.y>=l.y-l.size &&
+            p.y<=l.y+l.size
+        ){
+            snapshot();
+            state.text.selected=i;
+            state.text.dragging=true;
+            state.text.dragOffsetX=p.x-l.x;
+            state.text.dragOffsetY=p.y-l.y;
+            renderPanel("text");
+            render();
+            return;
+        }
+    }
+}
+
+function moveTextPointer(e){
+    if(!state.text.dragging)return;
+
+    const l=state.text.layers[state.text.selected];
+    if(!l)return;
+
+    const p=canvasPoint(e);
+
+    l.x=p.x-state.text.dragOffsetX;
+    l.y=p.y-state.text.dragOffsetY;
+
+    render();
+}
+
+function finishTextDrag(){
+    state.text.dragging=false;
+}
+
+$("stage").addEventListener("pointerup",finishTextDrag);
+
+function startDraw(e){
+    const p=canvasPoint(e);
+
+    snapshot();
+
+    state.draw.drawing=true;
+
+    state.draw.current={
+        size:state.draw.size,
+        opacity:state.draw.opacity,
+        color:state.draw.color,
+        points:[p]
+    };
+
+    state.draw.strokes.push(state.draw.current);
+    render();
+}
+
+function continueDraw(e){
+    if(!state.draw.drawing)return;
+
+    const p=canvasPoint(e);
+    state.draw.current.points.push(p);
+
+    render();
+}
+
+function finishDraw(){
+    state.draw.drawing=false;
+    state.draw.current=null;
+}
+
+function startRetouch(e){
+    const p=canvasPoint(e);
+
+    snapshot();
+
+    state.retouch.drawing=true;
+
+    state.retouch.strokes.push({
+        size:state.retouch.size,
+        feather:state.retouch.feather,
+        opacity:state.retouch.opacity,
+        points:[p]
+    });
+
+    render();
+}
+
+function continueRetouch(e){
+    if(!state.retouch.drawing)return;
+
+    const stroke=
+        state.retouch.strokes[state.retouch.strokes.length-1];
+
+    stroke.points.push(canvasPoint(e));
+
+    render();
+}
+
+function finishRetouch(){
+    state.retouch.drawing=false;
+}
+
+function pickColor(e){
+    if(!state.sourceCanvas)return;
+
+    const p=canvasPoint(e);
+
+    const x=Math.round(clamp(p.x,0,imageCanvas.width-1));
+    const y=Math.round(clamp(p.y,0,imageCanvas.height-1));
+
+    const d=imageCtx.getImageData(x,y,1,1).data;
+
+    state.selective.picked={
+        r:d[0],
+        g:d[1],
+        b:d[2]
+    };
+
+    const hex="#"+
+        [d[0],d[1],d[2]]
+        .map(v=>v.toString(16).padStart(2,"0"))
+        .join("");
+
+    const box=$("pickedColor");
+
+    if(box){
+        box.textContent=`Selected ${hex}`;
+        box.style.background=hex;
+        box.style.color=(d[0]+d[1]+d[2])>400?"#111":"#fff";
+    }
+
+    render();
+}
+
+function initializeCrop(){
+    if(!imageCanvas.width)return;
+
+    state.crop.x=0.08;
+    state.crop.y=0.08;
+    state.crop.w=.84;
+    state.crop.h=.84;
+    state.crop.active=true;
+
+    applyCropRatio();
+}
+
+function applyCropRatio(){
+    if(state.crop.ratio==="Free"||state.crop.ratio==="Original"){
+        return;
+    }
+
+    const parts=state.crop.ratio.split(":");
+    const ratio=Number(parts[0])/Number(parts[1]);
+
+    let w=state.crop.w;
+    let h=w/imageCanvas.width*imageCanvas.height/ratio;
+
+    if(h>state.crop.h){
+        h=state.crop.h;
+        w=h*ratio*imageCanvas.width/imageCanvas.height;
+    }
+
+    state.crop.w=w;
+    state.crop.h=h;
+
+    state.crop.x=(1-w)/2;
+    state.crop.y=(1-h)/2;
+}
+
+function drawCropOverlay(){
+    const x=state.crop.x*overlayCanvas.width;
+    const y=state.crop.y*overlayCanvas.height;
+    const w=state.crop.w*overlayCanvas.width;
+    const h=state.crop.h*overlayCanvas.height;
+
+    overlayCtx.save();
+
+    overlayCtx.fillStyle="rgba(0,0,0,.55)";
+    overlayCtx.fillRect(
+        0,
+        0,
+        overlayCanvas.width,
+        overlayCanvas.height
+    );
+
+    overlayCtx.clearRect(x,y,w,h);
+
+    overlayCtx.strokeStyle="#fff";
+    overlayCtx.lineWidth=Math.max(2,overlayCanvas.width/700);
+    overlayCtx.setLineDash([]);
+
+    overlayCtx.strokeRect(x,y,w,h);
+
+    overlayCtx.strokeStyle="rgba(255,255,255,.45)";
+    overlayCtx.lineWidth=1;
+
+    for(let i=1;i<3;i++){
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(x+w*i/3,y);
+        overlayCtx.lineTo(x+w*i/3,y+h);
+        overlayCtx.stroke();
+
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(x,y+h*i/3);
+        overlayCtx.lineTo(x+w,y+h*i/3);
+        overlayCtx.stroke();
+    }
+
+    const hs=12;
+
+    const handles=[
+        [x,y],[x+w,y],[x,y+h],[x+w,y+h]
+    ];
+
+    overlayCtx.fillStyle="#fff";
+
+    handles.forEach(([hx,hy])=>{
+        overlayCtx.fillRect(
+            hx-hs/2,
+            hy-hs/2,
+            hs,
+            hs
+        );
+    });
+
+    overlayCtx.restore();
+}
+
+function startCropPointer(e){
+    if(!state.crop.active)initializeCrop();
+
+    const p=canvasPoint(e);
+
+    const x=p.x/imageCanvas.width;
+    const y=p.y/imageCanvas.height;
+
+    const c=state.crop;
+
+    const px=c.x;
+    const py=c.y;
+    const pw=c.w;
+    const ph=c.h;
+
+    const near=0.025;
+
+    c.startX=x;
+    c.startY=y;
+    c.startCrop={...c};
+
+    if(Math.abs(x-px)<near&&Math.abs(y-py)<near)c.handle="tl";
+    else if(Math.abs(x-(px+pw))<near&&Math.abs(y-py)<near)c.handle="tr";
+    else if(Math.abs(x-px)<near&&Math.abs(y-(py+ph))<near)c.handle="bl";
+    else if(Math.abs(x-(px+pw))<near&&Math.abs(y-(py+ph))<near)c.handle="br";
+    else if(x>=px&&x<=px+pw&&y>=py&&y<=py+ph)c.handle="move";
+    else c.handle="";
+
+    if(c.handle){
+        c.dragging=true;
+        c.startCrop={...c};
+    }
+}
+
+function moveCropPointer(e){
+    if(!state.crop.dragging)return;
+
+    const p=canvasPoint(e);
+
+    const x=p.x/imageCanvas.width;
+    const y=p.y/imageCanvas.height;
+
+    const c=state.crop;
+    const s=c.startCrop;
+
+    const dx=x-c.startX;
+    const dy=y-c.startY;
+
+    if(c.handle==="move"){
+        c.x=clamp01(s.x+dx);
+        c.y=clamp01(s.y+dy);
+
+        c.x=Math.min(c.x,1-c.w);
+        c.y=Math.min(c.y,1-c.h);
+    }else{
+        let nx=s.x;
+        let ny=s.y;
+        let nw=s.w;
+        let nh=s.h;
+
+        if(c.handle.includes("l")){
+            nx=s.x+dx;
+            nw=s.w-dx;
+        }
+
+        if(c.handle.includes("r")){
+            nw=s.w+dx;
+        }
+
+        if(c.handle.includes("t")){
+            ny=s.y+dy;
+            nh=s.h-dy;
+        }
+
+        if(c.handle.includes("b")){
+            nh=s.h+dy;
+        }
+
+        nw=Math.max(.05,nw);
+        nh=Math.max(.05,nh);
+
+        nx=clamp(nx,0,1-nw);
+        ny=clamp(ny,0,1-nh);
+
+        c.x=nx;
+        c.y=ny;
+        c.w=nw;
+        c.h=nh;
+    }
+
+    render();
+}
+
+function finishCropPointer(){
+    state.crop.dragging=false;
+    state.crop.handle="";
+}
+
+function rotateImage(deg){
+    const src=state.sourceCanvas;
+
+    const c=document.createElement("canvas");
+    const ctx=c.getContext("2d");
+
+    const rad=deg*Math.PI/180;
+
+    if(Math.abs(deg)===90){
+        c.width=src.height;
+        c.height=src.width;
+    }else{
+        c.width=src.width;
+        c.height=src.height;
+    }
+
+    ctx.translate(c.width/2,c.height/2);
+    ctx.rotate(rad);
+    ctx.drawImage(src,-src.width/2,-src.height/2);
+
+    state.sourceCanvas=c;
+
+    imageCanvas.width=c.width;
+    imageCanvas.height=c.height;
+    overlayCanvas.width=c.width;
+    overlayCanvas.height=c.height;
+
+    state.crop.active=false;
+
+    fitImage();
+    render();
+}
+
+function flipImage(horizontal,vertical){
+    const src=state.sourceCanvas;
+
+    const c=document.createElement("canvas");
+    c.width=src.width;
+    c.height=src.height;
+
+    const ctx=c.getContext("2d");
+
+    ctx.translate(
+        horizontal?c.width:0,
+        vertical?c.height:0
+    );
+
+    ctx.scale(
+        horizontal?-1:1,
+        vertical?-1:1
+    );
+
+    ctx.drawImage(src,0,0);
+
+    state.sourceCanvas=c;
+
+    imageCanvas.width=c.width;
+    imageCanvas.height=c.height;
+    overlayCanvas.width=c.width;
+    overlayCanvas.height=c.height;
+
+    fitImage();
+    render();
+}
+
+function applyCrop(){
+    if(!state.crop.active)return;
+
+    const c=state.crop;
+
+    const sx=Math.round(c.x*imageCanvas.width);
+    const sy=Math.round(c.y*imageCanvas.height);
+    const sw=Math.round(c.w*imageCanvas.width);
+    const sh=Math.round(c.h*imageCanvas.height);
+
+    const out=document.createElement("canvas");
+    out.width=Math.max(1,sw);
+    out.height=Math.max(1,sh);
+
+    const ctx=out.getContext("2d");
+    ctx.drawImage(
+        state.sourceCanvas,
+        sx,sy,sw,sh,
+        0,0,sw,sh
+    );
+
+    state.sourceCanvas=out;
+
+    imageCanvas.width=sw;
+    imageCanvas.height=sh;
+    overlayCanvas.width=sw;
+    overlayCanvas.height=sh;
+
+    state.crop.active=false;
+
+    fitImage();
+    render();
+}
+
+function rgbToHsl(r,g,b){
+    r/=255;
+    g/=255;
+    b/=255;
+
+    const max=Math.max(r,g,b);
+    const min=Math.min(r,g,b);
+    let h=0;
+    let s=0;
+    const l=(max+min)/2;
+
+    if(max!==min){
+        const d=max-min;
+        s=l>.5?d/(2-max-min):d/(max+min);
+
+        switch(max){
+            case r:h=(g-b)/d+(g<b?6:0);break;
+            case g:h=(b-r)/d+2;break;
+            case b:h=(r-g)/d+4;break;
+        }
+
+        h/=6;
+    }
+
+    return {h:h*360,s:s*100,l:l*100};
+}
+
+function hue2rgb(p,q,t){
+    if(t<0)t+=1;
+    if(t>1)t-=1;
+
+    if(t<1/6)return p+(q-p)*6*t;
+    if(t<1/2)return q;
+    if(t<2/3)return p+(q-p)*(2/3-t)*6;
+
+    return p;
+}
+
+function hslToRgb(h,s,l){
+    h=((h%360)+360)%360/360;
+    s=clamp(s,0,100)/100;
+    l=clamp(l,0,100)/100;
+
+    let r,g,b;
+
+    if(s===0){
+        r=g=b=l;
+    }else{
+        const q=l<.5?l*(1+s):l+s-l*s;
+        const p=2*l-q;
+
+        r=hue2rgb(p,q,h+1/3);
+        g=hue2rgb(p,q,h);
+        b=hue2rgb(p,q,h-1/3);
+    }
+
+    return {
+        r:r*255,
+        g:g*255,
+        b:b*255
+    };
+}
+
+function applyColorMix(r,g,b){
+    const hsl=rgbToHsl(r,g,b);
+
+    if(state.selective.picked){
+        const phsl=rgbToHsl(
+            state.selective.picked.r,
+            state.selective.picked.g,
+            state.selective.picked.b
+        );
+
+        let dh=Math.abs(hsl.h-phsl.h);
+        if(dh>180)dh=360-dh;
+
+        const influence=
+            clamp01(1-dh/state.selective.range);
+
+        hsl.h+=state.selective.hue*influence;
+        hsl.s+=state.selective.saturation*influence;
+        hsl.l+=state.selective.lightness*influence;
+    }
+
+    let dh=Math.abs(hsl.h-state.color.hue);
+    if(dh>180)dh=360-dh;
+
+    const mixerInfluence=
+        clamp01(1-dh/state.color.hueRange);
+
+    hsl.s+=state.color.mixerSaturation*mixerInfluence;
+    hsl.l+=state.color.mixerLightness*mixerInfluence;
+
+    hsl.s+=state.color.saturation;
+
+    const satBoost=
+        state.color.vibrance*(1-hsl.s/100);
+
+    hsl.s+=satBoost;
+
+    const gradeLum=hsl.l;
+
+    let gradeHue=0;
+    let gradeSat=0;
+
+    if(gradeLum<35){
+        gradeHue=state.color.shadowHue;
+        gradeSat=state.color.shadowSat;
+    }else if(gradeLum>65){
+        gradeHue=state.color.highlightHue;
+        gradeSat=state.color.highlightSat;
+    }else{
+        gradeHue=state.color.midHue;
+        gradeSat=state.color.midSat;
+    }
+
+    const gradeInfluence=
+        state.color.gradeBlend/100*(gradeSat/100);
+
+    if(gradeSat>0){
+        hsl.h=lerp(hsl.h,gradeHue,gradeInfluence);
+        hsl.s+=gradeSat*.35;
+    }
+
+    hsl.s=clamp(hsl.s,0,100);
+    hsl.l=clamp(hsl.l,0,100);
+
+    return hslToRgb(hsl.h,hsl.s,hsl.l);
+}
+
+function adjustTone(v){
+    let x=v/255;
+
+    const exposure=state.light.exposure/100;
+    x*=Math.pow(2,exposure);
+
+    const contrast=state.light.contrast/100;
+    x=(x-.5)*(1+contrast)+.5;
+
+    if(x>.5){
+        x+=state.light.highlights/100*(x-.5)*1.5;
+        x+=state.light.whites/100*(x-.75);
+    }else{
+        x+=state.light.shadows/100*(.5-x)*1.5;
+        x+=state.light.blacks/100*(x-.25);
+    }
+
+    return clamp(x*255);
+}
+
+function localMaskWeight(x,y){
+    const m=state.mask;
+
+    if(m.type==="None")return 0;
+
+    const cx=m.x/100;
+    const cy=m.y/100;
+
+    if(m.type==="Radial"){
+        const rx=Math.max(.02,m.width/200);
+        const ry=Math.max(.02,m.height/200);
+
+        const d=Math.sqrt(
+            Math.pow((x-cx)/rx,2)+
+            Math.pow((y-cy)/ry,2)
+        );
+
+        const feather=Math.max(.01,m.feather/100);
+
+        return clamp01(
+            (1-d)/(feather+.001)
+        )*(m.amount/100);
+    }
+
+    const distance=Math.abs(y-cy);
+    const size=Math.max(.05,m.height/100);
+
+    return clamp01(
+        1-distance/size
+    )*(m.amount/100);
+}
+
+function pixelBlur(data,w,h,radius){
+    if(radius<=0)return data;
+
+    const out=new Uint8ClampedArray(data.length);
+    const r=Math.max(1,Math.round(radius));
+
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            let sr=0,sg=0,sb=0,count=0;
+
+            for(let yy=Math.max(0,y-r);yy<=Math.min(h-1,y+r);yy+=2){
+                for(let xx=Math.max(0,x-r);xx<=Math.min(w-1,x+r);xx+=2){
+                    const i=(yy*w+xx)*4;
+                    sr+=data[i];
+                    sg+=data[i+1];
+                    sb+=data[i+2];
+                    count++;
+                }
+            }
+
+            const i=(y*w+x)*4;
+            out[i]=sr/count;
+            out[i+1]=sg/count;
+            out[i+2]=sb/count;
+            out[i+3]=data[i+3];
+        }
+    }
+
+    return out;
+}
+
+function sharpen(data,w,h,amount){
+    if(amount<=0)return data;
+
+    const out=new Uint8ClampedArray(data);
+    const a=amount/100;
+
+    for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
+            const i=(y*w+x)*4;
+
+            for(let c=0;c<3;c++){
+                const center=data[i+c];
+
+                const avg=(
+                    data[((y-1)*w+x)*4+c]+
+                    data[((y+1)*w+x)*4+c]+
+                    data[(y*w+x-1)*4+c]+
+                    data[(y*w+x+1)*4+c]
+                )/4;
+
+                out[i+c]=clamp(center+(center-avg)*a*1.5);
+            }
+        }
+    }
+
+    return out;
+}
+
+function applyTextureClarity(data,w,h){
+    const amount=
+        (state.effects.texture+state.effects.clarity+
+        state.mask.texture+state.mask.clarity)/100;
+
+    if(Math.abs(amount)<.001)return data;
+
+    const out=new Uint8ClampedArray(data);
+
+    for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
+            const i=(y*w+x)*4;
+
+            for(let c=0;c<3;c++){
+                const avg=(
+                    data[((y-1)*w+x)*4+c]+
+                    data[((y+1)*w+x)*4+c]+
+                    data[(y*w+x-1)*4+c]+
+                    data[(y*w+x+1)*4+c]
+                )/4;
+
+                out[i+c]=clamp(
+                    data[i+c]+
+                    (data[i+c]-avg)*amount*.75
+                );
+            }
+        }
+    }
+
+    return out;
+}
+
+function applyBlurFocus(data,w,h){
+    if(state.blur.amount<=0)return data;
+
+    const radius=Math.max(
+        1,
+        Math.round(state.blur.amount/10)
+    );
+
+    const blurred=pixelBlur(data,w,h,radius);
+    const out=new Uint8ClampedArray(data);
+
+    const fx=state.blur.focusX/100;
+    const fy=state.blur.focusY/100;
+    const fs=Math.max(.02,state.blur.focusSize/100);
+    const feather=Math.max(.02,state.blur.feather/100);
+
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const nx=x/w;
+            const ny=y/h;
+
+            const d=Math.sqrt(
+                Math.pow((nx-fx),2)+
+                Math.pow((ny-fy),2)
+            );
+
+            const t=clamp01(
+                (d-fs)/(feather+.001)
+            );
+
+            const i=(y*w+x)*4;
+
+            out[i]=lerp(data[i],blurred[i],t);
+            out[i+1]=lerp(data[i+1],blurred[i+1],t);
+            out[i+2]=lerp(data[i+2],blurred[i+2],t);
+        }
+    }
+
+    return out;
+}
+
+function applyVignette(data,w,h,amount,midpoint,feather,roundness){
+    if(Math.abs(amount)<.01)return data;
+
+    const out=new Uint8ClampedArray(data);
+
+    const a=amount/100;
+    const m=midpoint/100;
+    const f=Math.max(.05,feather/100);
+    const r=roundness/100;
+
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const nx=(x/w-.5)*2;
+            const ny=(y/h-.5)*2;
+
+            const d=Math.sqrt(
+                Math.pow(nx*(1+r*.35),2)+
+                Math.pow(ny*(1-r*.35),2)
+            )/Math.SQRT2;
+
+            let t=clamp01((d-m)/f);
+            t*=t;
+
+            const factor=1-a*t;
+
+            const i=(y*w+x)*4;
+
+            out[i]=clamp(out[i]*factor);
+            out[i+1]=clamp(out[i+1]*factor);
+            out[i+2]=clamp(out[i+2]*factor);
+        }
+    }
+
+    return out;
+}
+
+function applyGrain(data,w,h){
+    const amount=state.effects.grain/100;
+
+    if(amount<=0)return data;
+
+    const out=new Uint8ClampedArray(data);
+
+    const rough=state.effects.grainRoughness/100;
+    const size=Math.max(1,state.effects.grainSize/15);
+
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+
+            const n=
+                (Math.random()-.5)*
+                255*
+                amount*
+                (.35+.65*rough)/
+                size;
+
+            out[i]=clamp(data[i]+n);
+            out[i+1]=clamp(data[i+1]+n);
+            out[i+2]=clamp(data[i+2]+n);
+        }
+    }
+
+    return out;
+}
+
+function applyDefringe(data,w,h,amount){
+    if(amount<=0)return data;
+
+    const out=new Uint8ClampedArray(data);
+    const a=amount/100;
+
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const i=(y*w+x)*4;
+
+            const max=Math.max(data[i],data[i+1],data[i+2]);
+            const min=Math.min(data[i],data[i+1],data[i+2]);
+
+            if(max-min>45){
+                out[i]=lerp(data[i],data[i+1],a*.15);
+                out[i+2]=lerp(data[i+2],data[i+1],a*.15);
+            }
+        }
+    }
+
+    return out;
+}
+
+function applyRetouch(data,w,h){
+    if(!state.retouch.strokes.length)return data;
+
+    const out=new Uint8ClampedArray(data);
+
+    state.retouch.strokes.forEach(stroke=>{
+        stroke.points.forEach(p=>{
+            const r=stroke.size;
+            const minX=Math.max(0,Math.floor(p.x-r));
+            const maxX=Math.min(w-1,Math.ceil(p.x+r));
+            const minY=Math.max(0,Math.floor(p.y-r));
+            const maxY=Math.min(h-1,Math.ceil(p.y+r));
+
+            for(let y=minY;y<=maxY;y++){
+                for(let x=minX;x<=maxX;x++){
+                    const d=Math.hypot(x-p.x,y-p.y);
+
+                    if(d>r)continue;
+
+                    const t=1-d/r;
+                    const fall=Math.pow(t,1+stroke.feather/50);
+                    const i=(y*w+x)*4;
+
+                    out[i]=lerp(out[i],128,fall*stroke.opacity/100*.18);
+                    out[i+1]=lerp(out[i+1],128,fall*stroke.opacity/100*.18);
+                    out[i+2]=lerp(out[i+2],128,fall*stroke.opacity/100*.18);
+                }
+            }
+        });
+    });
+
+    return out;
+}
+
+function processImage(){
+    const w=imageCanvas.width;
+    const h=imageCanvas.height;
+
+    if(!state.sourceCanvas)return;
+
+    const source=state.sourceCanvas
+        .getContext("2d")
+        .getImageData(0,0,w,h);
+
+    let data=new Uint8ClampedArray(source.data);
+
+    if(state.before)return data;
+
+    const pixelCount=w*h;
+
+    for(let i=0;i<data.length;i+=4){
+        let r=data[i];
+        let g=data[i+1];
+        let b=data[i+2];
+
+        r=adjustTone(r);
+        g=adjustTone(g);
+        b=adjustTone(b);
+
+        r+=state.color.temperature*0.45;
+        b-=state.color.temperature*0.45;
+
+        g+=state.color.tint*.25;
+        r-=state.color.tint*.1;
+        b-=state.color.tint*.1;
+
+        const rgb=applyColorMix(r,g,b);
+
+        r=rgb.r;
+        g=rgb.g;
+        b=rgb.b;
+
+        const x=(i/4)%w/w;
+        const y=Math.floor((i/4)/w)/h;
+
+        const mw=localMaskWeight(x,y);
+
+        if(mw>0){
+            r*=1+(state.mask.exposure/100)*mw;
+            g*=1+(state.mask.exposure/100)*mw;
+            b*=1+(state.mask.exposure/100)*mw;
+
+            const mhsl=rgbToHsl(r,g,b);
+
+            mhsl.h+=state.mask.hue*mw;
+            mhsl.s+=state.mask.saturation*mw;
+
+            const mRgb=hslToRgb(
+                mhsl.h,
+                mhsl.s,
+                mhsl.l
+            );
+
+            r=lerp(r,mRgb.r,mw);
+            g=lerp(g,mRgb.g,mw);
+            b=lerp(b,mRgb.b,mw);
+
+            const mc=1+(state.mask.contrast/100)*mw;
+
+            r=(r-128)*mc+128;
+            g=(g-128)*mc+128;
+            b=(b-128)*mc+128;
+        }
+
+        data[i]=clamp(r);
+        data[i+1]=clamp(g);
+        data[i+2]=clamp(b);
+    }
+
+    data=applyTextureClarity(data,w,h);
+
+    const noise=state.detail.noiseReduction/100;
+
+    if(noise>0){
+        data=pixelBlur(
+            data,
+            w,
+            h,
+            1+noise*2
+        );
+    }
+
+    const cnoise=state.detail.colorNoise/100;
+
+    if(cnoise>0){
+        for(let i=0;i<data.length;i+=4){
+            const avg=(data[i]+data[i+1]+data[i+2])/3;
+
+            data[i]=lerp(data[i],avg,cnoise);
+            data[i+1]=lerp(data[i+1],avg,cnoise);
+            data[i+2]=lerp(data[i+2],avg,cnoise);
+        }
+    }
+
+    data=applyDefringe(
+        data,
+        w,
+        h,
+        state.optics.defringe
+    );
+
+    const sharp=
+        state.detail.sharpening+
+        state.effects.texture*.2+
+        state.effects.clarity*.25;
+
+    if(sharp>0){
+        data=sharpen(
+            data,
+            w,
+            h,
+            Math.min(100,sharp)
+        );
+    }
+
+    data=applyBlurFocus(data,w,h);
+
+    data=applyVignette(
+        data,
+        w,
+        h,
+        state.effects.vignette+
+        state.optics.vignette,
+        state.effects.midpoint,
+        state.effects.feather,
+        state.effects.roundness
+    );
+
+    data=applyGrain(data,w,h);
+
+    return data;
+}
+
+function render(){
+    if(!state.sourceCanvas)return;
+
+    const w=imageCanvas.width;
+    const h=imageCanvas.height;
+
+    const data=processImage();
+
+    const output=imageCtx.createImageData(w,h);
+    output.data.set(data);
+
+    imageCtx.putImageData(output,0,0);
+
+    renderOverlays();
+    updateTransform();
+
+    if(state.tool==="crop"&&state.crop.active){
+        $("imageCanvas").style.filter="none";
+    }
 }
 
 function exportImage(){
-
-  if(!img){
-    alert('Please open a photo first.');
-    return;
-  }
-
-  $('status').textContent='Exporting...';
-
-  const oldZoom=zoom;
-  const oldPanX=panX;
-  const oldPanY=panY;
-  const oldBefore=showBefore;
-
-  zoom=1;
-  panX=0;
-  panY=0;
-  showBefore=false;
-
-  render();
-
-  const max =
-    Number($('size')?.value) ||
-    Math.max(C.width,C.height);
-
-  const scale =
-    Math.min(
-      1,
-      max/
-      Math.max(C.width,C.height)
-    );
-
-  const output =
-    document.createElement('canvas');
-
-  output.width =
-    Math.max(
-      1,
-      Math.round(C.width*scale)
-    );
-
-  output.height =
-    Math.max(
-      1,
-      Math.round(C.height*scale)
-    );
-
-  const out =
-    output.getContext('2d');
-
-  out.drawImage(
-    C,
-    0,
-    0,
-    output.width,
-    output.height
-  );
-
-  S.textLayers.forEach(layer => {
-    drawTextLayer(
-      out,
-      layer,
-      output.width,
-      output.height
-    );
-  });
-
-  S.drawLayers.forEach(layer => {
-    drawDrawLayer(
-      out,
-      layer,
-      output.width,
-      output.height
-    );
-  });
-
-  const type =
-    $('format')?.value ||
-    'image/jpeg';
-
-  const quality =
-    Number($('quality')?.value || .85);
-
-  const extension =
-    type === 'image/png'
-      ? 'png'
-      : type === 'image/webp'
-        ? 'webp'
-        : 'jpg';
-
-  const link =
-    document.createElement('a');
-
-  link.download =
-    `toolora-edited-${Date.now()}.${extension}`;
-
-  link.href =
-    output.toDataURL(
-      type,
-      quality
-    );
-
-  link.click();
-
-  zoom=oldZoom;
-  panX=oldPanX;
-  panY=oldPanY;
-  showBefore=oldBefore;
-
-  render();
-
-  $('status').textContent='Export complete';
-}
-
-/* =========================================================
-   TOP CONTROLS
-========================================================= */
-
-$('tabs').addEventListener('click',e => {
-
-  const button =
-    e.target.closest('[data-tool]');
-
-  if(!button) return;
-
-  active =
-    button.dataset.tool;
-
-  setActiveTab();
-
-  $('pickerBadge').style.display =
-    active === 'selective' &&
-    S.selectiveActive
-      ? 'block'
-      : 'none';
-
-  if(active !== 'crop'){
-    cropGuide=false;
-  }
-
-  panel();
-  render();
-});
-
-function setActiveTab(){
-
-  document
-    .querySelectorAll('#tabs button')
-    .forEach(button => {
-      button.classList.toggle(
-        'active',
-        button.dataset.tool === active
-      );
-    });
-}
-
-$('reset').addEventListener('click',() => {
-  if(!img) return;
-  pushHistory();
-  resetState(false);
-});
-
-$('undo').addEventListener('click',undo);
-$('redo').addEventListener('click',redo);
-
-$('before').addEventListener('click',() => {
-
-  if(!img) return;
-
-  showBefore = !showBefore;
-
-  render();
-});
-
-/* =========================================================
-   ZOOM
-========================================================= */
-
-function setZoom(value){
-
-  zoom =
-    clamp(
-      value,
-      .5,
-      4
-    );
-
-  if(zoom <= 1){
-    panX=0;
-    panY=0;
-  }
-
-  updateCanvasTransform();
-}
-
-$('zout').addEventListener('click',() => {
-  setZoom(zoom-.2);
-});
-
-$('zin').addEventListener('click',() => {
-  setZoom(zoom+.2);
-});
-
-$('fit').addEventListener('click',() => {
-
-  zoom=1;
-  panX=0;
-  panY=0;
-
-  updateCanvasTransform();
-});
-
-$('full').addEventListener('click',() => {
-  $('stage').requestFullscreen?.();
-});
-
-/* =========================================================
-   DOUBLE TAP
-========================================================= */
-
-$('stage').addEventListener('pointerup',e => {
-
-  if(
-    active === 'retouch' ||
-    active === 'text' ||
-    active === 'draw' ||
-    active === 'selective' ||
-    active === 'layers'
-  ){
-    return;
-  }
-
-  const now=Date.now();
-
-  if(now-lastTap < 280){
-
-    if(zoom > 1){
-      zoom=1;
-      panX=0;
-      panY=0;
-    }else{
-      zoom=2;
+    if(!state.sourceCanvas){
+        alert("Please open an image first.");
+        return;
     }
 
-    updateCanvasTransform();
-  }
+    setStatus("Preparing export...");
 
-  lastTap=now;
-});
+    const format=$("exportFormat").value;
+    const quality=Number($("exportQuality").value)/100;
+    const size=$("exportSize").value;
+    const include=$("includeOverlays").checked;
 
-/* =========================================================
-   POINTER / PAN / PINCH
-========================================================= */
+    const source=document.createElement("canvas");
 
-function distance(a,b){
-  return Math.hypot(
-    a.clientX-b.clientX,
-    a.clientY-b.clientY
-  );
-}
+    let w=imageCanvas.width;
+    let h=imageCanvas.height;
 
-function midpoint(a,b){
-  return {
-    x:(a.clientX+b.clientX)/2,
-    y:(a.clientY+b.clientY)/2
-  };
-}
-
-$('stage').addEventListener('pointerdown',e => {
-
-  if(!img) return;
-
-  if(active === 'retouch'){
-    retouchDrawing=true;
-    $('stage').setPointerCapture(e.pointerId);
-    addRetouchPoint(e);
-    return;
-  }
-
-  if(
-    active === 'text' ||
-    active === 'draw' ||
-    active === 'selective'
-  ){
-    handleSpecialPointerDown(e);
-    return;
-  }
-
-  pointers.set(e.pointerId,e);
-
-  $('stage').setPointerCapture(e.pointerId);
-
-  if(pointers.size===1){
-
-    gesture={
-      type:'pan',
-      startX:e.clientX,
-      startY:e.clientY,
-      startPanX:panX,
-      startPanY:panY
-    };
-
-  }else if(pointers.size===2){
-
-    const values=
-      [...pointers.values()];
-
-    gesture={
-      type:'pinch',
-      startDistance:
-        distance(values[0],values[1]),
-      startZoom:zoom,
-      startPanX:panX,
-      startPanY:panY,
-      startMid:
-        midpoint(values[0],values[1])
-    };
-  }
-});
-
-$('stage').addEventListener('pointermove',e => {
-
-  if(active === 'retouch'){
-    if(retouchDrawing){
-      addRetouchPoint(e);
-    }
-    return;
-  }
-
-  if(
-    active === 'text' ||
-    active === 'draw' ||
-    active === 'selective'
-  ){
-    handleSpecialPointerMove(e);
-    return;
-  }
-
-  if(!pointers.has(e.pointerId)) return;
-
-  pointers.set(e.pointerId,e);
-
-  if(
-    pointers.size===1 &&
-    gesture?.type==='pan'
-  ){
-
-    if(zoom <= 1) return;
-
-    panX =
-      gesture.startPanX+
-      e.clientX-
-      gesture.startX;
-
-    panY =
-      gesture.startPanY+
-      e.clientY-
-      gesture.startY;
-
-    updateCanvasTransform();
-
-  }else if(
-    pointers.size===2 &&
-    gesture?.type==='pinch'
-  ){
-
-    const values=
-      [...pointers.values()];
-
-    const currentDistance =
-      distance(values[0],values[1]);
-
-    if(gesture.startDistance <= 0) return;
-
-    zoom =
-      clamp(
-        gesture.startZoom*
-        currentDistance/
-        gesture.startDistance,
-        .5,
-        4
-      );
-
-    const currentMid =
-      midpoint(values[0],values[1]);
-
-    panX =
-      gesture.startPanX+
-      currentMid.x-
-      gesture.startMid.x;
-
-    panY =
-      gesture.startPanY+
-      currentMid.y-
-      gesture.startMid.y;
-
-    if(zoom<=1){
-      panX=0;
-      panY=0;
+    if(size!=="original"){
+        const max=Number(size);
+        const scale=Math.min(1,max/Math.max(w,h));
+        w=Math.max(1,Math.round(w*scale));
+        h=Math.max(1,Math.round(h*scale));
     }
 
-    updateCanvasTransform();
-  }
-});
+    source.width=w;
+    source.height=h;
 
-$('stage').addEventListener('pointerup',e => {
+    const ctx=source.getContext("2d");
 
-  pointers.delete(e.pointerId);
+    const temp=document.createElement("canvas");
+    temp.width=imageCanvas.width;
+    temp.height=imageCanvas.height;
 
-  if(pointers.size===0){
-    gesture=null;
-  }
+    const tctx=temp.getContext("2d");
 
-  if(retouchDrawing){
-    retouchDrawing=false;
-    pushHistory();
-  }
+    const processed=processImage();
 
-  if(specialPointer){
-    specialPointer=null;
-    showOverlay();
-    updateCanvasTransform();
-  }
-});
-
-$('stage').addEventListener('pointercancel',e => {
-
-  pointers.delete(e.pointerId);
-
-  if(pointers.size===0){
-    gesture=null;
-  }
-
-  retouchDrawing=false;
-  specialPointer=null;
-});
-
-/* =========================================================
-   CANVAS POINT
-========================================================= */
-
-function canvasPoint(e){
-
-  const rect =
-    C.getBoundingClientRect();
-
-  if(!rect.width || !rect.height){
-    return null;
-  }
-
-  return {
-    x:clamp(
-      (e.clientX-rect.left)/rect.width,
-      0,
-      1
-    ),
-    y:clamp(
-      (e.clientY-rect.top)/rect.height,
-      0,
-      1
-    )
-  };
-}
-
-/* =========================================================
-   TEXT HIT TEST
-========================================================= */
-
-function hitText(point){
-
-  const px =
-    point.x*C.width;
-
-  const py =
-    point.y*C.height;
-
-  for(
-    let i=S.textLayers.length-1;
-    i>=0;
-    i--
-  ){
-
-    const layer =
-      S.textLayers[i];
-
-    ox.save();
-
-    ox.font =
-      `${layer.italic?'italic ':''}${layer.bold?'700 ':'400 '}${layer.size}px ${layer.font}`;
-
-    const lines =
-      String(layer.text || '').split('\n');
-
-    const width =
-      Math.max(
-        ...lines.map(
-          line => ox.measureText(line).width
-        ),
-        30
-      );
-
-    const height =
-      lines.length*
-      layer.size*
-      1.2;
-
-    ox.restore();
-
-    const x =
-      layer.x*C.width;
-
-    const y =
-      layer.y*C.height;
-
-    if(
-      px >= x-width/2-20 &&
-      px <= x+width/2+20 &&
-      py >= y-height/2-20 &&
-      py <= y+height/2+20
-    ){
-      return layer;
-    }
-  }
-
-  return null;
-}
-
-/* =========================================================
-   SPECIAL TOOLS
-========================================================= */
-
-function handleSpecialPointerDown(e){
-
-  const point =
-    canvasPoint(e);
-
-  if(!point) return;
-
-  if(active === 'selective'){
-
-    if(S.selectiveActive){
-      sampleSelectedColor(point);
-    }
-
-    return;
-  }
-
-  if(active === 'text'){
-
-    const hit =
-      hitText(point);
-
-    if(hit){
-
-      pushHistory();
-
-      S.selectedTextId =
-        hit.id;
-
-      specialPointer={
-        type:'text',
-        id:hit.id,
-        startX:point.x,
-        startY:point.y,
-        originalX:hit.x,
-        originalY:hit.y
-      };
-
-      render();
-      panel();
-
-    }else{
-
-      S.selectedTextId=null;
-
-      showOverlay();
-      panel();
-    }
-
-    return;
-  }
-
-  if(active === 'draw'){
-
-    pushHistory();
-
-    const stroke={
-      points:[point],
-      size:S.drawSize,
-      opacity:S.drawOpacity,
-      color:S.drawColor
-    };
-
-    S.drawLayers.push(stroke);
-
-    specialPointer={
-      type:'draw',
-      stroke
-    };
-
-    showOverlay();
-  }
-}
-
-function handleSpecialPointerMove(e){
-
-  if(!specialPointer) return;
-
-  const point =
-    canvasPoint(e);
-
-  if(!point) return;
-
-  if(specialPointer.type === 'text'){
-
-    const layer =
-      S.textLayers.find(
-        x => x.id === specialPointer.id
-      );
-
-    if(!layer) return;
-
-    layer.x =
-      clamp(
-        specialPointer.originalX+
-        point.x-
-        specialPointer.startX,
-        0,
-        1
-      );
-
-    layer.y =
-      clamp(
-        specialPointer.originalY+
-        point.y-
-        specialPointer.startY,
-        0,
-        1
-      );
-
-    showOverlay();
-
-  }else if(specialPointer.type === 'draw'){
-
-    specialPointer.stroke.points.push(point);
-
-    showOverlay();
-  }
-}
-
-/* =========================================================
-   SELECTIVE COLOR
-========================================================= */
-
-function sampleSelectedColor(point){
-
-  const x =
-    clamp(
-      Math.round(point.x*C.width),
-      0,
-      C.width-1
+    const id=tctx.createImageData(
+        imageCanvas.width,
+        imageCanvas.height
     );
 
-  const y =
-    clamp(
-      Math.round(point.y*C.height),
-      0,
-      C.height-1
-    );
+    id.data.set(processed);
+    tctx.putImageData(id,0,0);
 
-  const pixel =
-    ctx.getImageData(
-      x,
-      y,
-      1,
-      1
-    ).data;
+    ctx.drawImage(temp,0,0,w,h);
 
-  pushHistory();
-
-  S.selectiveR=pixel[0];
-  S.selectiveG=pixel[1];
-  S.selectiveB=pixel[2];
-  S.selectiveActive=true;
-
-  $('pickerBadge').style.display='none';
-  $('status').textContent='Color selected';
-
-  render();
-  panel();
-}
-
-/* =========================================================
-   RETOUCH
-========================================================= */
-
-function addRetouchPoint(e){
-
-  if(!img) return;
-
-  const point =
-    canvasPoint(e);
-
-  if(!point) return;
-
-  retouch.push({
-    x:point.x*C.width,
-    y:point.y*C.height,
-    r:Math.max(
-      3,
-      S.retouchSize*
-      C.width/
-      1000
-    )
-  });
-
-  schedule();
-}
-
-/* =========================================================
-   DRAG & DROP
-========================================================= */
-
-$('stage').addEventListener('dragover',e => {
-  e.preventDefault();
-  $('stage').classList.add('dragover');
-});
-
-$('stage').addEventListener('dragleave',() => {
-  $('stage').classList.remove('dragover');
-});
-
-$('stage').addEventListener('drop',e => {
-
-  e.preventDefault();
-
-  $('stage').classList.remove('dragover');
-
-  handleImageFile(
-    e.dataTransfer.files?.[0]
-  );
-});
-
-/* =========================================================
-   KEYBOARD
-========================================================= */
-
-document.addEventListener('keydown',e => {
-
-  if(
-    (e.ctrlKey || e.metaKey) &&
-    e.key.toLowerCase()==='z'
-  ){
-
-    e.preventDefault();
-
-    if(e.shiftKey){
-      redo();
-    }else{
-      undo();
+    if(include){
+        ctx.drawImage(
+            overlayCanvas,
+            0,0,
+            overlayCanvas.width,
+            overlayCanvas.height,
+            0,0,w,h
+        );
     }
 
-    return;
-  }
+    source.toBlob(blob=>{
+        if(!blob){
+            setStatus("Export failed");
+            return;
+        }
 
-  if(
-    (e.ctrlKey || e.metaKey) &&
-    e.key.toLowerCase()==='y'
-  ){
+        const ext=
+            format==="image/png"?"png":
+            format==="image/webp"?"webp":"jpg";
 
-    e.preventDefault();
-    redo();
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement("a");
 
-    return;
-  }
+        a.href=url;
+        a.download=`toolora-edited-${Date.now()}.${ext}`;
 
-  if(e.key === '[' && active === 'crop'){
-    S.rotate =
-      (S.rotate+359)%360;
-    render();
-  }
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
 
-  if(e.key === ']' && active === 'crop'){
-    S.rotate =
-      (S.rotate+1)%360;
-    render();
-  }
+        setTimeout(()=>{
+            URL.revokeObjectURL(url);
+        },1000);
 
-  if(
-    e.key.toLowerCase()==='g' &&
-    active === 'crop'
-  ){
+        setStatus("Export complete");
+    },format,quality);
+}
 
-    cropGuide=!cropGuide;
-    updateCropGuide();
-  }
+document.addEventListener("keydown",e=>{
+    const key=e.key.toLowerCase();
+
+    if((e.ctrlKey||e.metaKey)&&key==="z"){
+        e.preventDefault();
+
+        if(e.shiftKey)redo();
+        else undo();
+    }
+
+    if((e.ctrlKey||e.metaKey)&&key==="y"){
+        e.preventDefault();
+        redo();
+    }
 });
 
-/* =========================================================
-   RESIZE
-========================================================= */
-
-window.addEventListener('resize',() => {
-  updateCanvasTransform();
+window.addEventListener("resize",()=>{
+    if(state.sourceCanvas)updateTransform();
 });
 
-/* =========================================================
-   INITIALIZE
-========================================================= */
-
-setActiveTab();
-panel();
-updateCanvasTransform();
-
-})();
+switchTool("light");
+updateHistoryButtons();
