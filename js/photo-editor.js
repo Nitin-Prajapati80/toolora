@@ -1,2808 +1,2333 @@
-"use strict";
+(()=>{
+'use strict';
 
-/* Toolora Professional Photo Editor
-   Browser-only image editor.
-   No fake AI operations are used.
-*/
+const $=id=>document.getElementById(id);
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 
-const $ = id => document.getElementById(id);
+const C=$('canvas');
+const ctx=C.getContext('2d',{willReadFrequently:true});
 
-const imageCanvas = $("imageCanvas");
-const overlayCanvas = $("overlayCanvas");
-const imageCtx = imageCanvas.getContext("2d", { willReadFrequently:true });
-const overlayCtx = overlayCanvas.getContext("2d");
+const O=$('overlay');
+const ox=O.getContext('2d');
 
-const state = {
-    image:null,
-    sourceCanvas:null,
-    sourceWidth:0,
-    sourceHeight:0,
+const src=document.createElement('canvas');
+const sx=src.getContext('2d',{willReadFrequently:true});
 
-    tool:"light",
-    before:false,
+let img=null;
+let fileName='';
+let renderQueued=false;
+let zoom=1;
+let active='light';
+let showBefore=false;
+let history=[];
+let future=[];
 
-    zoom:1,
-    panX:0,
-    panY:0,
+const S={
+  exposure:0,
+  contrast:0,
+  highlights:0,
+  shadows:0,
+  whites:0,
+  blacks:0,
 
-    light:{
-        exposure:0,
-        contrast:0,
-        highlights:0,
-        shadows:0,
-        whites:0,
-        blacks:0
-    },
+  temp:0,
+  tint:0,
+  vibrance:0,
+  saturation:0,
 
-    color:{
-        temperature:0,
-        tint:0,
-        vibrance:0,
-        saturation:0,
+  texture:0,
+  clarity:0,
+  dehaze:0,
+  vignette:0,
+  midpoint:50,
+  feather:50,
+  roundness:0,
 
-        hue:0,
-        hueRange:30,
-        mixerSaturation:0,
-        mixerLightness:0,
+  grain:0,
+  grainSize:25,
+  grainRough:50,
 
-        shadowHue:0,
-        shadowSat:0,
-        midHue:0,
-        midSat:0,
-        highlightHue:0,
-        highlightSat:0,
-        gradeBlend:50,
-        gradeBalance:0
-    },
+  sharp:0,
+  radius:1,
+  noise:0,
+  colorNoise:0,
 
-    effects:{
-        texture:0,
-        clarity:0,
-        dehaze:0,
-        vignette:0,
-        midpoint:50,
-        feather:50,
-        roundness:0,
-        grain:0,
-        grainSize:25,
-        grainRoughness:50
-    },
+  ratio:'original',
+  rotate:0,
+  flipX:false,
+  flipY:false,
+  profile:'natural',
 
-    detail:{
-        sharpening:0,
-        radius:1,
-        detail:25,
-        masking:0,
-        noiseReduction:0,
-        noiseDetail:50,
-        noiseContrast:0,
-        colorNoise:0,
-        colorDetail:50,
-        smoothness:50
-    },
+  preset:'none',
+  presetAmount:100,
 
-    crop:{
-        ratio:"Free",
-        x:0,
-        y:0,
-        w:1,
-        h:1,
-        active:false,
-        dragging:false,
-        resizing:false,
-        handle:"",
-        startX:0,
-        startY:0,
-        startCrop:null,
-        straighten:0
-    },
+  blur:0,
+  blurX:50,
+  blurY:50,
 
-    text:{
-        value:"",
-        font:"Arial",
-        size:48,
-        opacity:100,
-        bold:false,
-        italic:false,
-        align:"center",
-        color:"#ffffff",
-        stroke:"#000000",
-        strokeWidth:0,
-        layers:[],
-        selected:-1
-    },
+  lensVignette:0,
+  defringe:0,
 
-    draw:{
-        size:12,
-        opacity:100,
-        color:"#ffffff",
-        strokes:[],
-        drawing:false,
-        current:null
-    },
+  maskType:'radial',
+  maskAmount:0,
+  maskExposure:0,
+  maskContrast:0,
+  maskSaturation:0,
 
-    selective:{
-        picked:null,
-        range:30,
-        hue:0,
-        saturation:0,
-        lightness:0
-    },
-
-    preset:{
-        name:"None",
-        amount:100
-    },
-
-    profile:"Basic",
-
-    mask:{
-        type:"None",
-        amount:50,
-        feather:50,
-        exposure:0,
-        contrast:0,
-        saturation:0,
-        hue:0,
-        texture:0,
-        clarity:0,
-        dehaze:0,
-        x:50,
-        y:50,
-        width:70,
-        height:70
-    },
-
-    retouch:{
-        size:30,
-        feather:70,
-        opacity:100,
-        strokes:[]
-    },
-
-    blur:{
-        amount:0,
-        focusX:50,
-        focusY:50,
-        focusSize:40,
-        feather:50
-    },
-
-    optics:{
-        vignette:0,
-        defringe:0,
-        distortion:0
-    },
-
-    history:[],
-    future:[],
-
-    gesture:{
-        active:false,
-        lastX:0,
-        lastY:0,
-        startDistance:0,
-        startZoom:1
-    }
+  retouchSize:30
 };
 
-const profiles = {
-    Basic:{},
-    Modern:{contrast:8,saturation:5,clarity:5},
-    Vivid:{contrast:10,saturation:18,vibrance:20},
-    Portrait:{highlights:-8,shadows:12,saturation:4,clarity:-4},
-    Cinematic:{contrast:12,saturation:-8,vibrance:4,dehaze:7},
-    Vintage:{contrast:-8,saturation:-10,grain:10,vignette:10},
-    Matte:{contrast:-12,blacks:18,saturation:-5},
-    B&W:{saturation:-100,contrast:8},
-    Cool:{temperature:-18,shadowsHue:210,shadowsSat:10},
-    Warm:{temperature:18,highlightsHue:35,highlightsSat:12}
+const colors=[
+  'red',
+  'orange',
+  'yellow',
+  'green',
+  'aqua',
+  'blue',
+  'purple',
+  'magenta'
+];
+
+colors.forEach(c=>{
+  S['h_'+c]=0;
+  S['s_'+c]=0;
+  S['l_'+c]=0;
+});
+
+const names={
+  light:['Adjust','Light'],
+  color:['Adjust','Color'],
+  effects:['Adjust','Effects'],
+  detail:['Adjust','Detail'],
+  crop:['Transform','Crop'],
+  presets:['Looks','Presets'],
+  profiles:['Looks','Profiles'],
+  mask:['Local','Mask'],
+  retouch:['Retouch','Spot Blur'],
+  blur:['Effects','Blur'],
+  optics:['Lens','Optics'],
+  export:['Output','Export']
 };
 
-function clamp(v,min=0,max=255){
-    return Math.max(min,Math.min(max,v));
+function snap(){
+  return JSON.parse(JSON.stringify(S));
 }
 
-function clamp01(v){
-    return Math.max(0,Math.min(1,v));
+function push(){
+  history.push(snap());
+
+  if(history.length>25){
+    history.shift();
+  }
+
+  future=[];
 }
 
-function lerp(a,b,t){
-    return a+(b-a)*t;
+function restore(x){
+  Object.assign(S,x);
+  render();
+  panel();
 }
 
-function value(id){
-    const el=$(id);
-    return el ? Number(el.value) : 0;
+function control(k,label,min,max,step=1){
+  return `
+    <div class="control">
+      <div class="ch">
+        <span>${label}</span>
+        <span class="val" id="v_${k}">${fmt(S[k])}</span>
+      </div>
+
+      <input
+        data-k="${k}"
+        type="range"
+        min="${min}"
+        max="${max}"
+        step="${step}"
+        value="${S[k]}"
+      >
+    </div>
+  `;
 }
 
 function fmt(v){
-    return Number(v).toFixed(0);
+  v=Number(v);
+  return `${v>0?'+':''}${Number.isInteger(v)?v:v.toFixed(1)}`;
 }
 
-function snapshot(){
-    if(!state.sourceCanvas) return;
+function bind(){
 
-    const snap={
-        image:imageCanvas.toDataURL("image/png"),
-        text:JSON.parse(JSON.stringify(state.text.layers)),
-        draw:JSON.parse(JSON.stringify(state.draw.strokes)),
-        retouch:JSON.parse(JSON.stringify(state.retouch.strokes)),
-        crop:JSON.parse(JSON.stringify(state.crop))
-    };
+  document
+    .querySelectorAll('#panel input[data-k]')
+    .forEach(e=>{
 
-    state.history.push(snap);
+      e.oninput=()=>{
+        S[e.dataset.k]=+e.value;
 
-    if(state.history.length>30){
-        state.history.shift();
-    }
+        const v=$('v_'+e.dataset.k);
 
-    state.future=[];
-    updateHistoryButtons();
-}
+        if(v){
+          v.textContent=fmt(e.value);
+        }
 
-function restoreSnapshot(snap){
-    const img=new Image();
+        schedule();
+      };
 
-    img.onload=()=>{
-        state.sourceCanvas=document.createElement("canvas");
-        state.sourceCanvas.width=img.width;
-        state.sourceCanvas.height=img.height;
+      e.onchange=push;
+    });
 
-        const c=state.sourceCanvas.getContext("2d");
-        c.drawImage(img,0,0);
+  document
+    .querySelectorAll('#panel [data-mix]')
+    .forEach(e=>{
 
-        imageCanvas.width=img.width;
-        imageCanvas.height=img.height;
+      e.oninput=()=>{
+        S[e.dataset.mix+e.dataset.color]=+e.value;
+        schedule();
+      };
 
-        state.text.layers=JSON.parse(JSON.stringify(snap.text||[]));
-        state.draw.strokes=JSON.parse(JSON.stringify(snap.draw||[]));
-        state.retouch.strokes=JSON.parse(JSON.stringify(snap.retouch||[]));
-        state.crop=JSON.parse(JSON.stringify(snap.crop||state.crop));
-
-        render();
-        updateHistoryButtons();
-    };
-
-    img.src=snap.image;
-}
-
-function undo(){
-    if(!state.history.length) return;
-
-    const current={
-        image:imageCanvas.toDataURL("image/png"),
-        text:JSON.parse(JSON.stringify(state.text.layers)),
-        draw:JSON.parse(JSON.stringify(state.draw.strokes)),
-        retouch:JSON.parse(JSON.stringify(state.retouch.strokes)),
-        crop:JSON.parse(JSON.stringify(state.crop))
-    };
-
-    state.future.push(current);
-
-    const snap=state.history.pop();
-    restoreSnapshot(snap);
-}
-
-function redo(){
-    if(!state.future.length) return;
-
-    const current={
-        image:imageCanvas.toDataURL("image/png"),
-        text:JSON.parse(JSON.stringify(state.text.layers)),
-        draw:JSON.parse(JSON.stringify(state.draw.strokes)),
-        retouch:JSON.parse(JSON.stringify(state.retouch.strokes)),
-        crop:JSON.parse(JSON.stringify(state.crop))
-    };
-
-    state.history.push(current);
-
-    const snap=state.future.pop();
-    restoreSnapshot(snap);
-}
-
-function updateHistoryButtons(){
-    $("undoBtn").disabled=!state.history.length;
-    $("redoBtn").disabled=!state.future.length;
-}
-
-function setStatus(text){
-    $("statusText").textContent=text;
-}
-
-function openFile(file){
-    if(!file || !file.type.startsWith("image/")) return;
-
-    const reader=new FileReader();
-
-    reader.onload=e=>{
-        const img=new Image();
-
-        img.onload=()=>{
-            const max=1800;
-            const scale=Math.min(1,max/Math.max(img.width,img.height));
-
-            const w=Math.max(1,Math.round(img.width*scale));
-            const h=Math.max(1,Math.round(img.height*scale));
-
-            state.sourceCanvas=document.createElement("canvas");
-            state.sourceCanvas.width=w;
-            state.sourceCanvas.height=h;
-
-            const c=state.sourceCanvas.getContext("2d");
-            c.imageSmoothingEnabled=true;
-            c.imageSmoothingQuality="high";
-            c.drawImage(img,0,0,w,h);
-
-            imageCanvas.width=w;
-            imageCanvas.height=h;
-            overlayCanvas.width=w;
-            overlayCanvas.height=h;
-
-            state.image=img;
-            state.sourceWidth=w;
-            state.sourceHeight=h;
-
-            state.crop={
-                ratio:"Free",
-                x:0,
-                y:0,
-                w:1,
-                h:1,
-                active:false,
-                dragging:false,
-                resizing:false,
-                handle:"",
-                startX:0,
-                startY:0,
-                startCrop:null,
-                straighten:0
-            };
-
-            state.history=[];
-            state.future=[];
-            state.text.layers=[];
-            state.draw.strokes=[];
-            state.retouch.strokes=[];
-            state.text.selected=-1;
-            state.selective.picked=null;
-
-            $("emptyState").style.display="none";
-
-            $("imageInfo").textContent=`${img.width} × ${img.height}px`;
-            setStatus("Image loaded");
-
-            fitImage();
-            render();
-            updateHistoryButtons();
-        };
-
-        img.src=e.target.result;
-    };
-
-    reader.readAsDataURL(file);
-}
-
-$("openBtn").onclick=()=>$("fileInput").click();
-$("openEmptyBtn").onclick=()=>$("fileInput").click();
-
-$("fileInput").onchange=e=>{
-    openFile(e.target.files[0]);
-    e.target.value="";
-};
-
-$("backBtn").onclick=()=>{
-    window.location.href="index.html";
-};
-
-$("undoBtn").onclick=undo;
-$("redoBtn").onclick=redo;
-
-$("beforeBtn").onclick=()=>{
-    state.before=!state.before;
-    $("beforeBtn").textContent=state.before?"After":"Before";
-    render();
-};
-
-document.addEventListener("dragover",e=>e.preventDefault());
-
-document.addEventListener("drop",e=>{
-    e.preventDefault();
-
-    if(e.dataTransfer.files.length){
-        openFile(e.dataTransfer.files[0]);
-    }
-});
-
-function fitImage(){
-    if(!state.sourceCanvas) return;
-
-    const rect=$("stage").getBoundingClientRect();
-
-    const sx=(rect.width-30)/imageCanvas.width;
-    const sy=(rect.height-30)/imageCanvas.height;
-
-    state.zoom=Math.max(.05,Math.min(sx,sy));
-    state.panX=0;
-    state.panY=0;
-
-    updateTransform();
-}
-
-function updateTransform(){
-    imageCanvas.style.transform=
-        `translate3d(${state.panX}px,${state.panY}px,0) scale(${state.zoom})`;
-
-    overlayCanvas.style.transform=
-        `translate3d(${state.panX}px,${state.panY}px,0) scale(${state.zoom})`;
-
-    $("zoomLabel").textContent=`${Math.round(state.zoom*100)}%`;
-}
-
-$("zoomIn").onclick=()=>{
-    state.zoom=Math.min(5,state.zoom*1.2);
-    updateTransform();
-};
-
-$("zoomOut").onclick=()=>{
-    state.zoom=Math.max(.2,state.zoom/1.2);
-    updateTransform();
-};
-
-$("fitBtn").onclick=fitImage;
-
-$("fullBtn").onclick=()=>{
-    state.zoom=1;
-    state.panX=0;
-    state.panY=0;
-    updateTransform();
-};
-
-function distance(a,b){
-    return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
-}
-
-$("stage").addEventListener("pointerdown",e=>{
-    if(!state.sourceCanvas) return;
-
-    if(state.tool==="text"){
-        handleTextPointerDown(e);
-        return;
-    }
-
-    if(state.tool==="draw"){
-        startDraw(e);
-        return;
-    }
-
-    if(state.tool==="retouch"){
-        startRetouch(e);
-        return;
-    }
-
-    if(state.tool==="selective"){
-        pickColor(e);
-        return;
-    }
-
-    if(state.tool==="crop"){
-        startCropPointer(e);
-        return;
-    }
-
-    state.gesture.active=true;
-    state.gesture.lastX=e.clientX;
-    state.gesture.lastY=e.clientY;
-
-    $("stage").setPointerCapture?.(e.pointerId);
-});
-
-$("stage").addEventListener("pointermove",e=>{
-    if(!state.sourceCanvas) return;
-
-    if(state.tool==="text"){
-        moveTextPointer(e);
-        return;
-    }
-
-    if(state.tool==="draw"){
-        continueDraw(e);
-        return;
-    }
-
-    if(state.tool==="retouch"){
-        continueRetouch(e);
-        return;
-    }
-
-    if(state.tool==="crop"){
-        moveCropPointer(e);
-        return;
-    }
-
-    if(!state.gesture.active) return;
-
-    const dx=e.clientX-state.gesture.lastX;
-    const dy=e.clientY-state.gesture.lastY;
-
-    state.panX+=dx;
-    state.panY+=dy;
-
-    state.gesture.lastX=e.clientX;
-    state.gesture.lastY=e.clientY;
-
-    updateTransform();
-});
-
-$("stage").addEventListener("pointerup",e=>{
-    if(state.tool==="draw"){
-        finishDraw();
-        return;
-    }
-
-    if(state.tool==="retouch"){
-        finishRetouch();
-        return;
-    }
-
-    if(state.tool==="crop"){
-        finishCropPointer();
-        return;
-    }
-
-    state.gesture.active=false;
-});
-
-$("stage").addEventListener("pointercancel",()=>{
-    state.gesture.active=false;
-    state.draw.drawing=false;
-    state.retouch.drawing=false;
-});
-
-$("stage").addEventListener("wheel",e=>{
-    if(!state.sourceCanvas) return;
-
-    e.preventDefault();
-
-    state.zoom*=e.deltaY<0?1.08:.92;
-    state.zoom=Math.max(.2,Math.min(5,state.zoom));
-
-    updateTransform();
-},{passive:false});
-
-function canvasPoint(e){
-    const rect=imageCanvas.getBoundingClientRect();
-
-    return {
-        x:(e.clientX-rect.left)/rect.width*imageCanvas.width,
-        y:(e.clientY-rect.top)/rect.height*imageCanvas.height
-    };
-}
-
-function buildControl(label,id,min,max,step,val,suffix="",callback){
-    return `
-    <div class="control">
-        <div class="control-head">
-            <label>${label}</label>
-            <span class="value" id="${id}Value">${fmt(val)}${suffix}</span>
-        </div>
-        <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}">
-    </div>`;
-}
-
-function bindRange(id,callback,suffix=""){
-    const el=$(id);
-    if(!el) return;
-
-    const out=$(id+"Value");
-
-    const update=()=>{
-        const v=Number(el.value);
-
-        if(out) out.textContent=fmt(v)+suffix;
-
-        callback(v);
-        render();
-    };
-
-    el.addEventListener("input",update);
-
-    el.addEventListener("change",()=>{
-        snapshot();
-        update();
     });
 }
 
-function panel(title,description,body){
-    return `
-        <h2 class="panel-title">${title}</h2>
-        <p class="panel-description">${description}</p>
-        ${body}
+function panel(){
+
+  const p=$('panel');
+
+  $('eyebrow').textContent=names[active][0];
+  $('title').textContent=names[active][1];
+
+  let h='';
+
+  if(active==='light'){
+    h=`
+      <div class="section">
+
+        <h3>Tone</h3>
+
+        ${control('exposure','Exposure',-100,100)}
+        ${control('contrast','Contrast',-100,100)}
+        ${control('highlights','Highlights',-100,100)}
+        ${control('shadows','Shadows',-100,100)}
+        ${control('whites','Whites',-100,100)}
+        ${control('blacks','Blacks',-100,100)}
+
+      </div>
+
+      <div class="section">
+
+        <button class="btn" id="auto" style="width:100%">
+          Auto Tone
+        </button>
+
+        <p class="note" style="margin-top:8px">
+          Auto uses the image histogram and applies a quick balanced correction.
+        </p>
+
+      </div>
     `;
+  }
+
+  if(active==='color'){
+    h=`
+      <div class="section">
+
+        <h3>White Balance</h3>
+
+        ${control('temp','Temperature',-100,100)}
+        ${control('tint','Tint',-100,100)}
+        ${control('vibrance','Vibrance',-100,100)}
+        ${control('saturation','Saturation',-100,100)}
+
+      </div>
+
+      <div class="section">
+
+        <h3>Color Mixer</h3>
+
+        ${colors.map(c=>`
+
+          <div class="mixer">
+
+            <span>
+              ${c[0].toUpperCase()+c.slice(1)}
+            </span>
+
+            <input
+              data-mix="h_${c}"
+              data-color=""
+              type="range"
+              min="-30"
+              max="30"
+              value="${S['h_'+c]}"
+              title="Hue"
+            >
+
+            <input
+              data-mix="s_${c}"
+              data-color=""
+              type="range"
+              min="-100"
+              max="100"
+              value="${S['s_'+c]}"
+              title="Saturation"
+            >
+
+            <input
+              data-mix="l_${c}"
+              data-color=""
+              type="range"
+              min="-100"
+              max="100"
+              value="${S['l_'+c]}"
+              title="Luminance"
+            >
+
+          </div>
+
+        `).join('')}
+
+        <p class="note">
+          Each color row contains Hue, Saturation and Luminance sliders.
+        </p>
+
+      </div>
+
+      <div class="section">
+
+        <h3>Color Grading</h3>
+
+        ${control('gradeShadow','Shadow Color',0,360)}
+        ${control('gradeShadowSat','Shadow Strength',0,100)}
+
+        ${control('gradeMid','Midtone Color',0,360)}
+        ${control('gradeMidSat','Midtone Strength',0,100)}
+
+        ${control('gradeHigh','Highlight Color',0,360)}
+        ${control('gradeHighSat','Highlight Strength',0,100)}
+
+        ${control('gradeBlend','Blending',0,100)}
+        ${control('gradeBalance','Balance',-100,100)}
+
+      </div>
+    `;
+  }
+
+  if(active==='effects'){
+    h=`
+      <div class="section">
+
+        <h3>Effects</h3>
+
+        ${control('texture','Texture',-100,100)}
+        ${control('clarity','Clarity',-100,100)}
+        ${control('dehaze','Dehaze',-100,100)}
+        ${control('vignette','Vignette',-100,100)}
+        ${control('midpoint','Midpoint',0,100)}
+        ${control('feather','Feather',0,100)}
+        ${control('roundness','Roundness',-100,100)}
+
+      </div>
+
+      <div class="section">
+
+        <h3>Grain</h3>
+
+        ${control('grain','Amount',0,100)}
+        ${control('grainSize','Size',0,100)}
+        ${control('grainRough','Roughness',0,100)}
+
+      </div>
+    `;
+  }
+
+  if(active==='detail'){
+    h=`
+      <div class="section">
+
+        <h3>Detail</h3>
+
+        ${control('sharp','Sharpening',0,100)}
+        ${control('radius','Radius',.5,3,.1)}
+        ${control('noise','Noise Reduction',0,100)}
+        ${control('colorNoise','Color Noise',0,100)}
+
+      </div>
+
+      <p class="note">
+        Preview processing is capped for speed. Export uses the same edit state.
+      </p>
+    `;
+  }
+
+  if(active==='crop'){
+    h=`
+      <div class="section">
+
+        <h3>Crop & Geometry</h3>
+
+        <div class="cropbox">
+          Centered crop preview
+        </div>
+
+        <select class="select" id="ratio">
+          <option value="original">Original</option>
+          <option value="1:1">1 : 1</option>
+          <option value="4:5">4 : 5</option>
+          <option value="3:4">3 : 4</option>
+          <option value="4:3">4 : 3</option>
+          <option value="16:9">16 : 9</option>
+          <option value="9:16">9 : 16</option>
+          <option value="2:3">2 : 3</option>
+        </select>
+
+        ${control('straighten','Straighten',-10,10,.1)}
+
+        <div class="grid2">
+
+          <button class="btn" id="rl">
+            Rotate Left
+          </button>
+
+          <button class="btn" id="rr">
+            Rotate Right
+          </button>
+
+          <button class="btn" id="fx">
+            Flip Horizontal
+          </button>
+
+          <button class="btn" id="fy">
+            Flip Vertical
+          </button>
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  if(active==='presets'){
+    h=`
+      <div class="section">
+
+        <h3>Toolora Presets</h3>
+
+        <div class="presets">
+
+          ${[
+            ['clean','Clean','Balanced'],
+            ['warm','Warm','Soft warm'],
+            ['cool','Cool','Clean cool'],
+            ['cinematic','Cinematic','Moody'],
+            ['matte','Matte','Soft film'],
+            ['vivid','Vivid','Color punch'],
+            ['portrait','Portrait','Soft portrait'],
+            ['bw','B&W','Monochrome']
+          ].map(x=>`
+
+            <button
+              class="preset"
+              data-preset="${x[0]}"
+            >
+              <b>${x[1]}</b>
+              <small>${x[2]}</small>
+            </button>
+
+          `).join('')}
+
+        </div>
+
+      </div>
+
+      ${control('presetAmount','Preset Amount',0,100)}
+    `;
+  }
+
+  if(active==='profiles'){
+    h=`
+      <div class="section">
+
+        <h3>Profiles</h3>
+
+        <div class="grid2">
+
+          ${[
+            ['natural','Natural'],
+            ['neutral','Neutral'],
+            ['vivid','Vivid'],
+            ['modern','Modern'],
+            ['film','Film'],
+            ['mono','Monochrome']
+          ].map(x=>`
+
+            <button
+              class="btn ${S.profile===x[0]?'active':''}"
+              data-profile="${x[0]}"
+            >
+              ${x[1]}
+            </button>
+
+          `).join('')}
+
+        </div>
+
+      </div>
+
+      <p class="note">
+        Profiles change the base rendering character while keeping edits non-destructive.
+      </p>
+    `;
+  }
+
+  if(active==='mask'){
+    h=`
+      <div class="section">
+
+        <h3>Local Mask</h3>
+
+        <div class="grid3">
+
+          <button class="btn mask active" data-type="radial">
+            Radial
+          </button>
+
+          <button class="btn mask" data-type="linear">
+            Linear
+          </button>
+
+          <button class="btn mask" data-type="brush">
+            Brush
+          </button>
+
+        </div>
+
+        ${control('maskAmount','Mask Amount',0,100)}
+        ${control('maskExposure','Local Exposure',-100,100)}
+        ${control('maskContrast','Local Contrast',-100,100)}
+        ${control('maskSaturation','Local Saturation',-100,100)}
+
+        <button class="btn" id="maskClear" style="width:100%">
+          Clear Mask
+        </button>
+
+      </div>
+
+      <p class="note">
+        Radial and linear masks are real browser-side masks. AI subject/sky selection is intentionally not faked.
+      </p>
+    `;
+  }
+
+  if(active==='retouch'){
+    h=`
+      <div class="section">
+
+        <h3>Spot Blur Retouch</h3>
+
+        ${control('retouchSize','Brush Size',5,100)}
+
+        <button class="btn" id="retouchClear" style="width:100%">
+          Clear Retouch
+        </button>
+
+      </div>
+
+      <p class="note">
+        Paint over an unwanted area on the photo to blur it locally. This is a safe browser retouch tool, not generative fill.
+      </p>
+    `;
+  }
+
+  if(active==='blur'){
+    h=`
+      <div class="section">
+
+        <h3>Lens-style Blur</h3>
+
+        ${control('blur','Blur Amount',0,100)}
+        ${control('blurX','Focus X',0,100)}
+        ${control('blurY','Focus Y',0,100)}
+
+      </div>
+    `;
+  }
+
+  if(active==='optics'){
+    h=`
+      <div class="section">
+
+        <h3>Optics</h3>
+
+        ${control('lensVignette','Lens Vignette',-100,100)}
+        ${control('defringe','Defringe',0,100)}
+
+      </div>
+
+      <p class="note">
+        Browser-safe optical compensation. Camera-specific lens profiles require external profile data.
+      </p>
+    `;
+  }
+
+  if(active==='export'){
+    h=`
+      <div class="section">
+
+        <h3>Export</h3>
+
+        <div class="export">
+
+          <div class="grid2">
+
+            <div>
+
+              <div class="colorhead">
+                Format
+              </div>
+
+              <select class="select" id="format">
+                <option value="image/jpeg">JPG</option>
+                <option value="image/png">PNG</option>
+                <option value="image/webp">WebP</option>
+              </select>
+
+            </div>
+
+            <div>
+
+              <div class="colorhead">
+                Quality
+              </div>
+
+              <select class="select" id="quality">
+                <option value=".7">Standard</option>
+                <option value=".85" selected>High</option>
+                <option value=".95">Maximum</option>
+              </select>
+
+            </div>
+
+          </div>
+
+          <div class="colorhead" style="margin-top:10px">
+            Maximum long edge
+          </div>
+
+          <select class="select" id="size">
+            <option value="1600">1600 px</option>
+            <option value="2400" selected>2400 px</option>
+            <option value="3200">3200 px</option>
+            <option value="0">Original working size</option>
+          </select>
+
+          <button class="download" id="download">
+            Download Edited Photo
+          </button>
+
+        </div>
+
+      </div>
+
+      <button class="btn danger" id="resetAll" style="width:100%">
+        Reset All Edits
+      </button>
+    `;
+  }
+
+  p.innerHTML=h;
+
+  bind();
+  panelActions();
 }
 
-function renderPanel(tool){
-    const c=$("controls");
+function panelActions(){
 
-    if(tool==="light"){
-        c.innerHTML=panel(
-            "Light",
-            "Adjust brightness, contrast and tonal range.",
-            `<div class="control-group">
-                <h3 class="group-title">Tone</h3>
-                ${buildControl("Exposure","exposure",-100,100,1,0)}
-                ${buildControl("Contrast","contrast",-100,100,1,0)}
-                ${buildControl("Highlights","highlights",-100,100,1,0)}
-                ${buildControl("Shadows","shadows",-100,100,1,0)}
-                ${buildControl("Whites","whites",-100,100,1,0)}
-                ${buildControl("Blacks","blacks",-100,100,1,0)}
-            </div>
-            <button id="autoLight" class="action-btn primary">Auto Light</button>`
-        );
+  $('auto')?.addEventListener('click',()=>{
+    push();
 
-        bindRange("exposure",v=>state.light.exposure=v);
-        bindRange("contrast",v=>state.light.contrast=v);
-        bindRange("highlights",v=>state.light.highlights=v);
-        bindRange("shadows",v=>state.light.shadows=v);
-        bindRange("whites",v=>state.light.whites=v);
-        bindRange("blacks",v=>state.light.blacks=v);
+    S.exposure=0;
+    S.contrast=8;
+    S.highlights=-14;
+    S.shadows=16;
+    S.whites=4;
+    S.blacks=-5;
 
-        $("autoLight").onclick=()=>{
-            snapshot();
+    render();
+    panel();
+  });
 
-            const data=imageCtx.getImageData(
-                0,0,imageCanvas.width,imageCanvas.height
-            ).data;
+  $('ratio')?.addEventListener('change',e=>{
+    push();
+    S.ratio=e.target.value;
+    schedule();
+  });
 
-            let total=0;
-            const step=Math.max(4,Math.floor(data.length/40000));
+  $('rl')?.addEventListener('click',()=>{
+    push();
+    S.rotate=(S.rotate+270)%360;
+    schedule();
+  });
 
-            for(let i=0;i<data.length;i+=step*4){
-                total+=(data[i]+data[i+1]+data[i+2])/3;
-            }
+  $('rr')?.addEventListener('click',()=>{
+    push();
+    S.rotate=(S.rotate+90)%360;
+    schedule();
+  });
 
-            const avg=total/(data.length/(step*4));
-            state.light.exposure=clamp((128-avg)/1.8,-50,50);
-            renderPanel("light");
-            render();
-        };
+  $('fx')?.addEventListener('click',()=>{
+    push();
+    S.flipX=!S.flipX;
+    schedule();
+  });
+
+  $('fy')?.addEventListener('click',()=>{
+    push();
+    S.flipY=!S.flipY;
+    schedule();
+  });
+
+  document
+    .querySelectorAll('[data-preset]')
+    .forEach(b=>{
+      b.onclick=()=>preset(b.dataset.preset);
+    });
+
+  document
+    .querySelectorAll('[data-profile]')
+    .forEach(b=>{
+      b.onclick=()=>{
+        push();
+        S.profile=b.dataset.profile;
+        render();
+        panel();
+      };
+    });
+
+  document
+    .querySelectorAll('.mask')
+    .forEach(b=>{
+      b.onclick=()=>{
+        S.maskType=b.dataset.type;
+
+        document
+          .querySelectorAll('.mask')
+          .forEach(x=>x.classList.remove('active'));
+
+        b.classList.add('active');
+        schedule();
+      };
+    });
+
+  $('maskClear')?.addEventListener('click',()=>{
+    push();
+
+    S.maskAmount=0;
+    S.maskExposure=0;
+    S.maskContrast=0;
+    S.maskSaturation=0;
+
+    schedule();
+  });
+
+  $('retouchClear')?.addEventListener('click',()=>{
+    retouch=[];
+    render();
+  });
+
+  $('download')?.addEventListener('click',exportImage);
+
+  $('resetAll')?.addEventListener('click',resetAll);
+}
+
+function preset(n){
+
+  push();
+
+  const z={
+    exposure:0,
+    contrast:0,
+    highlights:0,
+    shadows:0,
+    whites:0,
+    blacks:0,
+    temp:0,
+    tint:0,
+    vibrance:0,
+    saturation:0,
+    texture:0,
+    clarity:0,
+    dehaze:0,
+    vignette:0,
+    grain:0
+  };
+
+  Object.assign(z,{
+
+    clean:{
+      exposure:4,
+      contrast:5,
+      shadows:8,
+      vibrance:10,
+      texture:8
+    },
+
+    warm:{
+      temp:16,
+      contrast:4,
+      highlights:-8,
+      shadows:8,
+      vibrance:8
+    },
+
+    cool:{
+      temp:-16,
+      contrast:5,
+      shadows:6,
+      vibrance:8
+    },
+
+    cinematic:{
+      contrast:12,
+      highlights:-15,
+      blacks:-12,
+      clarity:10,
+      dehaze:7,
+      vignette:18,
+      saturation:-5
+    },
+
+    matte:{
+      contrast:-8,
+      highlights:-12,
+      shadows:15,
+      blacks:18,
+      clarity:-4,
+      saturation:-4,
+      vignette:8
+    },
+
+    vivid:{
+      contrast:7,
+      vibrance:28,
+      saturation:5,
+      clarity:6
+    },
+
+    portrait:{
+      exposure:5,
+      highlights:-8,
+      shadows:12,
+      temp:5,
+      vibrance:8,
+      texture:-10,
+      clarity:-5
+    },
+
+    bw:{
+      contrast:10,
+      highlights:-8,
+      shadows:8,
+      blacks:-12,
+      saturation:-100,
+      clarity:8
     }
 
-    if(tool==="color"){
-        c.innerHTML=panel(
-            "Color",
-            "Control white balance, vibrance, saturation, HSL and color grading.",
-            `<div class="control-group">
-                <h3 class="group-title">Basic Color</h3>
-                ${buildControl("Temperature","temperature",-100,100,1,0)}
-                ${buildControl("Tint","tint",-100,100,1,0)}
-                ${buildControl("Vibrance","vibrance",-100,100,1,0)}
-                ${buildControl("Saturation","saturation",-100,100,1,0)}
-            </div>
+  }[n]);
 
-            <div class="control-group">
-                <h3 class="group-title">Color Mixer</h3>
-                ${buildControl("Target Hue","mixerHue",-180,180,1,0)}
-                ${buildControl("Color Range","mixerRange",1,90,1,30)}
-                ${buildControl("Mixer Saturation","mixerSat",-100,100,1,0)}
-                ${buildControl("Mixer Lightness","mixerLight",-100,100,1,0)}
-            </div>
+  Object.assign(S,z);
 
-            <div class="control-group">
-                <h3 class="group-title">Color Grading</h3>
-                ${buildControl("Shadow Hue","shadowHue",0,360,1,0)}
-                ${buildControl("Shadow Saturation","shadowSat",0,100,1,0)}
-                ${buildControl("Midtone Hue","midHue",0,360,1,0)}
-                ${buildControl("Midtone Saturation","midSat",0,100,1,0)}
-                ${buildControl("Highlight Hue","highlightHue",0,360,1,0)}
-                ${buildControl("Highlight Saturation","highlightSat",0,100,1,0)}
-                ${buildControl("Blending","gradeBlend",0,100,1,50)}
-                ${buildControl("Balance","gradeBalance",-100,100,1,0)}
-            </div>`
-        );
+  S.preset=n;
 
-        bindRange("temperature",v=>state.color.temperature=v);
-        bindRange("tint",v=>state.color.tint=v);
-        bindRange("vibrance",v=>state.color.vibrance=v);
-        bindRange("saturation",v=>state.color.saturation=v);
-        bindRange("mixerHue",v=>state.color.hue=v);
-        bindRange("mixerRange",v=>state.color.hueRange=v);
-        bindRange("mixerSat",v=>state.color.mixerSaturation=v);
-        bindRange("mixerLight",v=>state.color.mixerLightness=v);
-        bindRange("shadowHue",v=>state.color.shadowHue=v);
-        bindRange("shadowSat",v=>state.color.shadowSat=v);
-        bindRange("midHue",v=>state.color.midHue=v);
-        bindRange("midSat",v=>state.color.midSat=v);
-        bindRange("highlightHue",v=>state.color.highlightHue=v);
-        bindRange("highlightSat",v=>state.color.highlightSat=v);
-        bindRange("gradeBlend",v=>state.color.gradeBlend=v);
-        bindRange("gradeBalance",v=>state.color.gradeBalance=v);
+  render();
+  panel();
+}
+
+function load(file){
+
+  if(!file || !file.type.startsWith('image/')){
+    return;
+  }
+
+  const u=URL.createObjectURL(file);
+  const i=new Image();
+
+  i.onload=()=>{
+
+    URL.revokeObjectURL(u);
+
+    img=i;
+    fileName=file.name;
+
+    const max=1400;
+    const k=Math.min(
+      1,
+      max/Math.max(i.naturalWidth,i.naturalHeight)
+    );
+
+    src.width=Math.max(1,Math.round(i.naturalWidth*k));
+    src.height=Math.max(1,Math.round(i.naturalHeight*k));
+
+    sx.clearRect(0,0,src.width,src.height);
+    sx.drawImage(i,0,0,src.width,src.height);
+
+    $('name').textContent=file.name;
+    $('meta').textContent=`${i.naturalWidth} × ${i.naturalHeight}px`;
+
+    $('empty').style.display='none';
+    C.style.display='block';
+    O.style.display='block';
+
+    resetState(false);
+
+    render();
+  };
+
+  i.src=u;
+}
+
+function handleImageFile(file){
+
+  if(!file){
+    return;
+  }
+
+  if(!file.type || !file.type.startsWith('image/')){
+    alert('Please select a valid image file.');
+    return;
+  }
+
+  $('status').textContent='Opening photo…';
+
+  const url=URL.createObjectURL(file);
+  const i=new Image();
+
+  i.onload=()=>{
+
+    URL.revokeObjectURL(url);
+
+    img=i;
+    fileName=file.name;
+
+    const max=1400;
+
+    const k=Math.min(
+      1,
+      max/Math.max(i.naturalWidth,i.naturalHeight)
+    );
+
+    src.width=Math.max(
+      1,
+      Math.round(i.naturalWidth*k)
+    );
+
+    src.height=Math.max(
+      1,
+      Math.round(i.naturalHeight*k)
+    );
+
+    sx.clearRect(
+      0,
+      0,
+      src.width,
+      src.height
+    );
+
+    sx.drawImage(
+      i,
+      0,
+      0,
+      src.width,
+      src.height
+    );
+
+    $('name').textContent=file.name;
+
+    $('meta').textContent=
+      `${i.naturalWidth} × ${i.naturalHeight}px`;
+
+    $('empty').style.display='none';
+
+    C.style.display='block';
+    O.style.display='block';
+
+    showBefore=false;
+
+    $('beforeBadge').style.display='none';
+
+    retouch=[];
+
+    resetState(false);
+
+    zoom=1;
+
+    render();
+
+    $('status').textContent='Ready';
+  };
+
+  i.onerror=()=>{
+    URL.revokeObjectURL(url);
+    $('status').textContent='Ready';
+
+    alert(
+      'The selected image could not be opened. Please try another image.'
+    );
+  };
+
+  i.src=url;
+}
+
+const fileInput=$('fileInput');
+
+$('openTop').addEventListener(
+  'click',
+  ()=>fileInput.click()
+);
+
+$('openEmpty').addEventListener(
+  'click',
+  ()=>fileInput.click()
+);
+
+fileInput.addEventListener(
+  'change',
+  e=>{
+    handleImageFile(
+      e.target.files&&e.target.files[0]
+    );
+
+    e.target.value='';
+  }
+);
+
+$('stage').addEventListener(
+  'dragover',
+  e=>{
+    e.preventDefault();
+    $('stage').classList.add('dragover');
+  }
+);
+
+$('stage').addEventListener(
+  'dragleave',
+  ()=>$('stage').classList.remove('dragover')
+);
+
+$('stage').addEventListener(
+  'drop',
+  e=>{
+    e.preventDefault();
+
+    $('stage').classList.remove('dragover');
+
+    handleImageFile(
+      e.dataTransfer.files&&e.dataTransfer.files[0]
+    );
+  }
+);
+
+function resetState(keepImage=true){
+
+  for(const k of Object.keys(S)){
+
+    if(
+      k.startsWith('h_') ||
+      k.startsWith('s_') ||
+      k.startsWith('l_')
+    ){
+      S[k]=0;
     }
 
-    if(tool==="effects"){
-        c.innerHTML=panel(
-            "Effects",
-            "Add local-looking texture, clarity, haze control, vignette and grain.",
-            `<div class="control-group">
-                <h3 class="group-title">Effects</h3>
-                ${buildControl("Texture","texture",-100,100,1,0)}
-                ${buildControl("Clarity","clarity",-100,100,1,0)}
-                ${buildControl("Dehaze","dehaze",-100,100,1,0)}
-                ${buildControl("Vignette","vignette",-100,100,1,0)}
-                ${buildControl("Midpoint","midpoint",0,100,1,50)}
-                ${buildControl("Feather","feather",0,100,1,50)}
-                ${buildControl("Roundness","roundness",-100,100,1,0)}
-            </div>
-
-            <div class="control-group">
-                <h3 class="group-title">Grain</h3>
-                ${buildControl("Amount","grain",0,100,1,0)}
-                ${buildControl("Size","grainSize",1,100,1,25)}
-                ${buildControl("Roughness","grainRough",0,100,1,50)}
-            </div>`
-        );
-
-        bindRange("texture",v=>state.effects.texture=v);
-        bindRange("clarity",v=>state.effects.clarity=v);
-        bindRange("dehaze",v=>state.effects.dehaze=v);
-        bindRange("vignette",v=>state.effects.vignette=v);
-        bindRange("midpoint",v=>state.effects.midpoint=v);
-        bindRange("feather",v=>state.effects.feather=v);
-        bindRange("roundness",v=>state.effects.roundness=v);
-        bindRange("grain",v=>state.effects.grain=v);
-        bindRange("grainSize",v=>state.effects.grainSize=v);
-        bindRange("grainRough",v=>state.effects.grainRough=v);
+    else if(typeof S[k]==='boolean'){
+      S[k]=false;
     }
 
-    if(tool==="detail"){
-        c.innerHTML=panel(
-            "Detail",
-            "Sharpen fine details and reduce luminance or color noise.",
-            `<div class="control-group">
-                <h3 class="group-title">Sharpening</h3>
-                ${buildControl("Amount","sharpening",0,100,1,0)}
-                ${buildControl("Radius","radius",0.5,3,.1,1)}
-                ${buildControl("Detail","detail",0,100,1,25)}
-                ${buildControl("Masking","masking",0,100,1,0)}
-            </div>
+    else if(
+      k==='ratio' ||
+      k==='profile' ||
+      k==='preset' ||
+      k==='maskType'
+    ){
 
-            <div class="control-group">
-                <h3 class="group-title">Noise Reduction</h3>
-                ${buildControl("Luminance","noiseReduction",0,100,1,0)}
-                ${buildControl("Detail","noiseDetail",0,100,1,50)}
-                ${buildControl("Contrast","noiseContrast",-100,100,1,0)}
-                ${buildControl("Color","colorNoise",0,100,1,0)}
-                ${buildControl("Color Detail","colorDetail",0,100,1,50)}
-                ${buildControl("Smoothness","smoothness",0,100,1,50)}
-            </div>`
-        );
-
-        bindRange("sharpening",v=>state.detail.sharpening=v);
-        bindRange("radius",v=>state.detail.radius=v);
-        bindRange("detail",v=>state.detail.detail=v);
-        bindRange("masking",v=>state.detail.masking=v);
-        bindRange("noiseReduction",v=>state.detail.noiseReduction=v);
-        bindRange("noiseDetail",v=>state.detail.noiseDetail=v);
-        bindRange("noiseContrast",v=>state.detail.noiseContrast=v);
-        bindRange("colorNoise",v=>state.detail.colorNoise=v);
-        bindRange("colorDetail",v=>state.detail.colorDetail=v);
-        bindRange("smoothness",v=>state.detail.smoothness=v);
+      S[k]=
+        k==='ratio'
+        ?'original'
+        :k==='profile'
+        ?'natural'
+        :k==='preset'
+        ?'none'
+        :'radial';
     }
 
-    if(tool==="crop"){
-        c.innerHTML=panel(
-            "Crop & Transform",
-            "Crop, straighten, rotate and flip the image.",
-            `<div class="crop-info">
-                Drag inside the image to move the crop.
-                Drag a corner handle to resize it.
-            </div>
+    else if(
+      k==='midpoint' ||
+      k==='feather' ||
+      k==='grainSize' ||
+      k==='grainRough' ||
+      k==='blurX' ||
+      k==='blurY'
+    ){
 
-            <div class="control-group">
-                <h3 class="group-title">Aspect Ratio</h3>
-                <select id="cropRatio">
-                    <option>Free</option>
-                    <option>Original</option>
-                    <option>1:1</option>
-                    <option>4:5</option>
-                    <option>3:4</option>
-                    <option>4:3</option>
-                    <option>16:9</option>
-                    <option>9:16</option>
-                    <option>3:2</option>
-                    <option>2:3</option>
-                </select>
-            </div>
-
-            ${buildControl("Straighten","straighten",-15,15,.1,0)}
-
-            <div class="button-grid">
-                <button id="rotateLeft" class="action-btn">Rotate Left</button>
-                <button id="rotateRight" class="action-btn">Rotate Right</button>
-                <button id="flipH" class="action-btn">Flip Horizontal</button>
-                <button id="flipV" class="action-btn">Flip Vertical</button>
-                <button id="resetCrop" class="action-btn">Reset Crop</button>
-                <button id="applyCrop" class="action-btn primary">Apply Crop</button>
-            </div>`
-        );
-
-        $("cropRatio").value=state.crop.ratio;
-
-        $("cropRatio").onchange=()=>{
-            snapshot();
-            state.crop.ratio=$("cropRatio").value;
-            initializeCrop();
-            render();
-        };
-
-        bindRange("straighten",v=>{
-            state.crop.straighten=v;
-        });
-
-        $("rotateLeft").onclick=()=>{
-            snapshot();
-            rotateImage(-90);
-        };
-
-        $("rotateRight").onclick=()=>{
-            snapshot();
-            rotateImage(90);
-        };
-
-        $("flipH").onclick=()=>{
-            snapshot();
-            flipImage(true,false);
-        };
-
-        $("flipV").onclick=()=>{
-            snapshot();
-            flipImage(false,true);
-        };
-
-        $("resetCrop").onclick=()=>{
-            snapshot();
-            initializeCrop();
-            state.crop.straighten=0;
-            render();
-        };
-
-        $("applyCrop").onclick=()=>{
-            snapshot();
-            applyCrop();
-        };
-
-        initializeCrop();
+      S[k]=
+        k==='midpoint'||k==='feather'
+        ?50
+        :k==='grainSize'
+        ?25
+        :50;
     }
 
-    if(tool==="text"){
-        c.innerHTML=panel(
-            "Text",
-            "Add editable text, drag it anywhere on the photo and style it.",
-            `<div class="control-group">
-                <h3 class="group-title">Content</h3>
-                <textarea id="textValue" placeholder="Enter text"></textarea>
-                <button id="addText" class="action-btn primary" style="margin-top:8px">Add Text</button>
-            </div>
-
-            <div class="control-group">
-                <h3 class="group-title">Typography</h3>
-                <select id="textFont">
-                    <option>Arial</option>
-                    <option>Helvetica</option>
-                    <option>Georgia</option>
-                    <option>Times New Roman</option>
-                    <option>Verdana</option>
-                    <option>Trebuchet MS</option>
-                    <option>Courier New</option>
-                    <option>Impact</option>
-                </select>
-
-                ${buildControl("Font Size","textSize",8,220,1,48)}
-                ${buildControl("Opacity","textOpacity",0,100,1,100)}
-                ${buildControl("Stroke Width","textStroke",0,20,1,0)}
-
-                <div class="check-row">
-                    <input id="textBold" type="checkbox">
-                    <label for="textBold">Bold</label>
-                </div>
-
-                <div class="check-row">
-                    <input id="textItalic" type="checkbox">
-                    <label for="textItalic">Italic</label>
-                </div>
-
-                <select id="textAlign">
-                    <option value="left">Left</option>
-                    <option value="center" selected>Center</option>
-                    <option value="right">Right</option>
-                </select>
-            </div>
-
-            <div class="control-group">
-                <h3 class="group-title">Colors</h3>
-                <div class="color-row">
-                    <span>Text Color</span>
-                    <input id="textColor" type="color" value="#ffffff">
-                </div>
-                <div class="color-row">
-                    <span>Stroke Color</span>
-                    <input id="textStrokeColor" type="color" value="#000000">
-                </div>
-            </div>
-
-            <button id="deleteText" class="action-btn danger">Delete Selected Text</button>
-            <button id="clearText" class="action-btn danger" style="margin-top:7px">Clear All Text</button>`
-        );
-
-        bindTextControls();
+    else if(k==='radius'){
+      S[k]=1;
     }
 
-    if(tool==="draw"){
-        c.innerHTML=panel(
-            "Draw",
-            "Draw freehand strokes directly over the photo.",
-            `<div class="control-group">
-                ${buildControl("Brush Size","drawSize",1,120,1,12)}
-                ${buildControl("Opacity","drawOpacity",1,100,1,100)}
-                <div class="color-row">
-                    <span>Brush Color</span>
-                    <input id="drawColor" type="color" value="#ffffff">
-                </div>
-            </div>
+    else{
+      S[k]=0;
+    }
+  }
 
-            <div class="button-grid">
-                <button id="clearDraw" class="action-btn danger">Clear Drawing</button>
-                <button id="undoDraw" class="action-btn">Remove Last</button>
-            </div>`
-        );
+  S.presetAmount=100;
 
-        bindRange("drawSize",v=>state.draw.size=v);
-        bindRange("drawOpacity",v=>state.draw.opacity=v);
+  history=[];
+  future=[];
 
-        $("drawColor").oninput=e=>{
-            state.draw.color=e.target.value;
-        };
+  zoom=1;
 
-        $("clearDraw").onclick=()=>{
-            if(!state.draw.strokes.length)return;
-            snapshot();
-            state.draw.strokes=[];
-            render();
-        };
+  panel();
+  schedule();
+}
 
-        $("undoDraw").onclick=()=>{
-            if(!state.draw.strokes.length)return;
-            snapshot();
-            state.draw.strokes.pop();
-            render();
-        };
+function resetAll(){
+  push();
+  resetState(true);
+}
+
+function schedule(){
+
+  if(renderQueued){
+    return;
+  }
+
+  renderQueued=true;
+
+  requestAnimationFrame(()=>{
+    renderQueued=false;
+    render();
+  });
+}
+
+function applyProfile(p){
+
+  if(p.profile==='vivid'){
+    p.vibrance+=12;
+    p.saturation+=5;
+    p.contrast+=5;
+  }
+
+  if(p.profile==='neutral'){
+    p.contrast-=3;
+    p.saturation-=3;
+  }
+
+  if(p.profile==='modern'){
+    p.contrast+=5;
+    p.clarity+=7;
+    p.vibrance+=7;
+  }
+
+  if(p.profile==='film'){
+    p.contrast+=4;
+    p.saturation-=5;
+    p.temp+=4;
+    p.grain+=5;
+  }
+
+  if(p.profile==='mono'){
+    p.saturation=-100;
+  }
+}
+
+function rgbh(r,g,b){
+
+  const mx=Math.max(r,g,b);
+  const mn=Math.min(r,g,b);
+  const d=mx-mn;
+
+  let h=0;
+  let s=mx?d/mx:0;
+
+  if(d){
+
+    if(mx===r){
+      h=((g-b)/d+(g<b?6:0))/6;
     }
 
-    if(tool==="selective"){
-        c.innerHTML=panel(
-            "Color Select",
-            "Click a color directly in the photo, then adjust that color range.",
-            `<div class="picked-color" id="pickedColor">Click a color on the image</div>
+    else if(mx===g){
+      h=((b-r)/d+2)/6;
+    }
 
-            ${buildControl("Color Range","selectRange",1,100,1,30)}
-            ${buildControl("Hue","selectHue",-180,180,1,0)}
-            ${buildControl("Saturation","selectSat",-100,100,1,0)}
-            ${buildControl("Lightness","selectLight",-100,100,1,0)}
+    else{
+      h=((r-g)/d+4)/6;
+    }
+  }
 
-            <button id="clearColorSelect" class="action-btn">Clear Selection</button>`
-        );
+  return [h,s,mx];
+}
 
-        bindRange("selectRange",v=>state.selective.range=v);
-        bindRange("selectHue",v=>state.selective.hue=v);
-        bindRange("selectSat",v=>state.selective.saturation=v);
-        bindRange("selectLight",v=>state.selective.lightness=v);
+function hsv(h,s,v){
 
-        $("clearColorSelect").onclick=()=>{
-            state.selective.picked=null;
-            $("pickedColor").textContent="Click a color on the image";
-            $("stage").classList.remove("color-picking");
-            render();
-        };
+  const i=Math.floor(h*6);
+  const f=h*6-i;
 
-        $("stage").classList.add("color-picking");
+  const p=v*(1-s);
+  const q=v*(1-f*s);
+  const t=v*(1-(1-f)*s);
+
+  return [
+    [v,t,p],
+    [q,v,p],
+    [p,v,t],
+    [p,q,v],
+    [t,p,v],
+    [v,p,q]
+  ][i%6];
+}
+
+function band(h){
+
+  if(h<.04||h>.96)return'red';
+  if(h<.11)return'orange';
+  if(h<.19)return'yellow';
+  if(h<.43)return'green';
+  if(h<.53)return'aqua';
+  if(h<.70)return'blue';
+  if(h<.85)return'purple';
+
+  return'magenta';
+}
+
+function applyPixel(imgData,w,h){
+
+  const d=imgData.data;
+  const p={...S};
+
+  applyProfile(p);
+
+  const ex=Math.pow(2,p.exposure/50);
+  const con=(100+p.contrast)/100;
+  const sat=(100+p.saturation)/100;
+  const vib=p.vibrance/100;
+
+  for(let i=0;i<d.length;i+=4){
+
+    let r=d[i]/255;
+    let g=d[i+1]/255;
+    let b=d[i+2]/255;
+
+    r*=ex;
+    g*=ex;
+    b*=ex;
+
+    const lum=
+      .2126*r+
+      .7152*g+
+      .0722*b;
+
+    const hi=p.highlights/120;
+    const sh=p.shadows/120;
+
+    if(lum>.5){
+
+      r+=hi*(r-.5);
+      g+=hi*(g-.5);
+      b+=hi*(b-.5);
+
     }else{
-        $("stage").classList.remove("color-picking");
+
+      r+=sh*(.5-r);
+      g+=sh*(.5-g);
+      b+=sh*(.5-b);
     }
 
-    if(tool==="presets"){
-        c.innerHTML=panel(
-            "Presets",
-            "Apply quick professional looks and control their intensity.",
-            `<div class="control-group">
-                <select id="presetName">
-                    <option>None</option>
-                    <option>Clean</option>
-                    <option>Warm</option>
-                    <option>Cool</option>
-                    <option>Cinematic</option>
-                    <option>Matte</option>
-                    <option>Vivid</option>
-                    <option>Portrait</option>
-                    <option>B&W</option>
-                </select>
-                ${buildControl("Preset Amount","presetAmount",0,100,1,100)}
-                <button id="applyPreset" class="action-btn primary">Apply Preset</button>
-                <button id="resetAdjustments" class="action-btn" style="margin-top:7px">Reset Adjustments</button>
-            </div>`
-        );
+    r+=p.whites/255+p.blacks/255;
+    g+=p.whites/255+p.blacks/255;
+    b+=p.whites/255+p.blacks/255;
 
-        $("presetName").value=state.preset.name;
+    r=(r-.5)*con+.5;
+    g=(g-.5)*con+.5;
+    b=(b-.5)*con+.5;
 
-        bindRange("presetAmount",v=>state.preset.amount=v);
+    r+=p.temp*.0009;
+    b-=p.temp*.0009;
+    g+=p.tint*.00045;
 
-        $("presetName").onchange=e=>{
-            state.preset.name=e.target.value;
-        };
+    const gray=
+      .299*r+
+      .587*g+
+      .114*b;
 
-        $("applyPreset").onclick=()=>{
-            snapshot();
-            applyPreset(state.preset.name,state.preset.amount/100);
-        };
+    const boost=
+      1+
+      vib*
+      (1-Math.abs(2*lum-1))*
+      .7;
 
-        $("resetAdjustments").onclick=()=>{
-            snapshot();
-            resetAdjustments();
-            render();
-        };
+    r=gray+(r-gray)*sat*boost;
+    g=gray+(g-gray)*sat*boost;
+    b=gray+(b-gray)*sat*boost;
+
+    const fx=
+      (p.texture+p.clarity)/900;
+
+    const fgray=(r+g+b)/3;
+
+    r+=((r-fgray)*fx);
+    g+=((g-fgray)*fx);
+    b+=((b-fgray)*fx);
+
+    if(p.dehaze){
+
+      const dh=p.dehaze/140;
+
+      r=(r-.5)*(1+dh)+.5;
+      g=(g-.5)*(1+dh)+.5;
+      b=(b-.5)*(1+dh)+.5;
     }
 
-    if(tool==="profiles"){
-        c.innerHTML=panel(
-            "Profiles",
-            "Choose a base rendering style for the image.",
-            `<select id="profileSelect">
-                <option>Basic</option>
-                <option>Modern</option>
-                <option>Vivid</option>
-                <option>Portrait</option>
-                <option>Cinematic</option>
-                <option>Vintage</option>
-                <option>Matte</option>
-                <option>B&W</option>
-                <option>Cool</option>
-                <option>Warm</option>
-            </select>
-
-            <button id="applyProfile" class="action-btn primary" style="margin-top:10px">
-                Apply Profile
-            </button>`
-        );
-
-        $("profileSelect").value=state.profile;
-
-        $("profileSelect").onchange=e=>{
-            state.profile=e.target.value;
-        };
-
-        $("applyProfile").onclick=()=>{
-            snapshot();
-            applyProfile(state.profile);
-        };
-    }
-
-    if(tool==="mask"){
-        c.innerHTML=panel(
-            "Mask",
-            "Create browser-side radial or linear local adjustment masks.",
-            `<select id="maskType">
-                <option>None</option>
-                <option>Radial</option>
-                <option>Linear</option>
-            </select>
-
-            ${buildControl("Mask Amount","maskAmount",0,100,1,50)}
-            ${buildControl("Feather","maskFeather",0,100,1,50)}
-            ${buildControl("Exposure","maskExposure",-100,100,1,0)}
-            ${buildControl("Contrast","maskContrast",-100,100,1,0)}
-            ${buildControl("Saturation","maskSaturation",-100,100,1,0)}
-            ${buildControl("Hue","maskHue",-180,180,1,0)}
-            ${buildControl("Texture","maskTexture",-100,100,1,0)}
-            ${buildControl("Clarity","maskClarity",-100,100,1,0)}
-            ${buildControl("Dehaze","maskDehaze",-100,100,1,0)}
-            
-            <div class="control-group">
-                <h3 class="group-title">Mask Position</h3>
-                ${buildControl("Center X","maskX",0,100,1,50)}
-                ${buildControl("Center Y","maskY",0,100,1,50)}
-                ${buildControl("Width","maskWidth",5,100,1,70)}
-                ${buildControl("Height","maskHeight",5,100,1,70)}
-            </div>`
-        );
-
-        $("maskType").value=state.mask.type;
-
-        $("maskType").onchange=e=>{
-            state.mask.type=e.target.value;
-            render();
-        };
-
-        bindRange("maskAmount",v=>state.mask.amount=v);
-        bindRange("maskFeather",v=>state.mask.feather=v);
-        bindRange("maskExposure",v=>state.mask.exposure=v);
-        bindRange("maskContrast",v=>state.mask.contrast=v);
-        bindRange("maskSaturation",v=>state.mask.saturation=v);
-        bindRange("maskHue",v=>state.mask.hue=v);
-        bindRange("maskTexture",v=>state.mask.texture=v);
-        bindRange("maskClarity",v=>state.mask.clarity=v);
-        bindRange("maskDehaze",v=>state.mask.dehaze=v);
-        bindRange("maskX",v=>state.mask.x=v);
-        bindRange("maskY",v=>state.mask.y=v);
-        bindRange("maskWidth",v=>state.mask.width=v);
-        bindRange("maskHeight",v=>state.mask.height=v);
-    }
-
-    if(tool==="retouch"){
-        c.innerHTML=panel(
-            "Retouch",
-            "Paint over small areas for browser-side local healing/softening.",
-            `${buildControl("Brush Size","retouchSize",2,160,1,30)}
-            ${buildControl("Feather","retouchFeather",0,100,1,70)}
-            ${buildControl("Opacity","retouchOpacity",1,100,1,100)}
-
-            <button id="clearRetouch" class="action-btn danger">Clear Retouch</button>`
-        );
-
-        bindRange("retouchSize",v=>state.retouch.size=v);
-        bindRange("retouchFeather",v=>state.retouch.feather=v);
-        bindRange("retouchOpacity",v=>state.retouch.opacity=v);
-
-        $("clearRetouch").onclick=()=>{
-            if(!state.retouch.strokes.length)return;
-            snapshot();
-            state.retouch.strokes=[];
-            render();
-        };
-    }
-
-    if(tool==="blur"){
-        c.innerHTML=panel(
-            "Lens Blur",
-            "Create a depth-style focus effect using a soft radial focus area.",
-            `${buildControl("Blur Amount","blurAmount",0,100,1,0)}
-            ${buildControl("Focus X","focusX",0,100,1,50)}
-            ${buildControl("Focus Y","focusY",0,100,1,50)}
-            ${buildControl("Focus Size","focusSize",5,100,1,40)}
-            ${buildControl("Focus Feather","focusFeather",0,100,1,50)}`
-        );
-
-        bindRange("blurAmount",v=>state.blur.amount=v);
-        bindRange("focusX",v=>state.blur.focusX=v);
-        bindRange("focusY",v=>state.blur.focusY=v);
-        bindRange("focusSize",v=>state.blur.focusSize=v);
-        bindRange("focusFeather",v=>state.blur.feather=v);
-    }
-
-    if(tool==="optics"){
-        c.innerHTML=panel(
-            "Optics",
-            "Apply browser-side lens and edge corrections.",
-            `${buildControl("Vignette","lensVignette",-100,100,1,0)}
-            ${buildControl("Defringe","defringe",0,100,1,0)}
-            ${buildControl("Distortion","distortion",-100,100,1,0)}`
-        );
-
-        bindRange("lensVignette",v=>state.optics.vignette=v);
-        bindRange("defringe",v=>state.optics.defringe=v);
-        bindRange("distortion",v=>state.optics.distortion=v);
-    }
-
-    if(tool==="layers"){
-        let html=panel(
-            "Layers",
-            "Manage text and drawing overlays.",
-            `<div class="layer-list">`
-        );
-
-        state.text.layers.forEach((l,i)=>{
-            html+=`
-            <button class="layer-item" data-text-layer="${i}">
-                Text: ${escapeHtml(l.text.slice(0,30))}
-            </button>`;
-        });
-
-        state.draw.strokes.forEach((s,i)=>{
-            html+=`
-            <button class="layer-item" data-draw-layer="${i}">
-                Brush Stroke ${i+1}
-            </button>`;
-        });
-
-        html+=`
-            </div>
-            <button id="clearLayers" class="action-btn danger">Clear All Layers</button>
-        `;
-
-        c.innerHTML=html;
-
-        document.querySelectorAll("[data-text-layer]").forEach(btn=>{
-            btn.onclick=()=>{
-                state.text.selected=Number(btn.dataset.textLayer);
-                state.tool="text";
-                renderPanel("text");
-                render();
-            };
-        });
-
-        $("clearLayers").onclick=()=>{
-            if(!state.text.layers.length&&!state.draw.strokes.length)return;
-
-            snapshot();
-            state.text.layers=[];
-            state.draw.strokes=[];
-            render();
-            renderPanel("layers");
-        };
-    }
-
-    if(tool==="export"){
-        c.innerHTML=panel(
-            "Export",
-            "Save your edited image in a standard browser-supported format.",
-            `<div class="control-group">
-                <h3 class="group-title">Format</h3>
-                <select id="exportFormat">
-                    <option value="image/jpeg">JPG</option>
-                    <option value="image/png">PNG</option>
-                    <option value="image/webp">WebP</option>
-                </select>
-            </div>
-
-            ${buildControl("Quality","exportQuality",10,100,1,92)}
-
-            <div class="control-group">
-                <h3 class="group-title">Maximum Edge</h3>
-                <select id="exportSize">
-                    <option value="original">Original</option>
-                    <option value="4096">4096 px</option>
-                    <option value="3000">3000 px</option>
-                    <option value="2048">2048 px</option>
-                    <option value="1600">1600 px</option>
-                    <option value="1080">1080 px</option>
-                </select>
-            </div>
-
-            <label class="check-row">
-                <input id="includeOverlays" type="checkbox" checked>
-                Include text and drawing layers
-            </label>
-
-            <button id="downloadImage" class="action-btn primary">Download Image</button>`
-        );
-
-        bindRange("exportQuality",v=>{}, "%");
-
-        $("downloadImage").onclick=exportImage;
-    }
-}
-
-function escapeHtml(str){
-    return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-}
-
-function switchTool(tool){
-    state.tool=tool;
-
-    document.querySelectorAll("#toolTabs button").forEach(btn=>{
-        btn.classList.toggle("active",btn.dataset.tool===tool);
-    });
-
-    renderPanel(tool);
-    render();
-}
-
-document.querySelectorAll("#toolTabs button").forEach(btn=>{
-    btn.onclick=()=>switchTool(btn.dataset.tool);
-});
-
-function resetAdjustments(){
-    state.light={
-        exposure:0,
-        contrast:0,
-        highlights:0,
-        shadows:0,
-        whites:0,
-        blacks:0
-    };
-
-    state.color={
-        temperature:0,
-        tint:0,
-        vibrance:0,
-        saturation:0,
-        hue:0,
-        hueRange:30,
-        mixerSaturation:0,
-        mixerLightness:0,
-        shadowHue:0,
-        shadowSat:0,
-        midHue:0,
-        midSat:0,
-        highlightHue:0,
-        highlightSat:0,
-        gradeBlend:50,
-        gradeBalance:0
-    };
-
-    state.effects={
-        texture:0,
-        clarity:0,
-        dehaze:0,
-        vignette:0,
-        midpoint:50,
-        feather:50,
-        roundness:0,
-        grain:0,
-        grainSize:25,
-        grainRoughness:50
-    };
-
-    state.detail={
-        sharpening:0,
-        radius:1,
-        detail:25,
-        masking:0,
-        noiseReduction:0,
-        noiseDetail:50,
-        noiseContrast:0,
-        colorNoise:0,
-        colorDetail:50,
-        smoothness:50
-    };
-}
-
-function applyPreset(name,amount){
-    resetAdjustments();
-
-    const a=amount;
-
-    const presets={
-        Clean:{
-            contrast:8,
-            saturation:3,
-            clarity:4
-        },
-        Warm:{
-            temperature:25,
-            saturation:5,
-            highlights:5,
-            vignette:4
-        },
-        Cool:{
-            temperature:-25,
-            saturation:3,
-            shadows:-5
-        },
-        Cinematic:{
-            contrast:15,
-            saturation:-8,
-            dehaze:10,
-            vignette:12,
-            highlights:-10,
-            shadows:8
-        },
-        Matte:{
-            contrast:-12,
-            blacks:20,
-            saturation:-5
-        },
-        Vivid:{
-            contrast:10,
-            saturation:20,
-            vibrance:25,
-            clarity:7
-        },
-        Portrait:{
-            highlights:-10,
-            shadows:12,
-            saturation:4,
-            clarity:-5
-        },
-        "B&W":{
-            saturation:-100,
-            contrast:10
-        }
-    };
-
-    const p=presets[name];
-
-    if(p){
-        if(p.contrast)state.light.contrast=p.contrast*a;
-        if(p.highlights)state.light.highlights=p.highlights*a;
-        if(p.shadows)state.light.shadows=p.shadows*a;
-        if(p.blacks)state.light.blacks=p.blacks*a;
-        if(p.temperature)state.color.temperature=p.temperature*a;
-        if(p.saturation)state.color.saturation=p.saturation*a;
-        if(p.vibrance)state.color.vibrance=p.vibrance*a;
-        if(p.clarity)state.effects.clarity=p.clarity*a;
-        if(p.dehaze)state.effects.dehaze=p.dehaze*a;
-        if(p.vignette)state.effects.vignette=p.vignette*a;
-    }
-
-    state.preset.name=name;
-    render();
-}
-
-function applyProfile(name){
-    const p=profiles[name]||{};
-
-    resetAdjustments();
-
-    if(p.contrast)state.light.contrast=p.contrast;
-    if(p.saturation)state.color.saturation=p.saturation;
-    if(p.vibrance)state.color.vibrance=p.vibrance;
-    if(p.clarity)state.effects.clarity=p.clarity;
-    if(p.dehaze)state.effects.dehaze=p.dehaze;
-    if(p.temperature)state.color.temperature=p.temperature;
-    if(p.highlights)state.light.highlights=p.highlights;
-    if(p.shadows)state.light.shadows=p.shadows;
-    if(p.blacks)state.light.blacks=p.blacks;
-    if(p.grain)state.effects.grain=p.grain;
-    if(p.vignette)state.effects.vignette=p.vignette;
-
-    if(name==="B&W"){
-        state.color.saturation=-100;
-    }
-
-    render();
-}
-
-function bindTextControls(){
-    const layer=state.text.selected>=0?
-        state.text.layers[state.text.selected]:null;
-
-    $("textValue").value=layer?layer.text:"";
-    $("textFont").value=layer?layer.font:"Arial";
-    $("textSize").value=layer?layer.size:48;
-    $("textOpacity").value=layer?layer.opacity:100;
-    $("textStroke").value=layer?layer.strokeWidth:0;
-    $("textBold").checked=layer?layer.bold:false;
-    $("textItalic").checked=layer?layer.italic:false;
-    $("textAlign").value=layer?layer.align:"center";
-    $("textColor").value=layer?layer.color:"#ffffff";
-    $("textStrokeColor").value=layer?layer.stroke:"#000000";
-
-    bindRange("textSize",v=>{
-        if(layer)layer.size=v;
-        state.text.size=v;
-    });
-
-    bindRange("textOpacity",v=>{
-        if(layer)layer.opacity=v;
-        state.text.opacity=v;
-    });
-
-    bindRange("textStroke",v=>{
-        if(layer)layer.strokeWidth=v;
-        state.text.strokeWidth=v;
-    });
-
-    $("textFont").onchange=e=>{
-        if(layer)layer.font=e.target.value;
-        state.text.font=e.target.value;
-        render();
-    };
-
-    $("textBold").onchange=e=>{
-        if(layer)layer.bold=e.target.checked;
-        state.text.bold=e.target.checked;
-        render();
-    };
-
-    $("textItalic").onchange=e=>{
-        if(layer)layer.italic=e.target.checked;
-        state.text.italic=e.target.checked;
-        render();
-    };
-
-    $("textAlign").onchange=e=>{
-        if(layer)layer.align=e.target.value;
-        state.text.align=e.target.value;
-        render();
-    };
-
-    $("textColor").oninput=e=>{
-        if(layer)layer.color=e.target.value;
-        state.text.color=e.target.value;
-        render();
-    };
-
-    $("textStrokeColor").oninput=e=>{
-        if(layer)layer.stroke=e.target.value;
-        state.text.stroke=e.target.value;
-        render();
-    };
-
-    $("textValue").oninput=e=>{
-        if(layer){
-            layer.text=e.target.value;
-            render();
-        }
-    };
-
-    $("addText").onclick=()=>{
-        const text=$("textValue").value.trim();
-
-        if(!text)return;
-
-        snapshot();
-
-        const layer={
-            id:Date.now(),
-            text,
-            x:imageCanvas.width/2,
-            y:imageCanvas.height/2,
-            font:state.text.font,
-            size:state.text.size,
-            opacity:state.text.opacity,
-            bold:state.text.bold,
-            italic:state.text.italic,
-            align:state.text.align,
-            color:state.text.color,
-            stroke:state.text.stroke,
-            strokeWidth:state.text.strokeWidth
-        };
-
-        state.text.layers.push(layer);
-        state.text.selected=state.text.layers.length-1;
-
-        renderPanel("text");
-        render();
-    };
-
-    $("deleteText").onclick=()=>{
-        if(state.text.selected<0)return;
-
-        snapshot();
-        state.text.layers.splice(state.text.selected,1);
-        state.text.selected=-1;
-        renderPanel("text");
-        render();
-    };
-
-    $("clearText").onclick=()=>{
-        if(!state.text.layers.length)return;
-
-        snapshot();
-        state.text.layers=[];
-        state.text.selected=-1;
-        render();
-    };
-}
-
-function drawTextLayer(ctx,l){
-    ctx.save();
-
-    ctx.globalAlpha=clamp01(l.opacity/100);
-
-    const style=
-        `${l.italic?"italic ":""}${l.bold?"bold ":""}${l.size}px ${l.font}`;
-
-    ctx.font=style;
-    ctx.textAlign=l.align;
-    ctx.textBaseline="middle";
-
-    if(l.strokeWidth>0){
-        ctx.lineWidth=l.strokeWidth*2;
-        ctx.strokeStyle=l.stroke;
-        ctx.strokeText(l.text,l.x,l.y);
-    }
-
-    ctx.fillStyle=l.color;
-    ctx.fillText(l.text,l.x,l.y);
-
-    ctx.restore();
-}
-
-function renderOverlays(){
-    overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
-
-    if(!state.sourceCanvas)return;
-
-    state.text.layers.forEach((l,i)=>{
-        drawTextLayer(overlayCtx,l);
-
-        if(state.tool==="text"&&i===state.text.selected){
-            overlayCtx.save();
-            overlayCtx.strokeStyle="rgba(255,255,255,.65)";
-            overlayCtx.setLineDash([7,5]);
-
-            const m=overlayCtx.measureText(l.text);
-            let x=l.x;
-
-            if(l.align==="center")x-=m.width/2;
-            if(l.align==="right")x-=m.width;
-
-            overlayCtx.strokeRect(
-                x-8,
-                l.y-l.size/2-8,
-                m.width+16,
-                l.size+16
-            );
-
-            overlayCtx.restore();
-        }
-    });
-
-    state.draw.strokes.forEach(stroke=>{
-        if(!stroke.points.length)return;
-
-        overlayCtx.save();
-
-        overlayCtx.globalAlpha=stroke.opacity/100;
-        overlayCtx.strokeStyle=stroke.color;
-        overlayCtx.lineWidth=stroke.size;
-        overlayCtx.lineCap="round";
-        overlayCtx.lineJoin="round";
-
-        overlayCtx.beginPath();
-
-        stroke.points.forEach((p,i)=>{
-            if(i===0)overlayCtx.moveTo(p.x,p.y);
-            else overlayCtx.lineTo(p.x,p.y);
-        });
-
-        overlayCtx.stroke();
-        overlayCtx.restore();
-    });
-
-    if(state.tool==="crop"&&state.crop.active){
-        drawCropOverlay();
-    }
-}
-
-function handleTextPointerDown(e){
-    const p=canvasPoint(e);
-
-    for(let i=state.text.layers.length-1;i>=0;i--){
-        const l=state.text.layers[i];
-
-        overlayCtx.font=
-            `${l.italic?"italic ":""}${l.bold?"bold ":""}${l.size}px ${l.font}`;
-
-        const width=overlayCtx.measureText(l.text).width;
-
-        let left=l.x-width/2;
-
-        if(l.align==="left")left=l.x;
-        if(l.align==="right")left=l.x-width;
-
-        if(
-            p.x>=left-15 &&
-            p.x<=left+width+15 &&
-            p.y>=l.y-l.size &&
-            p.y<=l.y+l.size
-        ){
-            snapshot();
-            state.text.selected=i;
-            state.text.dragging=true;
-            state.text.dragOffsetX=p.x-l.x;
-            state.text.dragOffsetY=p.y-l.y;
-            renderPanel("text");
-            render();
-            return;
-        }
-    }
-}
-
-function moveTextPointer(e){
-    if(!state.text.dragging)return;
-
-    const l=state.text.layers[state.text.selected];
-    if(!l)return;
-
-    const p=canvasPoint(e);
-
-    l.x=p.x-state.text.dragOffsetX;
-    l.y=p.y-state.text.dragOffsetY;
-
-    render();
-}
-
-function finishTextDrag(){
-    state.text.dragging=false;
-}
-
-$("stage").addEventListener("pointerup",finishTextDrag);
-
-function startDraw(e){
-    const p=canvasPoint(e);
-
-    snapshot();
-
-    state.draw.drawing=true;
-
-    state.draw.current={
-        size:state.draw.size,
-        opacity:state.draw.opacity,
-        color:state.draw.color,
-        points:[p]
-    };
-
-    state.draw.strokes.push(state.draw.current);
-    render();
-}
-
-function continueDraw(e){
-    if(!state.draw.drawing)return;
-
-    const p=canvasPoint(e);
-    state.draw.current.points.push(p);
-
-    render();
-}
-
-function finishDraw(){
-    state.draw.drawing=false;
-    state.draw.current=null;
-}
-
-function startRetouch(e){
-    const p=canvasPoint(e);
-
-    snapshot();
-
-    state.retouch.drawing=true;
-
-    state.retouch.strokes.push({
-        size:state.retouch.size,
-        feather:state.retouch.feather,
-        opacity:state.retouch.opacity,
-        points:[p]
-    });
-
-    render();
-}
-
-function continueRetouch(e){
-    if(!state.retouch.drawing)return;
-
-    const stroke=
-        state.retouch.strokes[state.retouch.strokes.length-1];
-
-    stroke.points.push(canvasPoint(e));
-
-    render();
-}
-
-function finishRetouch(){
-    state.retouch.drawing=false;
-}
-
-function pickColor(e){
-    if(!state.sourceCanvas)return;
-
-    const p=canvasPoint(e);
-
-    const x=Math.round(clamp(p.x,0,imageCanvas.width-1));
-    const y=Math.round(clamp(p.y,0,imageCanvas.height-1));
-
-    const d=imageCtx.getImageData(x,y,1,1).data;
-
-    state.selective.picked={
-        r:d[0],
-        g:d[1],
-        b:d[2]
-    };
-
-    const hex="#"+
-        [d[0],d[1],d[2]]
-        .map(v=>v.toString(16).padStart(2,"0"))
-        .join("");
-
-    const box=$("pickedColor");
-
-    if(box){
-        box.textContent=`Selected ${hex}`;
-        box.style.background=hex;
-        box.style.color=(d[0]+d[1]+d[2])>400?"#111":"#fff";
-    }
-
-    render();
-}
-
-function initializeCrop(){
-    if(!imageCanvas.width)return;
-
-    state.crop.x=0.08;
-    state.crop.y=0.08;
-    state.crop.w=.84;
-    state.crop.h=.84;
-    state.crop.active=true;
-
-    applyCropRatio();
-}
-
-function applyCropRatio(){
-    if(state.crop.ratio==="Free"||state.crop.ratio==="Original"){
-        return;
-    }
-
-    const parts=state.crop.ratio.split(":");
-    const ratio=Number(parts[0])/Number(parts[1]);
-
-    let w=state.crop.w;
-    let h=w/imageCanvas.width*imageCanvas.height/ratio;
-
-    if(h>state.crop.h){
-        h=state.crop.h;
-        w=h*ratio*imageCanvas.width/imageCanvas.height;
-    }
-
-    state.crop.w=w;
-    state.crop.h=h;
-
-    state.crop.x=(1-w)/2;
-    state.crop.y=(1-h)/2;
-}
-
-function drawCropOverlay(){
-    const x=state.crop.x*overlayCanvas.width;
-    const y=state.crop.y*overlayCanvas.height;
-    const w=state.crop.w*overlayCanvas.width;
-    const h=state.crop.h*overlayCanvas.height;
-
-    overlayCtx.save();
-
-    overlayCtx.fillStyle="rgba(0,0,0,.55)";
-    overlayCtx.fillRect(
-        0,
-        0,
-        overlayCanvas.width,
-        overlayCanvas.height
+    let [
+      hh,
+      ss,
+      vv
+    ]=rgbh(
+      clamp(r,0,1),
+      clamp(g,0,1),
+      clamp(b,0,1)
     );
 
-    overlayCtx.clearRect(x,y,w,h);
+    const bb=band(hh);
 
-    overlayCtx.strokeStyle="#fff";
-    overlayCtx.lineWidth=Math.max(2,overlayCanvas.width/700);
-    overlayCtx.setLineDash([]);
+    const dh=S['h_'+bb];
+    const ds=S['s_'+bb];
+    const dl=S['l_'+bb];
 
-    overlayCtx.strokeRect(x,y,w,h);
+    if(dh||ds||dl){
 
-    overlayCtx.strokeStyle="rgba(255,255,255,.45)";
-    overlayCtx.lineWidth=1;
-
-    for(let i=1;i<3;i++){
-        overlayCtx.beginPath();
-        overlayCtx.moveTo(x+w*i/3,y);
-        overlayCtx.lineTo(x+w*i/3,y+h);
-        overlayCtx.stroke();
-
-        overlayCtx.beginPath();
-        overlayCtx.moveTo(x,y+h*i/3);
-        overlayCtx.lineTo(x+w,y+h*i/3);
-        overlayCtx.stroke();
+      [r,g,b]=hsv(
+        (hh+dh/360+1)%1,
+        clamp(ss*(1+ds/100),0,1),
+        clamp(vv*(1+dl/100),0,1)
+      );
     }
 
-    const hs=12;
+    const lum2=
+      .2126*r+
+      .7152*g+
+      .0722*b;
 
-    const handles=[
-        [x,y],[x+w,y],[x,y+h],[x+w,y+h]
-    ];
+    const gh=
+      lum2<.35
+      ?S.gradeShadow
+      :lum2>.65
+      ?S.gradeHigh
+      :S.gradeMid;
 
-    overlayCtx.fillStyle="#fff";
+    const gs=
+      lum2<.35
+      ?S.gradeShadowSat
+      :lum2>.65
+      ?S.gradeHighSat
+      :S.gradeMidSat;
 
-    handles.forEach(([hx,hy])=>{
-        overlayCtx.fillRect(
-            hx-hs/2,
-            hy-hs/2,
-            hs,
-            hs
-        );
-    });
+    if(gs){
 
-    overlayCtx.restore();
-}
+      const grgb=hsv(
+        gh/360,
+        gs/100,
+        Math.max(.25,lum2)
+      );
 
-function startCropPointer(e){
-    if(!state.crop.active)initializeCrop();
+      const blend=
+        (S.gradeBlend/100)*.35;
 
-    const p=canvasPoint(e);
-
-    const x=p.x/imageCanvas.width;
-    const y=p.y/imageCanvas.height;
-
-    const c=state.crop;
-
-    const px=c.x;
-    const py=c.y;
-    const pw=c.w;
-    const ph=c.h;
-
-    const near=0.025;
-
-    c.startX=x;
-    c.startY=y;
-    c.startCrop={...c};
-
-    if(Math.abs(x-px)<near&&Math.abs(y-py)<near)c.handle="tl";
-    else if(Math.abs(x-(px+pw))<near&&Math.abs(y-py)<near)c.handle="tr";
-    else if(Math.abs(x-px)<near&&Math.abs(y-(py+ph))<near)c.handle="bl";
-    else if(Math.abs(x-(px+pw))<near&&Math.abs(y-(py+ph))<near)c.handle="br";
-    else if(x>=px&&x<=px+pw&&y>=py&&y<=py+ph)c.handle="move";
-    else c.handle="";
-
-    if(c.handle){
-        c.dragging=true;
-        c.startCrop={...c};
-    }
-}
-
-function moveCropPointer(e){
-    if(!state.crop.dragging)return;
-
-    const p=canvasPoint(e);
-
-    const x=p.x/imageCanvas.width;
-    const y=p.y/imageCanvas.height;
-
-    const c=state.crop;
-    const s=c.startCrop;
-
-    const dx=x-c.startX;
-    const dy=y-c.startY;
-
-    if(c.handle==="move"){
-        c.x=clamp01(s.x+dx);
-        c.y=clamp01(s.y+dy);
-
-        c.x=Math.min(c.x,1-c.w);
-        c.y=Math.min(c.y,1-c.h);
-    }else{
-        let nx=s.x;
-        let ny=s.y;
-        let nw=s.w;
-        let nh=s.h;
-
-        if(c.handle.includes("l")){
-            nx=s.x+dx;
-            nw=s.w-dx;
-        }
-
-        if(c.handle.includes("r")){
-            nw=s.w+dx;
-        }
-
-        if(c.handle.includes("t")){
-            ny=s.y+dy;
-            nh=s.h-dy;
-        }
-
-        if(c.handle.includes("b")){
-            nh=s.h+dy;
-        }
-
-        nw=Math.max(.05,nw);
-        nh=Math.max(.05,nh);
-
-        nx=clamp(nx,0,1-nw);
-        ny=clamp(ny,0,1-nh);
-
-        c.x=nx;
-        c.y=ny;
-        c.w=nw;
-        c.h=nh;
+      r=r*(1-blend)+grgb[0]*blend;
+      g=g*(1-blend)+grgb[1]*blend;
+      b=b*(1-blend)+grgb[2]*blend;
     }
 
-    render();
-}
+    const x=(i/4%w)/w-.5;
+    const y=Math.floor(i/4/w)/h-.5;
 
-function finishCropPointer(){
-    state.crop.dragging=false;
-    state.crop.handle="";
-}
+    const dist=
+      Math.sqrt(x*x+y*y)*1.414;
 
-function rotateImage(deg){
-    const src=state.sourceCanvas;
+    if(p.vignette){
 
-    const c=document.createElement("canvas");
-    const ctx=c.getContext("2d");
-
-    const rad=deg*Math.PI/180;
-
-    if(Math.abs(deg)===90){
-        c.width=src.height;
-        c.height=src.width;
-    }else{
-        c.width=src.width;
-        c.height=src.height;
-    }
-
-    ctx.translate(c.width/2,c.height/2);
-    ctx.rotate(rad);
-    ctx.drawImage(src,-src.width/2,-src.height/2);
-
-    state.sourceCanvas=c;
-
-    imageCanvas.width=c.width;
-    imageCanvas.height=c.height;
-    overlayCanvas.width=c.width;
-    overlayCanvas.height=c.height;
-
-    state.crop.active=false;
-
-    fitImage();
-    render();
-}
-
-function flipImage(horizontal,vertical){
-    const src=state.sourceCanvas;
-
-    const c=document.createElement("canvas");
-    c.width=src.width;
-    c.height=src.height;
-
-    const ctx=c.getContext("2d");
-
-    ctx.translate(
-        horizontal?c.width:0,
-        vertical?c.height:0
-    );
-
-    ctx.scale(
-        horizontal?-1:1,
-        vertical?-1:1
-    );
-
-    ctx.drawImage(src,0,0);
-
-    state.sourceCanvas=c;
-
-    imageCanvas.width=c.width;
-    imageCanvas.height=c.height;
-    overlayCanvas.width=c.width;
-    overlayCanvas.height=c.height;
-
-    fitImage();
-    render();
-}
-
-function applyCrop(){
-    if(!state.crop.active)return;
-
-    const c=state.crop;
-
-    const sx=Math.round(c.x*imageCanvas.width);
-    const sy=Math.round(c.y*imageCanvas.height);
-    const sw=Math.round(c.w*imageCanvas.width);
-    const sh=Math.round(c.h*imageCanvas.height);
-
-    const out=document.createElement("canvas");
-    out.width=Math.max(1,sw);
-    out.height=Math.max(1,sh);
-
-    const ctx=out.getContext("2d");
-    ctx.drawImage(
-        state.sourceCanvas,
-        sx,sy,sw,sh,
-        0,0,sw,sh
-    );
-
-    state.sourceCanvas=out;
-
-    imageCanvas.width=sw;
-    imageCanvas.height=sh;
-    overlayCanvas.width=sw;
-    overlayCanvas.height=sh;
-
-    state.crop.active=false;
-
-    fitImage();
-    render();
-}
-
-function rgbToHsl(r,g,b){
-    r/=255;
-    g/=255;
-    b/=255;
-
-    const max=Math.max(r,g,b);
-    const min=Math.min(r,g,b);
-    let h=0;
-    let s=0;
-    const l=(max+min)/2;
-
-    if(max!==min){
-        const d=max-min;
-        s=l>.5?d/(2-max-min):d/(max+min);
-
-        switch(max){
-            case r:h=(g-b)/d+(g<b?6:0);break;
-            case g:h=(b-r)/d+2;break;
-            case b:h=(r-g)/d+4;break;
-        }
-
-        h/=6;
-    }
-
-    return {h:h*360,s:s*100,l:l*100};
-}
-
-function hue2rgb(p,q,t){
-    if(t<0)t+=1;
-    if(t>1)t-=1;
-
-    if(t<1/6)return p+(q-p)*6*t;
-    if(t<1/2)return q;
-    if(t<2/3)return p+(q-p)*(2/3-t)*6;
-
-    return p;
-}
-
-function hslToRgb(h,s,l){
-    h=((h%360)+360)%360/360;
-    s=clamp(s,0,100)/100;
-    l=clamp(l,0,100)/100;
-
-    let r,g,b;
-
-    if(s===0){
-        r=g=b=l;
-    }else{
-        const q=l<.5?l*(1+s):l+s-l*s;
-        const p=2*l-q;
-
-        r=hue2rgb(p,q,h+1/3);
-        g=hue2rgb(p,q,h);
-        b=hue2rgb(p,q,h-1/3);
-    }
-
-    return {
-        r:r*255,
-        g:g*255,
-        b:b*255
-    };
-}
-
-function applyColorMix(r,g,b){
-    const hsl=rgbToHsl(r,g,b);
-
-    if(state.selective.picked){
-        const phsl=rgbToHsl(
-            state.selective.picked.r,
-            state.selective.picked.g,
-            state.selective.picked.b
+      const edge=
+        clamp(
+          (dist-p.midpoint/100*.65)/
+          Math.max(.05,p.feather/100),
+          0,
+          1
         );
 
-        let dh=Math.abs(hsl.h-phsl.h);
-        if(dh>180)dh=360-dh;
+      const vvv=
+        1-p.vignette/100*edge*edge;
 
-        const influence=
-            clamp01(1-dh/state.selective.range);
-
-        hsl.h+=state.selective.hue*influence;
-        hsl.s+=state.selective.saturation*influence;
-        hsl.l+=state.selective.lightness*influence;
+      r*=vvv;
+      g*=vvv;
+      b*=vvv;
     }
 
-    let dh=Math.abs(hsl.h-state.color.hue);
-    if(dh>180)dh=360-dh;
+    if(p.maskAmount){
 
-    const mixerInfluence=
-        clamp01(1-dh/state.color.hueRange);
+      let m=
+        p.maskType==='radial'
+        ?1-clamp(
+          Math.sqrt(x*x+y*y)*2.1,
+          0,
+          1
+        )
+        :p.maskType==='linear'
+        ?clamp(
+          1-Math.abs(y)*2,
+          0,
+          1
+        )
+        :1;
 
-    hsl.s+=state.color.mixerSaturation*mixerInfluence;
-    hsl.l+=state.color.mixerLightness*mixerInfluence;
+      m*=p.maskAmount/100;
 
-    hsl.s+=state.color.saturation;
+      r+=m*p.maskExposure/250;
+      g+=m*p.maskExposure/250;
+      b+=m*p.maskExposure/250;
 
-    const satBoost=
-        state.color.vibrance*(1-hsl.s/100);
+      const mg=
+        1+m*p.maskContrast/100;
 
-    hsl.s+=satBoost;
+      r=(r-.5)*mg+.5;
+      g=(g-.5)*mg+.5;
+      b=(b-.5)*mg+.5;
 
-    const gradeLum=hsl.l;
+      const gr=
+        .299*r+
+        .587*g+
+        .114*b;
 
-    let gradeHue=0;
-    let gradeSat=0;
+      const ms=
+        1+m*p.maskSaturation/100;
 
-    if(gradeLum<35){
-        gradeHue=state.color.shadowHue;
-        gradeSat=state.color.shadowSat;
-    }else if(gradeLum>65){
-        gradeHue=state.color.highlightHue;
-        gradeSat=state.color.highlightSat;
-    }else{
-        gradeHue=state.color.midHue;
-        gradeSat=state.color.midSat;
+      r=gr+(r-gr)*ms;
+      g=gr+(g-gr)*ms;
+      b=gr+(b-gr)*ms;
     }
 
-    const gradeInfluence=
-        state.color.gradeBlend/100*(gradeSat/100);
+    d[i]=clamp(r*255,0,255);
+    d[i+1]=clamp(g*255,0,255);
+    d[i+2]=clamp(b*255,0,255);
+  }
 
-    if(gradeSat>0){
-        hsl.h=lerp(hsl.h,gradeHue,gradeInfluence);
-        hsl.s+=gradeSat*.35;
-    }
+  S.exposure=p.exposure;
+  S.contrast=p.contrast;
+  S.highlights=p.highlights;
+  S.shadows=p.shadows;
+  S.whites=p.whites;
+  S.blacks=p.blacks;
+  S.temp=p.temp;
+  S.tint=p.tint;
+  S.vibrance=p.vibrance;
+  S.saturation=p.saturation;
+  S.texture=p.texture;
+  S.clarity=p.clarity;
+  S.dehaze=p.dehaze;
+  S.vignette=p.vignette;
 
-    hsl.s=clamp(hsl.s,0,100);
-    hsl.l=clamp(hsl.l,0,100);
-
-    return hslToRgb(hsl.h,hsl.s,hsl.l);
+  return imgData;
 }
 
-function adjustTone(v){
-    let x=v/255;
+function sharpen(c,w,h,a){
 
-    const exposure=state.light.exposure/100;
-    x*=Math.pow(2,exposure);
+  if(a<1){
+    return;
+  }
 
-    const contrast=state.light.contrast/100;
-    x=(x-.5)*(1+contrast)+.5;
+  const s=c.getImageData(0,0,w,h);
+  const o=c.createImageData(w,h);
 
-    if(x>.5){
-        x+=state.light.highlights/100*(x-.5)*1.5;
-        x+=state.light.whites/100*(x-.75);
-    }else{
-        x+=state.light.shadows/100*(.5-x)*1.5;
-        x+=state.light.blacks/100*(x-.25);
-    }
+  const d=s.data;
+  const q=o.data;
 
-    return clamp(x*255);
-}
+  const k=a/100*.7;
 
-function localMaskWeight(x,y){
-    const m=state.mask;
+  for(let y=1;y<h-1;y++){
 
-    if(m.type==="None")return 0;
+    for(let x=1;x<w-1;x++){
 
-    const cx=m.x/100;
-    const cy=m.y/100;
+      const i=(y*w+x)*4;
 
-    if(m.type==="Radial"){
-        const rx=Math.max(.02,m.width/200);
-        const ry=Math.max(.02,m.height/200);
+      for(let ch=0;ch<3;ch++){
 
-        const d=Math.sqrt(
-            Math.pow((x-cx)/rx,2)+
-            Math.pow((y-cy)/ry,2)
+        q[i+ch]=clamp(
+          d[i+ch]*(1+4*k)
+          -
+          k*(
+            d[i-4+ch]+
+            d[i+4+ch]+
+            d[i-w*4+ch]+
+            d[i+w*4+ch]
+          ),
+          0,
+          255
         );
+      }
 
-        const feather=Math.max(.01,m.feather/100);
-
-        return clamp01(
-            (1-d)/(feather+.001)
-        )*(m.amount/100);
+      q[i+3]=255;
     }
+  }
 
-    const distance=Math.abs(y-cy);
-    const size=Math.max(.05,m.height/100);
-
-    return clamp01(
-        1-distance/size
-    )*(m.amount/100);
+  c.putImageData(o,0,0);
 }
 
-function pixelBlur(data,w,h,radius){
-    if(radius<=0)return data;
+function grain(c,w,h,a){
 
-    const out=new Uint8ClampedArray(data.length);
-    const r=Math.max(1,Math.round(radius));
+  if(!a){
+    return;
+  }
 
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            let sr=0,sg=0,sb=0,count=0;
+  const q=c.getImageData(0,0,w,h);
+  const d=q.data;
 
-            for(let yy=Math.max(0,y-r);yy<=Math.min(h-1,y+r);yy+=2){
-                for(let xx=Math.max(0,x-r);xx<=Math.min(w-1,x+r);xx+=2){
-                    const i=(yy*w+xx)*4;
-                    sr+=data[i];
-                    sg+=data[i+1];
-                    sb+=data[i+2];
-                    count++;
-                }
-            }
+  const n=a/100*28;
 
-            const i=(y*w+x)*4;
-            out[i]=sr/count;
-            out[i+1]=sg/count;
-            out[i+2]=sb/count;
-            out[i+3]=data[i+3];
-        }
-    }
+  for(let i=0;i<d.length;i+=4){
 
-    return out;
+    const x=(Math.random()-.5)*n;
+
+    d[i]=clamp(d[i]+x,0,255);
+    d[i+1]=clamp(d[i+1]+x,0,255);
+    d[i+2]=clamp(d[i+2]+x,0,255);
+  }
+
+  c.putImageData(q,0,0);
 }
 
-function sharpen(data,w,h,amount){
-    if(amount<=0)return data;
+let retouch=[];
 
-    const out=new Uint8ClampedArray(data);
-    const a=amount/100;
+function retouchDraw(c,w,h){
 
-    for(let y=1;y<h-1;y++){
-        for(let x=1;x<w-1;x++){
-            const i=(y*w+x)*4;
+  for(const p of retouch){
 
-            for(let c=0;c<3;c++){
-                const center=data[i+c];
+    const r=p.r;
+    const blur=Math.max(2,r/5);
 
-                const avg=(
-                    data[((y-1)*w+x)*4+c]+
-                    data[((y+1)*w+x)*4+c]+
-                    data[(y*w+x-1)*4+c]+
-                    data[(y*w+x+1)*4+c]
-                )/4;
+    c.save();
 
-                out[i+c]=clamp(center+(center-avg)*a*1.5);
-            }
-        }
-    }
-
-    return out;
-}
-
-function applyTextureClarity(data,w,h){
-    const amount=
-        (state.effects.texture+state.effects.clarity+
-        state.mask.texture+state.mask.clarity)/100;
-
-    if(Math.abs(amount)<.001)return data;
-
-    const out=new Uint8ClampedArray(data);
-
-    for(let y=1;y<h-1;y++){
-        for(let x=1;x<w-1;x++){
-            const i=(y*w+x)*4;
-
-            for(let c=0;c<3;c++){
-                const avg=(
-                    data[((y-1)*w+x)*4+c]+
-                    data[((y+1)*w+x)*4+c]+
-                    data[(y*w+x-1)*4+c]+
-                    data[(y*w+x+1)*4+c]
-                )/4;
-
-                out[i+c]=clamp(
-                    data[i+c]+
-                    (data[i+c]-avg)*amount*.75
-                );
-            }
-        }
-    }
-
-    return out;
-}
-
-function applyBlurFocus(data,w,h){
-    if(state.blur.amount<=0)return data;
-
-    const radius=Math.max(
-        1,
-        Math.round(state.blur.amount/10)
+    c.beginPath();
+    c.arc(
+      p.x,
+      p.y,
+      r,
+      0,
+      Math.PI*2
     );
 
-    const blurred=pixelBlur(data,w,h,radius);
-    const out=new Uint8ClampedArray(data);
+    c.clip();
 
-    const fx=state.blur.focusX/100;
-    const fy=state.blur.focusY/100;
-    const fs=Math.max(.02,state.blur.focusSize/100);
-    const feather=Math.max(.02,state.blur.feather/100);
+    c.filter=`blur(${blur}px)`;
 
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            const nx=x/w;
-            const ny=y/h;
+    const cp=document.createElement('canvas');
 
-            const d=Math.sqrt(
-                Math.pow((nx-fx),2)+
-                Math.pow((ny-fy),2)
-            );
+    cp.width=w;
+    cp.height=h;
 
-            const t=clamp01(
-                (d-fs)/(feather+.001)
-            );
+    cp
+      .getContext('2d')
+      .drawImage(c.canvas,0,0);
 
-            const i=(y*w+x)*4;
+    c.drawImage(cp,0,0);
 
-            out[i]=lerp(data[i],blurred[i],t);
-            out[i+1]=lerp(data[i+1],blurred[i+1],t);
-            out[i+2]=lerp(data[i+2],blurred[i+2],t);
-        }
-    }
-
-    return out;
+    c.restore();
+  }
 }
 
-function applyVignette(data,w,h,amount,midpoint,feather,roundness){
-    if(Math.abs(amount)<.01)return data;
+function updateZoomLabel(){
 
-    const out=new Uint8ClampedArray(data);
-
-    const a=amount/100;
-    const m=midpoint/100;
-    const f=Math.max(.05,feather/100);
-    const r=roundness/100;
-
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            const nx=(x/w-.5)*2;
-            const ny=(y/h-.5)*2;
-
-            const d=Math.sqrt(
-                Math.pow(nx*(1+r*.35),2)+
-                Math.pow(ny*(1-r*.35),2)
-            )/Math.SQRT2;
-
-            let t=clamp01((d-m)/f);
-            t*=t;
-
-            const factor=1-a*t;
-
-            const i=(y*w+x)*4;
-
-            out[i]=clamp(out[i]*factor);
-            out[i+1]=clamp(out[i+1]*factor);
-            out[i+2]=clamp(out[i+2]*factor);
-        }
-    }
-
-    return out;
+  $('zlabel').textContent=
+    Math.round(zoom*100)+'%';
 }
 
-function applyGrain(data,w,h){
-    const amount=state.effects.grain/100;
+function applyZoomVisual(){
 
-    if(amount<=0)return data;
+  const transform=
+    `scale(${zoom})`;
 
-    const out=new Uint8ClampedArray(data);
+  C.style.transform=transform;
+  O.style.transform=transform;
 
-    const rough=state.effects.grainRoughness/100;
-    const size=Math.max(1,state.effects.grainSize/15);
-
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            const i=(y*w+x)*4;
-
-            const n=
-                (Math.random()-.5)*
-                255*
-                amount*
-                (.35+.65*rough)/
-                size;
-
-            out[i]=clamp(data[i]+n);
-            out[i+1]=clamp(data[i+1]+n);
-            out[i+2]=clamp(data[i+2]+n);
-        }
-    }
-
-    return out;
-}
-
-function applyDefringe(data,w,h,amount){
-    if(amount<=0)return data;
-
-    const out=new Uint8ClampedArray(data);
-    const a=amount/100;
-
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            const i=(y*w+x)*4;
-
-            const max=Math.max(data[i],data[i+1],data[i+2]);
-            const min=Math.min(data[i],data[i+1],data[i+2]);
-
-            if(max-min>45){
-                out[i]=lerp(data[i],data[i+1],a*.15);
-                out[i+2]=lerp(data[i+2],data[i+1],a*.15);
-            }
-        }
-    }
-
-    return out;
-}
-
-function applyRetouch(data,w,h){
-    if(!state.retouch.strokes.length)return data;
-
-    const out=new Uint8ClampedArray(data);
-
-    state.retouch.strokes.forEach(stroke=>{
-        stroke.points.forEach(p=>{
-            const r=stroke.size;
-            const minX=Math.max(0,Math.floor(p.x-r));
-            const maxX=Math.min(w-1,Math.ceil(p.x+r));
-            const minY=Math.max(0,Math.floor(p.y-r));
-            const maxY=Math.min(h-1,Math.ceil(p.y+r));
-
-            for(let y=minY;y<=maxY;y++){
-                for(let x=minX;x<=maxX;x++){
-                    const d=Math.hypot(x-p.x,y-p.y);
-
-                    if(d>r)continue;
-
-                    const t=1-d/r;
-                    const fall=Math.pow(t,1+stroke.feather/50);
-                    const i=(y*w+x)*4;
-
-                    out[i]=lerp(out[i],128,fall*stroke.opacity/100*.18);
-                    out[i+1]=lerp(out[i+1],128,fall*stroke.opacity/100*.18);
-                    out[i+2]=lerp(out[i+2],128,fall*stroke.opacity/100*.18);
-                }
-            }
-        });
-    });
-
-    return out;
-}
-
-function processImage(){
-    const w=imageCanvas.width;
-    const h=imageCanvas.height;
-
-    if(!state.sourceCanvas)return;
-
-    const source=state.sourceCanvas
-        .getContext("2d")
-        .getImageData(0,0,w,h);
-
-    let data=new Uint8ClampedArray(source.data);
-
-    if(state.before)return data;
-
-    const pixelCount=w*h;
-
-    for(let i=0;i<data.length;i+=4){
-        let r=data[i];
-        let g=data[i+1];
-        let b=data[i+2];
-
-        r=adjustTone(r);
-        g=adjustTone(g);
-        b=adjustTone(b);
-
-        r+=state.color.temperature*0.45;
-        b-=state.color.temperature*0.45;
-
-        g+=state.color.tint*.25;
-        r-=state.color.tint*.1;
-        b-=state.color.tint*.1;
-
-        const rgb=applyColorMix(r,g,b);
-
-        r=rgb.r;
-        g=rgb.g;
-        b=rgb.b;
-
-        const x=(i/4)%w/w;
-        const y=Math.floor((i/4)/w)/h;
-
-        const mw=localMaskWeight(x,y);
-
-        if(mw>0){
-            r*=1+(state.mask.exposure/100)*mw;
-            g*=1+(state.mask.exposure/100)*mw;
-            b*=1+(state.mask.exposure/100)*mw;
-
-            const mhsl=rgbToHsl(r,g,b);
-
-            mhsl.h+=state.mask.hue*mw;
-            mhsl.s+=state.mask.saturation*mw;
-
-            const mRgb=hslToRgb(
-                mhsl.h,
-                mhsl.s,
-                mhsl.l
-            );
-
-            r=lerp(r,mRgb.r,mw);
-            g=lerp(g,mRgb.g,mw);
-            b=lerp(b,mRgb.b,mw);
-
-            const mc=1+(state.mask.contrast/100)*mw;
-
-            r=(r-128)*mc+128;
-            g=(g-128)*mc+128;
-            b=(b-128)*mc+128;
-        }
-
-        data[i]=clamp(r);
-        data[i+1]=clamp(g);
-        data[i+2]=clamp(b);
-    }
-
-    data=applyTextureClarity(data,w,h);
-
-    const noise=state.detail.noiseReduction/100;
-
-    if(noise>0){
-        data=pixelBlur(
-            data,
-            w,
-            h,
-            1+noise*2
-        );
-    }
-
-    const cnoise=state.detail.colorNoise/100;
-
-    if(cnoise>0){
-        for(let i=0;i<data.length;i+=4){
-            const avg=(data[i]+data[i+1]+data[i+2])/3;
-
-            data[i]=lerp(data[i],avg,cnoise);
-            data[i+1]=lerp(data[i+1],avg,cnoise);
-            data[i+2]=lerp(data[i+2],avg,cnoise);
-        }
-    }
-
-    data=applyDefringe(
-        data,
-        w,
-        h,
-        state.optics.defringe
-    );
-
-    const sharp=
-        state.detail.sharpening+
-        state.effects.texture*.2+
-        state.effects.clarity*.25;
-
-    if(sharp>0){
-        data=sharpen(
-            data,
-            w,
-            h,
-            Math.min(100,sharp)
-        );
-    }
-
-    data=applyBlurFocus(data,w,h);
-
-    data=applyVignette(
-        data,
-        w,
-        h,
-        state.effects.vignette+
-        state.optics.vignette,
-        state.effects.midpoint,
-        state.effects.feather,
-        state.effects.roundness
-    );
-
-    data=applyGrain(data,w,h);
-
-    return data;
+  updateZoomLabel();
 }
 
 function render(){
-    if(!state.sourceCanvas)return;
 
-    const w=imageCanvas.width;
-    const h=imageCanvas.height;
+  if(!img){
+    return;
+  }
 
-    const data=processImage();
+  $('status').textContent='Rendering…';
 
-    const output=imageCtx.createImageData(w,h);
-    output.data.set(data);
+  const a=
+    (S.rotate+S.straighten)*
+    Math.PI/180;
 
-    imageCtx.putImageData(output,0,0);
+  const W=src.width;
+  const H=src.height;
 
-    renderOverlays();
-    updateTransform();
+  const sw=
+    (S.rotate%180)
+    ?H
+    :W;
 
-    if(state.tool==="crop"&&state.crop.active){
-        $("imageCanvas").style.filter="none";
+  const sh=
+    (S.rotate%180)
+    ?W
+    :H;
+
+  const t=document.createElement('canvas');
+
+  t.width=sw;
+  t.height=sh;
+
+  const tc=t.getContext('2d');
+
+  tc.translate(
+    sw/2,
+    sh/2
+  );
+
+  tc.rotate(a);
+
+  tc.scale(
+    S.flipX?-1:1,
+    S.flipY?-1:1
+  );
+
+  tc.drawImage(
+    src,
+    -W/2,
+    -H/2
+  );
+
+  let cw=sw;
+  let ch=sh;
+  let cx=0;
+  let cy=0;
+
+  if(S.ratio!=='original'){
+
+    const [
+      rw,
+      rh
+    ]=S.ratio
+      .split(':')
+      .map(Number);
+
+    const tr=rw/rh;
+    const cr=sw/sh;
+
+    if(cr>tr){
+
+      cw=Math.round(sh*tr);
+      cx=(sw-cw)/2;
+
+    }else{
+
+      ch=Math.round(sw/tr);
+      cy=(sh-ch)/2;
     }
+  }
+
+  /*
+    Smaller preview buffer keeps mobile editing smoother.
+    The source image itself is still kept separately.
+  */
+
+  const max=
+    innerWidth<700
+    ?620
+    :900;
+
+  const k=
+    Math.min(
+      1,
+      max/Math.max(cw,ch)
+    );
+
+  const w=
+    Math.max(
+      1,
+      Math.round(cw*k)
+    );
+
+  const h=
+    Math.max(
+      1,
+      Math.round(ch*k)
+    );
+
+  C.width=w;
+  C.height=h;
+
+  ctx.clearRect(
+    0,
+    0,
+    w,
+    h
+  );
+
+  ctx.drawImage(
+    t,
+    cx,
+    cy,
+    cw,
+    ch,
+    0,
+    0,
+    w,
+    h
+  );
+
+  let data=
+    ctx.getImageData(
+      0,
+      0,
+      w,
+      h
+    );
+
+  if(showBefore){
+
+    ctx.clearRect(
+      0,
+      0,
+      w,
+      h
+    );
+
+    ctx.drawImage(
+      src,
+      0,
+      0,
+      w,
+      h
+    );
+
+    showOverlay();
+
+    applyZoomVisual();
+
+    $('status').textContent='Original';
+
+    return;
+  }
+
+  data=
+    applyPixel(
+      data,
+      w,
+      h
+    );
+
+  ctx.putImageData(
+    data,
+    0,
+    0
+  );
+
+  if(S.sharp){
+    sharpen(
+      ctx,
+      w,
+      h,
+      S.sharp
+    );
+  }
+
+  if(S.noise){
+
+    ctx.filter=
+      `blur(${S.noise/50}px)`;
+
+    const cp=
+      document.createElement('canvas');
+
+    cp.width=w;
+    cp.height=h;
+
+    cp
+      .getContext('2d')
+      .drawImage(
+        C,
+        0,
+        0
+      );
+
+    ctx.filter='none';
+
+    ctx.drawImage(
+      cp,
+      0,
+      0
+    );
+  }
+
+  if(S.grain){
+    grain(
+      ctx,
+      w,
+      h,
+      S.grain
+    );
+  }
+
+  if(S.blur){
+
+    ctx.filter=
+      `blur(${Math.min(10,S.blur/10)}px)`;
+
+    const cp=
+      document.createElement('canvas');
+
+    cp.width=w;
+    cp.height=h;
+
+    cp
+      .getContext('2d')
+      .drawImage(
+        C,
+        0,
+        0
+      );
+
+    ctx.filter='none';
+
+    ctx.clearRect(
+      0,
+      0,
+      w,
+      h
+    );
+
+    ctx.drawImage(
+      cp,
+      0,
+      0
+    );
+  }
+
+  retouchDraw(
+    ctx,
+    w,
+    h
+  );
+
+  showOverlay();
+
+  O.style.width=
+    C.clientWidth+'px';
+
+  O.style.height=
+    C.clientHeight+'px';
+
+  applyZoomVisual();
+
+  $('status').textContent='Ready';
+}
+
+function showOverlay(){
+
+  O.width=C.width;
+  O.height=C.height;
+
+  ox.clearRect(
+    0,
+    0,
+    O.width,
+    O.height
+  );
+
+  O.style.width=
+    C.clientWidth+'px';
+
+  O.style.height=
+    C.clientHeight+'px';
 }
 
 function exportImage(){
-    if(!state.sourceCanvas){
-        alert("Please open an image first.");
-        return;
-    }
 
-    setStatus("Preparing export...");
+  if(!img){
 
-    const format=$("exportFormat").value;
-    const quality=Number($("exportQuality").value)/100;
-    const size=$("exportSize").value;
-    const include=$("includeOverlays").checked;
-
-    const source=document.createElement("canvas");
-
-    let w=imageCanvas.width;
-    let h=imageCanvas.height;
-
-    if(size!=="original"){
-        const max=Number(size);
-        const scale=Math.min(1,max/Math.max(w,h));
-        w=Math.max(1,Math.round(w*scale));
-        h=Math.max(1,Math.round(h*scale));
-    }
-
-    source.width=w;
-    source.height=h;
-
-    const ctx=source.getContext("2d");
-
-    const temp=document.createElement("canvas");
-    temp.width=imageCanvas.width;
-    temp.height=imageCanvas.height;
-
-    const tctx=temp.getContext("2d");
-
-    const processed=processImage();
-
-    const id=tctx.createImageData(
-        imageCanvas.width,
-        imageCanvas.height
+    alert(
+      'Please open a photo first.'
     );
 
-    id.data.set(processed);
-    tctx.putImageData(id,0,0);
+    return;
+  }
 
-    ctx.drawImage(temp,0,0,w,h);
+  $('status').textContent=
+    'Exporting…';
 
-    if(include){
-        ctx.drawImage(
-            overlayCanvas,
-            0,0,
-            overlayCanvas.width,
-            overlayCanvas.height,
-            0,0,w,h
-        );
-    }
+  const max=
+    +$('size').value ||
+    Math.max(
+      src.width,
+      src.height
+    );
 
-    source.toBlob(blob=>{
-        if(!blob){
-            setStatus("Export failed");
-            return;
-        }
+  const old=zoom;
 
-        const ext=
-            format==="image/png"?"png":
-            format==="image/webp"?"webp":"jpg";
+  zoom=1;
 
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement("a");
+  render();
 
-        a.href=url;
-        a.download=`toolora-edited-${Date.now()}.${ext}`;
+  const k=
+    Math.min(
+      1,
+      max/
+      Math.max(
+        C.width,
+        C.height
+      )
+    );
 
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+  const o=
+    document.createElement('canvas');
 
-        setTimeout(()=>{
-            URL.revokeObjectURL(url);
-        },1000);
+  o.width=
+    Math.max(
+      1,
+      Math.round(C.width*k)
+    );
 
-        setStatus("Export complete");
-    },format,quality);
+  o.height=
+    Math.max(
+      1,
+      Math.round(C.height*k)
+    );
+
+  o
+    .getContext('2d')
+    .drawImage(
+      C,
+      0,
+      0,
+      o.width,
+      o.height
+    );
+
+  const type=
+    $('format').value;
+
+  const q=
+    +$('quality').value;
+
+  const ext=
+    type==='image/png'
+    ?'png'
+    :type==='image/webp'
+    ?'webp'
+    :'jpg';
+
+  const a=
+    document.createElement('a');
+
+  a.download=
+    `toolora-edited-${Date.now()}.${ext}`;
+
+  a.href=
+    o.toDataURL(
+      type,
+      q
+    );
+
+  a.click();
+
+  zoom=old;
+
+  render();
+
+  $('status').textContent=
+    'Export complete';
 }
 
-document.addEventListener("keydown",e=>{
-    const key=e.key.toLowerCase();
+$('tabs').addEventListener(
+  'click',
+  e=>{
+    const b=
+      e.target.closest('[data-tool]');
 
-    if((e.ctrlKey||e.metaKey)&&key==="z"){
-        e.preventDefault();
-
-        if(e.shiftKey)redo();
-        else undo();
+    if(!b){
+      return;
     }
 
-    if((e.ctrlKey||e.metaKey)&&key==="y"){
-        e.preventDefault();
-        redo();
+    active=b.dataset.tool;
+
+    document
+      .querySelectorAll('#tabs button')
+      .forEach(x=>
+        x.classList.toggle(
+          'active',
+          x===b
+        )
+      );
+
+    panel();
+  }
+);
+
+$('reset').onclick=()=>{
+  push();
+  resetState(true);
+};
+
+$('undo').onclick=()=>{
+  if(history.length){
+
+    future.push(snap());
+
+    restore(
+      history.pop()
+    );
+  }
+};
+
+$('redo').onclick=()=>{
+  if(future.length){
+
+    history.push(snap());
+
+    restore(
+      future.pop()
+    );
+  }
+};
+
+$('before').onclick=()=>{
+
+  showBefore=!showBefore;
+
+  $('beforeBadge').style.display=
+    showBefore
+    ?'block'
+    :'none';
+
+  render();
+};
+
+$('zout').onclick=()=>{
+
+  zoom=
+    clamp(
+      zoom-.1,
+      .5,
+      4
+    );
+
+  applyZoomVisual();
+};
+
+$('zin').onclick=()=>{
+
+  zoom=
+    clamp(
+      zoom+.1,
+      .5,
+      4
+    );
+
+  applyZoomVisual();
+};
+
+$('fit').onclick=()=>{
+
+  zoom=1;
+
+  applyZoomVisual();
+};
+
+$('full').onclick=()=>{
+  $('stage').requestFullscreen?.();
+};
+
+$('stage').ondblclick=()=>{
+  $('before').click();
+};
+
+document.addEventListener(
+  'keydown',
+  e=>{
+
+    if(
+      (e.ctrlKey||e.metaKey) &&
+      e.key.toLowerCase()==='z'
+    ){
+
+      e.preventDefault();
+      $('undo').click();
     }
-});
 
-window.addEventListener("resize",()=>{
-    if(state.sourceCanvas)updateTransform();
-});
+    if(
+      (e.ctrlKey||e.metaKey) &&
+      e.shiftKey &&
+      e.key.toLowerCase()==='z'
+    ){
 
-switchTool("light");
-updateHistoryButtons();
+      e.preventDefault();
+      $('redo').click();
+    }
+  }
+);
+
+
+/*
+  Touch zoom and retouch share the same fixed photo stage.
+  The page never scrolls while interacting with the photo.
+*/
+
+let drawing=false;
+
+const pointers=new Map();
+
+let pinchStartDistance=0;
+let pinchStartZoom=1;
+let pinchActive=false;
+
+function pointerDistance(a,b){
+
+  return Math.hypot(
+    a.x-b.x,
+    a.y-b.y
+  );
+}
+
+$('stage').addEventListener(
+  'pointerdown',
+  e=>{
+
+    if(!img){
+      return;
+    }
+
+    e.preventDefault();
+
+    pointers.set(
+      e.pointerId,
+      {
+        x:e.clientX,
+        y:e.clientY
+      }
+    );
+
+    /*
+      Second finger starts pinch mode.
+      Retouch drawing is cancelled so two fingers
+      can never accidentally paint on the image.
+    */
+
+    if(pointers.size===2){
+
+      if(drawing){
+
+        drawing=false;
+
+        if(retouch.length){
+          retouch.pop();
+        }
+      }
+
+      pinchActive=true;
+
+      const pts=[
+        ...pointers.values()
+      ];
+
+      pinchStartDistance=
+        Math.max(
+          1,
+          pointerDistance(
+            pts[0],
+            pts[1]
+          )
+        );
+
+      pinchStartZoom=zoom;
+
+      return;
+    }
+
+    if(active==='retouch'){
+
+      drawing=true;
+
+      try{
+        $('stage')
+          .setPointerCapture(
+            e.pointerId
+          );
+      }catch(_){}
+
+      addRetouch(e);
+    }
+  }
+);
+
+$('stage').addEventListener(
+  'pointermove',
+  e=>{
+
+    if(!img){
+      return;
+    }
+
+    if(
+      pointers.has(
+        e.pointerId
+      )
+    ){
+
+      pointers.set(
+        e.pointerId,
+        {
+          x:e.clientX,
+          y:e.clientY
+        }
+      );
+    }
+
+    /*
+      IMPORTANT:
+      Pinch zoom changes only CSS transform.
+      It does NOT run the heavy photo render.
+      This makes finger zoom much smoother.
+    */
+
+    if(
+      pinchActive &&
+      pointers.size>=2
+    ){
+
+      const pts=[
+        ...pointers.values()
+      ];
+
+      const d=
+        Math.max(
+          1,
+          pointerDistance(
+            pts[0],
+            pts[1]
+          )
+        );
+
+      zoom=
+        clamp(
+          pinchStartZoom*
+          (d/pinchStartDistance),
+          .5,
+          4
+        );
+
+      applyZoomVisual();
+
+      return;
+    }
+
+    if(drawing){
+      addRetouch(e);
+    }
+  }
+);
+
+function endPointer(e){
+
+  pointers.delete(
+    e.pointerId
+  );
+
+  if(pointers.size<2){
+    pinchActive=false;
+  }
+
+  drawing=false;
+}
+
+$('stage').addEventListener(
+  'pointerup',
+  endPointer
+);
+
+$('stage').addEventListener(
+  'pointercancel',
+  endPointer
+);
+
+function addRetouch(e){
+
+  const r=
+    C.getBoundingClientRect();
+
+  if(!r.width||!r.height){
+    return;
+  }
+
+  const x=
+    (e.clientX-r.left)/
+    r.width*
+    C.width;
+
+  const y=
+    (e.clientY-r.top)/
+    r.height*
+    C.height;
+
+  retouch.push({
+    x,
+    y,
+    r:Math.max(
+      3,
+      S.retouchSize*
+      C.width/
+      1000
+    )
+  });
+
+  schedule();
+}
+
+updateZoomLabel();
+
+
+Object.assign(
+  S,
+  {
+    gradeShadow:0,
+    gradeShadowSat:0,
+    gradeMid:0,
+    gradeMidSat:0,
+    gradeHigh:0,
+    gradeHighSat:0,
+    gradeBlend:50,
+    gradeBalance:0,
+    straighten:0
+  }
+);
+
+function init(){
+
+  document
+    .querySelector(
+      '#tabs button[data-tool="light"]'
+    )
+    .classList.add('active');
+
+  panel();
+}
+
+init();
+
+})();
