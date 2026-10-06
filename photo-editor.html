@@ -1,144 +1,169 @@
-<!-- FILE: index.html -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0d0f12">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0d10">
 <title>Toolora Photo Editor</title>
-<link rel="stylesheet" href="photo-editor.css">
+<link rel="stylesheet" href="css/photo-editor.css">
 </head>
 <body>
+<div class="app" id="app">
 
 <header class="topbar">
-  <button id="openBtn" class="brand" aria-label="Open photo">Toolora</button>
-
-  <div class="file-meta">
-    <strong id="fileName">No photo</strong>
-    <span id="fileInfo">Open an image to begin</span>
+  <div class="brand">
+    <span class="brand-mark">T</span>
+    <span>Toolora</span>
   </div>
 
   <div class="top-actions">
-    <button id="undoBtn" class="icon-btn" title="Undo" disabled>↶</button>
-    <button id="redoBtn" class="icon-btn" title="Redo" disabled>↷</button>
-    <button id="beforeBtn" class="icon-btn" title="Hold to preview original">◉</button>
-    <button id="exportTop" class="export-btn">Export</button>
+    <button class="icon-btn" id="openBtn" title="Open photo">↥</button>
+    <button class="icon-btn" id="undoBtn" title="Undo">↶</button>
+    <button class="icon-btn" id="redoBtn" title="Redo">↷</button>
+    <button class="icon-btn" id="beforeBtn" title="Hold to view original">◉</button>
+    <button class="icon-btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
   </div>
+
+  <input id="fileInput" type="file" accept="image/*" hidden>
 </header>
 
-<main class="editor-shell">
+<main class="workspace">
 
-  <section class="preview-area">
+  <section class="viewer-shell">
 
-    <div id="stage" class="stage">
+    <div class="viewer-head">
+      <div class="file-meta">
+        <strong id="fileName">No photo</strong>
+        <span id="fileInfo">Open an image to begin</span>
+      </div>
 
-      <canvas id="photoCanvas"></canvas>
-      <canvas id="overlayCanvas"></canvas>
+      <div class="viewer-actions">
+        <button id="zoomOut">−</button>
+        <span id="zoomLabel">Fit</span>
+        <button id="zoomIn">+</button>
+        <button id="fitBtn">Fit</button>
+        <button id="oneBtn">100%</button>
+      </div>
+    </div>
 
-      <div id="emptyState" class="empty-state">
+    <div class="stage" id="stage">
+
+      <div class="empty-state" id="emptyState">
         <div class="empty-icon">＋</div>
         <h1>Open a photo</h1>
         <p>Professional editing, directly in your browser.</p>
-        <button id="openMain" class="primary">Open Photo</button>
-        <p class="drop-hint">You can also drag and drop an image here.</p>
+        <button class="primary" id="openEmpty">Open Photo</button>
+        <small>Drag and drop an image here</small>
       </div>
 
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="photoCanvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+      </div>
+
+      <div class="stage-toast" id="toast"></div>
     </div>
 
-    <div class="zoom-bar">
-      <button data-zoom="out">−</button>
-      <span id="zoomLabel">100%</span>
-      <button data-zoom="in">+</button>
-      <button data-zoom="fit">Fit</button>
-      <button data-zoom="1">1:1</button>
+    <div class="viewer-foot">
+      <span id="editCount">0 edits</span>
+      <span id="statusText">Ready</span>
     </div>
 
   </section>
 
-  <aside class="control-area">
-    <div id="panel" class="panel"></div>
-  </aside>
+  <section class="controls-shell">
+
+    <div class="control-header">
+      <div>
+        <span class="eyebrow" id="toolEyebrow">Adjust</span>
+        <h2 id="toolTitle">Light</h2>
+        <p id="toolDesc">Tune the overall brightness and contrast.</p>
+      </div>
+
+      <button class="text-btn" id="resetTool">Reset</button>
+    </div>
+
+    <div class="control-body" id="controlBody"></div>
+
+  </section>
 
 </main>
 
-<nav id="toolNav" class="tool-nav" aria-label="Editing tools">
+<nav class="tool-tabs" id="toolTabs">
 
-  <button data-tool="light">
-    ☼
-    <span>Light</span>
+  <button class="tool-tab active" data-tool="light">
+    <span>☼</span>
+    <small>Light</small>
   </button>
 
-  <button data-tool="color">
-    ◐
-    <span>Color</span>
+  <button class="tool-tab" data-tool="color">
+    <span>◐</span>
+    <small>Color</small>
   </button>
 
-  <button data-tool="effects">
-    ✦
-    <span>Effects</span>
+  <button class="tool-tab" data-tool="effects">
+    <span>✦</span>
+    <small>Effects</small>
   </button>
 
-  <button data-tool="detail">
-    ◌
-    <span>Detail</span>
+  <button class="tool-tab" data-tool="detail">
+    <span>◌</span>
+    <small>Detail</small>
   </button>
 
-  <button data-tool="crop">
-    □
-    <span>Crop</span>
+  <button class="tool-tab" data-tool="crop">
+    <span>⌗</span>
+    <small>Crop</small>
   </button>
 
-  <button data-tool="heal">
-    ✚
-    <span>Heal</span>
+  <button class="tool-tab" data-tool="retouch">
+    <span>✚</span>
+    <small>Heal</small>
   </button>
 
-  <button data-tool="mask">
-    ◉
-    <span>Mask</span>
+  <button class="tool-tab" data-tool="mask">
+    <span>◉</span>
+    <small>Mask</small>
   </button>
 
-  <button data-tool="text">
-    T
-    <span>Text</span>
+  <button class="tool-tab" data-tool="text">
+    <span>T</span>
+    <small>Text</small>
   </button>
 
-  <button data-tool="draw">
-    ✎
-    <span>Draw</span>
+  <button class="tool-tab" data-tool="draw">
+    <span>✎</span>
+    <small>Draw</small>
   </button>
 
-  <button data-tool="blur">
-    ◒
-    <span>Blur</span>
+  <button class="tool-tab" data-tool="blur">
+    <span>◍</span>
+    <small>Blur</small>
   </button>
 
-  <button data-tool="presets">
-    ◆
-    <span>Presets</span>
+  <button class="tool-tab" data-tool="presets">
+    <span>◆</span>
+    <small>Presets</small>
   </button>
 
-  <button data-tool="layers">
-    ▤
-    <span>Layers</span>
+  <button class="tool-tab" data-tool="layers">
+    <span>▤</span>
+    <small>Layers</small>
   </button>
 
-  <button data-tool="export">
-    ⇩
-    <span>Export</span>
+  <button class="tool-tab" data-tool="export">
+    <span>⇩</span>
+    <small>Export</small>
   </button>
 
 </nav>
 
-<input
-  id="fileInput"
-  type="file"
-  accept="image/jpeg,image/png,image/webp,image/avif"
-  hidden
->
+<div class="drop-overlay" id="dropOverlay">
+  Drop image to open
+</div>
 
-<div id="toast" class="toast"></div>
+</div>
 
-<script src="photo-editor.js"></script>
+<script src="js/photo-editor.js"></script>
 </body>
 </html>
