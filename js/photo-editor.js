@@ -13,7 +13,13 @@ const ctx = canvas.getContext('2d',{
   willReadFrequently:true
 });
 
+ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = 'high';
+
 const octx = overlay.getContext('2d');
+
+octx.imageSmoothingEnabled = true;
+octx.imageSmoothingQuality = 'high';
 
 const stage = $('stage');
 const wrap = $('canvasWrap');
@@ -29,6 +35,21 @@ let zoom = 1;
 let panX = 0;
 let panY = 0;
 let fitScale = 1;
+
+let workCanvas = null;
+let workCtx = null;
+let canvasImageW = 0;
+let canvasImageH = 0;
+let canvasMode = '';
+let renderFrame = 0;
+let histogramFrame = 0;
+let histogramQueued = false;
+let histogramSampleCanvas = null;
+let histogramSampleCtx = null;
+
+const PREVIEW_MAX_EDGE = 1100;
+const INTERACTIVE_MAX_EDGE = 760;
+const MAX_ZOOM = 5;
 
 let crop = {
   x:0,
@@ -1484,7 +1505,7 @@ function renderPanel(){
   syncPanelValues();
 
   if(active === 'light'){
-    setTimeout(drawHistogram,0);
+    scheduleHistogram();
   }
 
 }
@@ -1510,10 +1531,44 @@ function bindPanel(){
     .querySelectorAll('.range')
     .forEach(el => {
 
+      let sliderHistoryPushed = false;
+
       el.addEventListener(
         'pointerdown',
-        () => pushHistory(),
-        {once:true}
+        () => {
+
+          if(!sliderHistoryPushed){
+
+            pushHistory();
+            sliderHistoryPushed = true;
+
+          }
+
+        }
+      );
+
+      el.addEventListener(
+        'pointerup',
+        () => {
+
+          sliderHistoryPushed = false;
+
+          if(img)
+            render(false);
+
+        }
+      );
+
+      el.addEventListener(
+        'change',
+        () => {
+
+          sliderHistoryPushed = false;
+
+          if(img)
+            render(false);
+
+        }
       );
 
       el.addEventListener(
@@ -1554,7 +1609,7 @@ function bindPanel(){
 
           }
 
-          render();
+          scheduleRender(true);
           syncPanelValues();
 
         }
@@ -2435,10 +2490,16 @@ function fitToScreen(){
   if(!img) return;
 
   const sw =
-    stage.clientWidth * .9;
+    Math.max(
+      1,
+      stage.clientWidth * .96
+    );
 
   const sh =
-    stage.clientHeight * .88;
+    Math.max(
+      1,
+      stage.clientHeight * .94
+    );
 
   fitScale =
     Math.min(
@@ -2450,6 +2511,132 @@ function fitToScreen(){
   panX = 0;
   panY = 0;
 
+  updateTransform();
+
+}
+
+function getStageCenter(){
+
+  const r =
+    stage.getBoundingClientRect();
+
+  return {
+    x:r.left + r.width/2,
+    y:r.top + r.height/2
+  };
+
+}
+
+function getPanBounds(scale = fitScale*zoom){
+
+  const stageW = stage.clientWidth;
+  const stageH = stage.clientHeight;
+
+  const imageW = canvas.width * scale;
+  const imageH = canvas.height * scale;
+
+  return {
+    x:Math.max(
+      0,
+      (imageW-stageW)/2
+    ),
+    y:Math.max(
+      0,
+      (imageH-stageH)/2
+    )
+  };
+
+}
+
+function clampPan(){
+
+  const b =
+    getPanBounds();
+
+  panX =
+    clamp(
+      panX,
+      -b.x,
+      b.x
+    );
+
+  panY =
+    clamp(
+      panY,
+      -b.y,
+      b.y
+    );
+
+}
+
+function zoomAt(clientX,clientY,nextZoom){
+
+  if(!img) return;
+
+  const oldZoom = zoom;
+
+  nextZoom =
+    clamp(
+      nextZoom,
+      .5,
+      MAX_ZOOM
+    );
+
+  if(nextZoom === oldZoom)
+    return;
+
+  const center =
+    getStageCenter();
+
+  const oldScale =
+    fitScale * oldZoom;
+
+  const nextScale =
+    fitScale * nextZoom;
+
+  const localX =
+    (
+      clientX -
+      center.x -
+      panX
+    ) /
+    Math.max(
+      oldScale,
+      .000001
+    );
+
+  const localY =
+    (
+      clientY -
+      center.y -
+      panY
+    ) /
+    Math.max(
+      oldScale,
+      .000001
+    );
+
+  zoom = nextZoom;
+
+  panX =
+    clientX -
+    center.x -
+    localX * nextScale;
+
+  panY =
+    clientY -
+    center.y -
+    localY * nextScale;
+
+  if(zoom <= 1){
+
+    zoom = 1;
+    panX = 0;
+    panY = 0;
+
+  }
+
+  clampPan();
   updateTransform();
 
 }
@@ -2467,31 +2654,38 @@ function updateTransform(){
   wrap.style.height =
     h + 'px';
 
+  clampPan();
+
   wrap.style.transform =
-    `translate(${panX}px,${panY}px) scale(${fitScale*zoom})`;
+    `translate3d(${panX}px,${panY}px,0) scale(${fitScale*zoom})`;
 
   $('zoomLabel').textContent =
     Math.round(zoom*100) + '%';
 
 }
 
-function resizeCanvas(){
+function resizeCanvas(interactive = false){
 
   if(!img) return;
 
-  const max = 1200;
+  const max =
+    interactive
+    ? INTERACTIVE_MAX_EDGE
+    : PREVIEW_MAX_EDGE;
+
+  const longest =
+    Math.max(
+      img.naturalWidth,
+      img.naturalHeight
+    );
 
   const sc =
     Math.min(
       1,
-      max /
-      Math.max(
-        img.naturalWidth,
-        img.naturalHeight
-      )
+      max / longest
     );
 
-  canvas.width =
+  const W =
     Math.max(
       1,
       Math.round(
@@ -2499,7 +2693,7 @@ function resizeCanvas(){
       )
     );
 
-  canvas.height =
+  const H =
     Math.max(
       1,
       Math.round(
@@ -2507,19 +2701,87 @@ function resizeCanvas(){
       )
     );
 
-  overlay.width =
-    canvas.width;
+  const mode =
+    `${W}x${H}`;
 
-  overlay.height =
-    canvas.height;
+  if(
+    canvasImageW === W &&
+    canvasImageH === H &&
+    canvasMode === mode
+  ){
+    return;
+  }
+
+  canvas.width = W;
+  canvas.height = H;
+
+  overlay.width = W;
+  overlay.height = H;
+
+  canvasImageW = W;
+  canvasImageH = H;
+  canvasMode = mode;
+
+  workCanvas =
+    workCanvas ||
+    document.createElement('canvas');
+
+  workCanvas.width = W;
+  workCanvas.height = H;
+
+  workCtx =
+    workCanvas.getContext(
+      '2d',
+      {
+        willReadFrequently:true
+      }
+    );
+
+  workCtx.imageSmoothingEnabled = true;
+  workCtx.imageSmoothingQuality = 'high';
 
 }
 
-function render(){
+function scheduleRender(interactive = true){
+
+  if(renderFrame)
+    cancelAnimationFrame(renderFrame);
+
+  renderFrame =
+    requestAnimationFrame(() => {
+
+      renderFrame = 0;
+
+      render(interactive);
+
+    });
+
+}
+
+function scheduleHistogram(){
+
+  if(histogramQueued)
+    return;
+
+  histogramQueued = true;
+
+  histogramFrame =
+    requestAnimationFrame(() => {
+
+      histogramQueued = false;
+      histogramFrame = 0;
+
+      drawHistogram();
+
+    });
+
+}
+
+function render(interactive = false){
 
   if(!img) return;
 
-  resizeCanvas();
+  resizeCanvas(interactive);
 
   const W = canvas.width;
   const H = canvas.height;
@@ -2548,44 +2810,42 @@ function render(){
 
   }
 
-  const work =
-    document.createElement('canvas');
+  if(!workCtx)
+    resizeCanvas(interactive);
 
-  work.width = W;
-  work.height = H;
+  workCtx.clearRect(
+    0,
+    0,
+    W,
+    H
+  );
 
-  const wc =
-    work.getContext(
-      '2d',
-      {willReadFrequently:true}
-    );
+  workCtx.save();
 
-  wc.save();
-
-  wc.translate(
+  workCtx.translate(
     W/2,
     H/2
   );
 
-  wc.translate(
+  workCtx.translate(
     S.transform.offsetX/100 * W/2,
     S.transform.offsetY/100 * H/2
   );
 
-  wc.rotate(
+  workCtx.rotate(
     crop.angle *
     Math.PI /
     180
   );
 
-  wc.scale(
+  workCtx.scale(
     S.transform.scale *
     S.transform.flipX,
     S.transform.scale *
     S.transform.flipY
   );
 
-  wc.transform(
+  workCtx.transform(
     1,
     S.transform.perspectiveY/500,
     S.transform.perspectiveX/500,
@@ -2594,7 +2854,7 @@ function render(){
     0
   );
 
-  wc.drawImage(
+  workCtx.drawImage(
     img,
     -W/2,
     -H/2,
@@ -2602,10 +2862,10 @@ function render(){
     H
   );
 
-  wc.restore();
+  workCtx.restore();
 
   let data =
-    wc.getImageData(
+    workCtx.getImageData(
       0,
       0,
       W,
@@ -2629,7 +2889,7 @@ function render(){
 
   updateTransform();
 
-  drawHistogram();
+  scheduleHistogram();
 
 }
 
@@ -2663,6 +2923,33 @@ function processPixels(d,W,H){
   const sat =
     1 +
     C.saturation / 100;
+
+  const vib =
+    C.vibrance/100;
+
+  const warm =
+    C.temp/100;
+
+  const tint =
+    C.tint/100*5;
+
+  const hslMixActive =
+    !!(
+      C.redH || C.redS || C.redL ||
+      C.orangeH || C.orangeS || C.orangeL ||
+      C.yellowH || C.yellowS || C.yellowL ||
+      C.greenH || C.greenS || C.greenL ||
+      C.aquaH || C.aquaS || C.aquaL ||
+      C.blueH || C.blueS || C.blueL ||
+      C.purpleH || C.purpleS || C.purpleL ||
+      C.magentaH || C.magentaS || C.magentaL
+    );
+
+  const gradeCache = {
+    sh:hexRgb(C.gradeShadow),
+    mi:hexRgb(C.gradeMid),
+    hi:hexRgb(C.gradeHigh)
+  };
 
   for(
     let i=0;
@@ -2726,20 +3013,21 @@ function processPixels(d,W,H){
       avg +
       (b-avg)*sat;
 
-    [
-      r,
-      g,
-      b
-    ] =
-      applyHslMix(
+    if(hslMixActive){
+
+      [
         r,
         g,
-        b,
-        C
-      );
+        b
+      ] =
+        applyHslMix(
+          r,
+          g,
+          b,
+          C
+        );
 
-    const vib =
-      C.vibrance/100;
+    }
 
     const mx =
       Math.max(r,g,b);
@@ -2765,26 +3053,26 @@ function processPixels(d,W,H){
       vib *
       (1-vs);
 
-    const warm =
-      C.temp/100;
-
     r += warm*18;
     b -= warm*18;
 
-    g +=
-      C.tint/100*5;
+    g += tint;
 
-    [
-      r,
-      g,
-      b
-    ] =
-      rotateRGB(
+    if(C.hue){
+
+      [
         r,
         g,
-        b,
-        C.hue
-      );
+        b
+      ] =
+        rotateRGB(
+          r,
+          g,
+          b,
+          C.hue
+        );
+
+    }
 
     const x =
       (i/4 % W)/W;
@@ -3064,7 +3352,8 @@ function processPixels(d,W,H){
         r,
         g,
         b,
-        C
+        C,
+        gradeCache
       );
 
     if(E.sepia){
@@ -3375,19 +3664,22 @@ function hexRgb(hex){
 
 }
 
-function applyGrade(r,g,b,C){
+function applyGrade(r,g,b,C,gradeCache){
 
   const sh =
+    gradeCache?.sh ||
     hexRgb(
       C.gradeShadow
     );
 
   const mi =
+    gradeCache?.mi ||
     hexRgb(
       C.gradeMid
     );
 
   const hi =
+    gradeCache?.hi ||
     hexRgb(
       C.gradeHigh
     );
@@ -4787,17 +5079,50 @@ function handlePointerDown(e){
     ] =
       [...pointers.values()];
 
+    const mid =
+      midpoint(a,b);
+
+    const center =
+      getStageCenter();
+
+    const scale =
+      fitScale * zoom;
+
     gesture = {
 
       type:'pinch',
 
       dist:
-        distance(a,b),
+        Math.max(
+          1,
+          distance(a,b)
+        ),
 
       zoom,
 
-      mid:
-        midpoint(a,b),
+      mid,
+
+      localX:
+        (
+          mid.x -
+          center.x -
+          panX
+        ) /
+        Math.max(
+          scale,
+          .000001
+        ),
+
+      localY:
+        (
+          mid.y -
+          center.y -
+          panY
+        ) /
+        Math.max(
+          scale,
+          .000001
+        ),
 
       px:panX,
       py:panY
@@ -4941,6 +5266,7 @@ function handlePointerMove(e){
       e.clientY -
       gesture.sy;
 
+    clampPan();
     updateTransform();
 
   }
@@ -4964,29 +5290,37 @@ function handlePointerMove(e){
       clamp(
         gesture.zoom*f,
         .5,
-        5
+        MAX_ZOOM
       );
 
     const m =
       midpoint(a,b);
 
+    const center =
+      getStageCenter();
+
+    const scale =
+      fitScale * zoom;
+
     panX =
-      gesture.px +
       m.x -
-      gesture.mid.x;
+      center.x -
+      gesture.localX * scale;
 
     panY =
-      gesture.py +
       m.y -
-      gesture.mid.y;
+      center.y -
+      gesture.localY * scale;
 
     if(zoom <= 1){
 
-      panX=0;
-      panY=0;
+      zoom = 1;
+      panX = 0;
+      panY = 0;
 
     }
 
+    clampPan();
     updateTransform();
 
   }
@@ -5057,8 +5391,27 @@ function handlePointerUp(e){
 
   }
 
-  if(!pointers.size)
+  if(pointers.size === 1){
+
+    const remaining =
+      [...pointers.values()][0];
+
+    gesture = {
+
+      type:'pan',
+
+      sx:remaining.clientX,
+      sy:remaining.clientY,
+
+      px:panX,
+      py:panY
+
+    };
+
+  }
+  else if(!pointers.size){
     gesture = null;
+  }
 
   const now =
     Date.now();
@@ -5077,15 +5430,19 @@ function handlePointerUp(e){
       panX=0;
       panY=0;
 
+      updateTransform();
+
     }
 
     else{
 
-      zoom=2;
+      zoomAt(
+        e.clientX,
+        e.clientY,
+        2
+      );
 
     }
-
-    updateTransform();
 
   }
 
@@ -5316,11 +5673,37 @@ function drawHistogram(){
   const x =
     c.getContext('2d');
 
-  c.width =
-    c.clientWidth*2;
+  const histDpr =
+    Math.min(
+      window.devicePixelRatio || 1,
+      2
+    );
 
-  c.height =
-    c.clientHeight*2;
+  const histW =
+    Math.max(
+      1,
+      Math.round(
+        c.clientWidth * histDpr
+      )
+    );
+
+  const histH =
+    Math.max(
+      1,
+      Math.round(
+        c.clientHeight * histDpr
+      )
+    );
+
+  if(
+    c.width !== histW ||
+    c.height !== histH
+  ){
+
+    c.width = histW;
+    c.height = histH;
+
+  }
 
   x.clearRect(
     0,
@@ -5329,12 +5712,48 @@ function drawHistogram(){
     c.height
   );
 
+  histogramSampleCanvas =
+    histogramSampleCanvas ||
+    document.createElement('canvas');
+
+  const sampleW = 192;
+  const sampleH = 128;
+
+  if(
+    histogramSampleCanvas.width !== sampleW ||
+    histogramSampleCanvas.height !== sampleH
+  ){
+
+    histogramSampleCanvas.width = sampleW;
+    histogramSampleCanvas.height = sampleH;
+
+  }
+
+  histogramSampleCtx =
+    histogramSampleCtx ||
+    histogramSampleCanvas.getContext('2d');
+
+  histogramSampleCtx.clearRect(
+    0,
+    0,
+    sampleW,
+    sampleH
+  );
+
+  histogramSampleCtx.drawImage(
+    canvas,
+    0,
+    0,
+    sampleW,
+    sampleH
+  );
+
   const id =
-    ctx.getImageData(
+    histogramSampleCtx.getImageData(
       0,
       0,
-      canvas.width,
-      canvas.height
+      sampleW,
+      sampleH
     ).data;
 
   const h =
@@ -5343,7 +5762,7 @@ function drawHistogram(){
   for(
     let i=0;
     i<id.length;
-    i+=16
+    i+=4
   ){
 
     const lum =
@@ -5740,38 +6159,44 @@ $('fullscreenBtn').onclick =
       .documentElement
       .requestFullscreen?.();
 
+window.addEventListener(
+  'resize',
+  () => {
+
+    if(!img)
+      return;
+
+    fitToScreen();
+    render(false);
+
+  }
+);
+
 $('zoomIn').onclick =
   () => {
 
-    zoom =
-      clamp(
-        zoom+.25,
-        .5,
-        5
-      );
+    const r =
+      stage.getBoundingClientRect();
 
-    updateTransform();
+    zoomAt(
+      r.left + r.width/2,
+      r.top + r.height/2,
+      zoom+.25
+    );
 
   };
 
 $('zoomOut').onclick =
   () => {
 
-    zoom =
-      clamp(
-        zoom-.25,
-        .5,
-        5
-      );
+    const r =
+      stage.getBoundingClientRect();
 
-    if(zoom <= 1){
-
-      panX=0;
-      panY=0;
-
-    }
-
-    updateTransform();
+    zoomAt(
+      r.left + r.width/2,
+      r.top + r.height/2,
+      zoom-.25
+    );
 
   };
 
@@ -5850,26 +6275,16 @@ stage.addEventListener(
 
     e.preventDefault();
 
-    zoom =
-      clamp(
-        zoom *
-        (
-          e.deltaY < 0
-          ? 1.1
-          : .9
-        ),
-        .5,
-        5
-      );
+    const factor =
+      e.deltaY < 0
+      ? 1.1
+      : .9;
 
-    if(zoom <= 1){
-
-      panX=0;
-      panY=0;
-
-    }
-
-    updateTransform();
+    zoomAt(
+      e.clientX,
+      e.clientY,
+      zoom * factor
+    );
 
   },
   {passive:false}
