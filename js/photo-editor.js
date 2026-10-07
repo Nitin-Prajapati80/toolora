@@ -36,6 +36,19 @@ let panX = 0;
 let panY = 0;
 let fitScale = 1;
 
+// The committed crop is non-destructive: it changes the active source
+// rectangle without throwing away the original image pixels.
+let committedCrop = {
+  x:0,
+  y:0,
+  w:1,
+  h:1
+};
+
+let textSessionFresh = true;
+let textHistoryPushed = false;
+let renderStateKey = '';
+
 let workCanvas = null;
 let workCtx = null;
 let canvasImageW = 0;
@@ -328,6 +341,7 @@ function snapshot(){
   return {
     S:deepClone(S),
     crop:deepClone(crop),
+    committedCrop:deepClone(committedCrop),
     layers:deepClone(layers),
     img:!!img
   };
@@ -339,6 +353,11 @@ function restore(s){
   Object.assign(S,deepClone(s.S));
 
   crop = deepClone(s.crop);
+
+  committedCrop =
+    deepClone(
+      s.committedCrop || {x:0,y:0,w:1,h:1}
+    );
 
   layers = deepClone(s.layers);
 
@@ -1630,7 +1649,7 @@ function bindPanel(){
 
           S[a][b] = el.value;
 
-          render();
+          scheduleRender(true);
 
         }
       );
@@ -1797,8 +1816,46 @@ function bindPanel(){
 
 function syncSpecial(e){
 
-  if(e.id === 'textValue')
+  if(e.id === 'textValue'){
+
     S.text.value = e.value;
+
+    if(active === 'text'){
+
+      if(textSessionFresh || selectedLayer < 0 || !layers[selectedLayer] || layers[selectedLayer].type !== 'text'){
+
+        if(e.value.length){
+
+          if(!textHistoryPushed){
+            pushHistory();
+            textHistoryPushed = true;
+          }
+
+          layers.push({
+            type:'text',
+            name:e.value,
+            x:.5,
+            y:.5,
+            draft:true,
+            settings:deepClone(S.text)
+          });
+
+          selectedLayer = layers.length-1;
+          textSessionFresh = false;
+
+        }
+
+      }
+      else if(layers[selectedLayer]?.type === 'text'){
+
+        layers[selectedLayer].name = e.value;
+        layers[selectedLayer].settings = deepClone(S.text);
+
+      }
+
+    }
+
+  }
 
   if(e.id === 'textFont')
     S.text.font = e.value;
@@ -1827,7 +1884,17 @@ function syncSpecial(e){
   if(e.id === 'exportQuality')
     S.export.quality = +e.value;
 
-  render();
+  if(
+    active === 'text' &&
+    selectedLayer >= 0 &&
+    layers[selectedLayer]?.type === 'text'
+  ){
+    layers[selectedLayer].settings = deepClone(S.text);
+    if(e.id === 'textValue')
+      layers[selectedLayer].name = e.value;
+  }
+
+  renderOverlayOnly();
 
 }
 
@@ -1917,6 +1984,13 @@ function countEdits(){
   n += layers.length;
   n += S.retouch.ops.length;
 
+  if(
+    committedCrop.x !== 0 ||
+    committedCrop.y !== 0 ||
+    committedCrop.w !== 1 ||
+    committedCrop.h !== 1
+  ) n++;
+
   return n;
 
 }
@@ -1945,7 +2019,7 @@ function action(a){
       'copyState'
     ].includes(a)
   ){
-    if(a !== 'copyState')
+    if(a !== 'copyState' && a !== 'cropApply')
       pushHistory();
   }
 
@@ -1999,8 +2073,10 @@ function action(a){
   if(a === 'flipV')
     S.transform.flipY *= -1;
 
-  if(a === 'cropApply')
+  if(a === 'cropApply'){
     applyCrop();
+    return;
+  }
 
   if(a === 'cropReset'){
 
@@ -2027,28 +2103,40 @@ function action(a){
 
   if(a === 'addText'){
 
-    if(!S.text.value.trim())
+    const value = S.text.value.trim();
+
+    if(!value)
       return toast('Enter text first');
 
-    layers.push({
+    if(
+      selectedLayer >= 0 &&
+      layers[selectedLayer]?.type === 'text' &&
+      layers[selectedLayer]?.draft
+    ){
 
-      type:'text',
+      layers[selectedLayer].draft = false;
+      layers[selectedLayer].name = S.text.value;
+      layers[selectedLayer].settings = deepClone(S.text);
 
-      name:
-        S.text.value.slice(0,22),
+    }
+    else{
 
-      x:.5,
-      y:.5,
+      layers.push({
+        type:'text',
+        name:S.text.value,
+        x:.5,
+        y:.5,
+        draft:false,
+        settings:deepClone(S.text)
+      });
 
-      settings:
-        deepClone(S.text)
+      selectedLayer = layers.length - 1;
 
-    });
-
-    selectedLayer =
-      layers.length - 1;
+    }
 
     S.text.value = '';
+    textSessionFresh = true;
+    textHistoryPushed = false;
 
   }
 
@@ -2251,6 +2339,11 @@ function resetAll(){
     angle:0
   };
 
+  committedCrop = {x:0,y:0,w:1,h:1};
+  textSessionFresh = true;
+  textHistoryPushed = false;
+  renderStateKey = '';
+
   renderPanel();
   render();
   updateUI();
@@ -2442,6 +2535,11 @@ function openFile(file){
 
       S.retouch.ops = [];
 
+      committedCrop = {x:0,y:0,w:1,h:1};
+      textSessionFresh = true;
+      textHistoryPushed = false;
+      renderStateKey = '';
+
       resetCrop();
 
       $('fileName').textContent =
@@ -2485,9 +2583,41 @@ function resetCrop(){
 
 }
 
-function fitToScreen(){
+function getSourceRect(){
+
+  if(!img)
+    return {x:0,y:0,w:1,h:1};
+
+  const iw = Math.max(1,img.naturalWidth);
+  const ih = Math.max(1,img.naturalHeight);
+
+  return {
+    x:clamp(committedCrop.x,0,1) * iw,
+    y:clamp(committedCrop.y,0,1) * ih,
+    w:Math.max(1,clamp(committedCrop.w,.000001,1) * iw),
+    h:Math.max(1,clamp(committedCrop.h,.000001,1) * ih)
+  };
+
+}
+
+function getSourceSize(){
+
+  const r = getSourceRect();
+
+  return {
+    width:r.w,
+    height:r.h
+  };
+
+}
+
+function fitToScreen(preserveView = false){
 
   if(!img) return;
+
+  const oldZoom = zoom;
+  const oldPanX = panX;
+  const oldPanY = panY;
 
   const sw =
     Math.max(
@@ -2501,11 +2631,22 @@ function fitToScreen(){
       stage.clientHeight * .94
     );
 
+  const source = getSourceSize();
+
   fitScale =
     Math.min(
-      sw / img.naturalWidth,
-      sh / img.naturalHeight
+      sw / source.width,
+      sh / source.height
     );
+
+  if(preserveView){
+    zoom = oldZoom;
+    panX = oldPanX;
+    panY = oldPanY;
+    clampPan();
+    updateTransform();
+    return;
+  }
 
   zoom = 1;
   panX = 0;
@@ -2527,7 +2668,25 @@ function getStageCenter(){
 
 }
 
-function getPanBounds(scale = fitScale*zoom){
+function getDisplayScale(){
+
+  if(!img || !canvas.width || !canvas.height)
+    return fitScale * zoom;
+
+  const source = getSourceSize();
+  const canvasScale =
+    Math.min(
+      canvas.width / Math.max(1,source.width),
+      canvas.height / Math.max(1,source.height)
+    );
+
+  return (
+    fitScale * zoom
+  ) / Math.max(canvasScale,.000001);
+
+}
+
+function getPanBounds(scale = getDisplayScale()){
 
   const stageW = stage.clientWidth;
   const stageH = stage.clientHeight;
@@ -2536,36 +2695,18 @@ function getPanBounds(scale = fitScale*zoom){
   const imageH = canvas.height * scale;
 
   return {
-    x:Math.max(
-      0,
-      (imageW-stageW)/2
-    ),
-    y:Math.max(
-      0,
-      (imageH-stageH)/2
-    )
+    x:Math.max(0,(imageW-stageW)/2),
+    y:Math.max(0,(imageH-stageH)/2)
   };
 
 }
 
 function clampPan(){
 
-  const b =
-    getPanBounds();
+  const b = getPanBounds();
 
-  panX =
-    clamp(
-      panX,
-      -b.x,
-      b.x
-    );
-
-  panY =
-    clamp(
-      panY,
-      -b.y,
-      b.y
-    );
+  panX = clamp(panX,-b.x,b.x);
+  panY = clamp(panY,-b.y,b.y);
 
 }
 
@@ -2575,65 +2716,33 @@ function zoomAt(clientX,clientY,nextZoom){
 
   const oldZoom = zoom;
 
-  nextZoom =
-    clamp(
-      nextZoom,
-      .5,
-      MAX_ZOOM
-    );
+  nextZoom = clamp(nextZoom,.5,MAX_ZOOM);
 
   if(nextZoom === oldZoom)
     return;
 
-  const center =
-    getStageCenter();
-
-  const oldScale =
-    fitScale * oldZoom;
-
-  const nextScale =
-    fitScale * nextZoom;
+  const center = getStageCenter();
+  const oldScale = getDisplayScale();
 
   const localX =
-    (
-      clientX -
-      center.x -
-      panX
-    ) /
-    Math.max(
-      oldScale,
-      .000001
-    );
+    (clientX-center.x-panX) /
+    Math.max(oldScale,.000001);
 
   const localY =
-    (
-      clientY -
-      center.y -
-      panY
-    ) /
-    Math.max(
-      oldScale,
-      .000001
-    );
+    (clientY-center.y-panY) /
+    Math.max(oldScale,.000001);
 
   zoom = nextZoom;
 
-  panX =
-    clientX -
-    center.x -
-    localX * nextScale;
+  const nextScale = getDisplayScale();
 
-  panY =
-    clientY -
-    center.y -
-    localY * nextScale;
+  panX = clientX-center.x-localX*nextScale;
+  panY = clientY-center.y-localY*nextScale;
 
   if(zoom <= 1){
-
     zoom = 1;
     panX = 0;
     panY = 0;
-
   }
 
   clampPan();
@@ -2648,16 +2757,13 @@ function updateTransform(){
   const w = canvas.width;
   const h = canvas.height;
 
-  wrap.style.width =
-    w + 'px';
-
-  wrap.style.height =
-    h + 'px';
+  wrap.style.width = w + 'px';
+  wrap.style.height = h + 'px';
 
   clampPan();
 
   wrap.style.transform =
-    `translate3d(${panX}px,${panY}px,0) scale(${fitScale*zoom})`;
+    `translate3d(${panX}px,${panY}px,0) scale(${getDisplayScale()})`;
 
   $('zoomLabel').textContent =
     Math.round(zoom*100) + '%';
@@ -2673,36 +2779,16 @@ function resizeCanvas(interactive = false){
     ? INTERACTIVE_MAX_EDGE
     : PREVIEW_MAX_EDGE;
 
+  const source = getSourceSize();
   const longest =
-    Math.max(
-      img.naturalWidth,
-      img.naturalHeight
-    );
+    Math.max(source.width,source.height);
 
-  const sc =
-    Math.min(
-      1,
-      max / longest
-    );
+  const sc = Math.min(1,max/longest);
 
-  const W =
-    Math.max(
-      1,
-      Math.round(
-        img.naturalWidth * sc
-      )
-    );
+  const W = Math.max(1,Math.round(source.width*sc));
+  const H = Math.max(1,Math.round(source.height*sc));
 
-  const H =
-    Math.max(
-      1,
-      Math.round(
-        img.naturalHeight * sc
-      )
-    );
-
-  const mode =
-    `${W}x${H}`;
+  const mode = `${W}x${H}`;
 
   if(
     canvasImageW === W &&
@@ -2723,19 +2809,15 @@ function resizeCanvas(interactive = false){
   canvasMode = mode;
 
   workCanvas =
-    workCanvas ||
-    document.createElement('canvas');
+    workCanvas || document.createElement('canvas');
 
-  workCanvas.width = W;
-  workCanvas.height = H;
+  if(workCanvas.width !== W || workCanvas.height !== H){
+    workCanvas.width = W;
+    workCanvas.height = H;
+  }
 
   workCtx =
-    workCanvas.getContext(
-      '2d',
-      {
-        willReadFrequently:true
-      }
-    );
+    workCanvas.getContext('2d',{willReadFrequently:true});
 
   workCtx.imageSmoothingEnabled = true;
   workCtx.imageSmoothingQuality = 'high';
@@ -2786,17 +2868,18 @@ function render(interactive = false){
   const W = canvas.width;
   const H = canvas.height;
 
-  ctx.clearRect(
-    0,
-    0,
-    W,
-    H
-  );
+  ctx.clearRect(0,0,W,H);
 
   if(before){
 
+    const source = getSourceRect();
+
     ctx.drawImage(
       original,
+      source.x,
+      source.y,
+      source.w,
+      source.h,
       0,
       0,
       W,
@@ -2804,8 +2887,8 @@ function render(interactive = false){
     );
 
     drawOverlay();
+    drawCropGuide();
     updateTransform();
-
     return;
 
   }
@@ -2813,36 +2896,24 @@ function render(interactive = false){
   if(!workCtx)
     resizeCanvas(interactive);
 
-  workCtx.clearRect(
-    0,
-    0,
-    W,
-    H
-  );
+  workCtx.clearRect(0,0,W,H);
+
+  const source = getSourceRect();
 
   workCtx.save();
 
-  workCtx.translate(
-    W/2,
-    H/2
-  );
+  workCtx.translate(W/2,H/2);
 
   workCtx.translate(
     S.transform.offsetX/100 * W/2,
     S.transform.offsetY/100 * H/2
   );
 
-  workCtx.rotate(
-    crop.angle *
-    Math.PI /
-    180
-  );
+  workCtx.rotate(crop.angle*Math.PI/180);
 
   workCtx.scale(
-    S.transform.scale *
-    S.transform.flipX,
-    S.transform.scale *
-    S.transform.flipY
+    S.transform.scale*S.transform.flipX,
+    S.transform.scale*S.transform.flipY
   );
 
   workCtx.transform(
@@ -2856,6 +2927,10 @@ function render(interactive = false){
 
   workCtx.drawImage(
     img,
+    source.x,
+    source.y,
+    source.w,
+    source.h,
     -W/2,
     -H/2,
     W,
@@ -2864,32 +2939,29 @@ function render(interactive = false){
 
   workCtx.restore();
 
-  let data =
-    workCtx.getImageData(
-      0,
-      0,
-      W,
-      H
-    );
+  const data =
+    workCtx.getImageData(0,0,W,H);
 
-  processPixels(
-    data,
-    W,
-    H
-  );
+  processPixels(data,W,H);
 
-  ctx.putImageData(
-    data,
-    0,
-    0
-  );
+  ctx.putImageData(data,0,0);
 
   drawOverlay();
   drawCropGuide();
-
   updateTransform();
 
-  scheduleHistogram();
+  if(active === 'light')
+    scheduleHistogram();
+
+}
+
+function renderOverlayOnly(){
+
+  if(!img) return;
+
+  drawOverlay();
+  drawCropGuide();
+  updateTransform();
 
 }
 
@@ -4752,90 +4824,69 @@ function applyCrop(){
   if(!img)
     return;
 
-  const W =
-    canvas.width;
+  const hasCrop =
+    crop.x > .0001 ||
+    crop.y > .0001 ||
+    crop.w < .9999 ||
+    crop.h < .9999;
 
-  const H =
-    canvas.height;
+  if(!hasCrop){
+    toast('Crop area is unchanged');
+    return;
+  }
 
-  const x =
-    Math.round(
-      crop.x*W
-    );
+  pushHistory();
 
-  const y =
-    Math.round(
-      crop.y*H
-    );
+  const oldCrop = deepClone(crop);
+  const base = deepClone(committedCrop);
 
-  const w =
-    Math.round(
-      crop.w*W
-    );
-
-  const h =
-    Math.round(
-      crop.h*H
-    );
-
-  const tmp =
-    document.createElement(
-      'canvas'
-    );
-
-  tmp.width =
-    Math.max(1,w);
-
-  tmp.height =
-    Math.max(1,h);
-
-  tmp.getContext('2d')
-    .drawImage(
-      canvas,
-      x,
-      y,
-      w,
-      h,
-      0,
-      0,
-      w,
-      h
-    );
-
-  const im =
-    new Image();
-
-  im.onload = () => {
-
-    img = im;
-
-    crop = {
-      x:0,
-      y:0,
-      w:1,
-      h:1,
-      ratio:'free',
-      angle:0
-    };
-
-    S.transform.scale = 1;
-    S.transform.offsetX = 0;
-    S.transform.offsetY = 0;
-    S.transform.perspectiveX = 0;
-    S.transform.perspectiveY = 0;
-    S.transform.flipX = 1;
-    S.transform.flipY = 1;
-
-    render();
-    fitToScreen();
-    renderPanel();
-
+  const next = {
+    x:clamp(base.x + oldCrop.x*base.w,0,1),
+    y:clamp(base.y + oldCrop.y*base.h,0,1),
+    w:clamp(oldCrop.w*base.w,.000001,1),
+    h:clamp(oldCrop.h*base.h,.000001,1)
   };
 
-  im.src =
-    tmp.toDataURL(
-      'image/png'
-    );
+  // Keep overlay layers attached to the same visible part of the photo.
+  for(const l of layers){
+
+    if(l.type === 'text'){
+
+      l.x = clamp((l.x-oldCrop.x)/Math.max(oldCrop.w,.000001),0,1);
+      l.y = clamp((l.y-oldCrop.y)/Math.max(oldCrop.h,.000001),0,1);
+
+    }
+
+    if(l.type === 'draw' && Array.isArray(l.points)){
+
+      l.points = l.points.map(p => ({
+        x:clamp((p.x-oldCrop.x)/Math.max(oldCrop.w,.000001),0,1),
+        y:clamp((p.y-oldCrop.y)/Math.max(oldCrop.h,.000001),0,1)
+      }));
+
+    }
+
+  }
+
+  committedCrop = next;
+
+  crop = {
+    x:0,
+    y:0,
+    w:1,
+    h:1,
+    ratio:'free',
+    angle:0
+  };
+
+  // Applying Crop commits the crop boundary. Keep other adjustment systems
+  // intact so subsequent edits continue from the cropped image view.
+  fitToScreen(true);
+  renderPanel();
+  render(false);
+  updateUI();
+
+  toast('Crop applied');
 
 }
 
@@ -4911,6 +4962,9 @@ function handlePointerDown(e){
       selectedLayer =
         hit;
 
+      loadLayer();
+      textSessionFresh = false;
+
       drawing = {
 
         type:'moveText',
@@ -4965,7 +5019,7 @@ function handlePointerDown(e){
       layer:l
     };
 
-    render();
+    renderOverlayOnly();
 
     return;
 
@@ -5002,7 +5056,7 @@ function handlePointerDown(e){
     S.mask.y =
       p.y;
 
-    render();
+    scheduleRender(true);
 
     return;
 
@@ -5019,7 +5073,7 @@ function handlePointerDown(e){
     S.blur.focusY =
       p.y*100;
 
-    render();
+    scheduleRender(true);
 
     return;
 
@@ -5086,7 +5140,7 @@ function handlePointerDown(e){
       getStageCenter();
 
     const scale =
-      fitScale * zoom;
+      getDisplayScale();
 
     gesture = {
 
@@ -5173,7 +5227,7 @@ function handlePointerMove(e){
         1
       );
 
-    render();
+    renderOverlayOnly();
 
     return;
 
@@ -5188,7 +5242,7 @@ function handlePointerMove(e){
       pointerPos(e)
     );
 
-    render();
+    renderOverlayOnly();
 
     return;
 
@@ -5239,7 +5293,7 @@ function handlePointerMove(e){
         1-crop.h
       );
 
-    render();
+    renderOverlayOnly();
 
     return;
 
@@ -5300,7 +5354,7 @@ function handlePointerMove(e){
       getStageCenter();
 
     const scale =
-      fitScale * zoom;
+      getDisplayScale();
 
     panX =
       m.x -
@@ -5475,176 +5529,75 @@ function midpoint(a,b){
 
 function retouchAt(e){
 
-  const p =
-    pointerPos(e);
+  const p = pointerPos(e);
+  const W = canvas.width;
+  const H = canvas.height;
 
-  const W =
-    canvas.width;
+  const rad = Math.max(2,S.retouch.size);
+  const R = Math.max(1,Math.round(rad/2));
 
-  const H =
-    canvas.height;
+  const sx = Math.round(p.x*W);
+  const sy = Math.round(p.y*H);
 
-  const r =
-    S.retouch.size /
-    Math.min(W,H);
+  const x0 = clamp(sx-R,0,W-1);
+  const y0 = clamp(sy-R,0,H-1);
+  const x1 = clamp(sx+R,0,W-1);
+  const y1 = clamp(sy+R,0,H-1);
 
-  const rad =
-    Math.max(
-      2,
-      r *
-      Math.min(W,H)
-    );
+  const rw = Math.max(1,x1-x0+1);
+  const rh = Math.max(1,y1-y0+1);
 
-  const sx =
-    Math.round(
-      p.x*W
-    );
+  const id = ctx.getImageData(x0,y0,rw,rh);
+  const d = id.data;
+  const q = S.retouch.opacity/100;
+  const feather = clamp(S.retouch.feather/100,0,1);
 
-  const sy =
-    Math.round(
-      p.y*H
-    );
+  for(let y=0;y<rh;y++){
 
-  const R =
-    Math.round(
-      rad/2
-    );
+    for(let x=0;x<rw;x++){
 
-  const id =
-    ctx.getImageData(
-      0,
-      0,
-      W,
-      H
-    );
+      const gx = x+x0;
+      const gy = y+y0;
+      const dx = gx-sx;
+      const dy = gy-sy;
+      const dist = Math.hypot(dx,dy);
 
-  const d =
-    id.data;
-
-  for(
-    let y=-R;
-    y<=R;
-    y++
-  ){
-
-    for(
-      let x=-R;
-      x<=R;
-      x++
-    ){
-
-      if(
-        x*x+y*y >
-        R*R
-      )
+      if(dist > R)
         continue;
 
-      const X =
-        clamp(
-          sx+x,
-          0,
-          W-1
-        );
+      const edge =
+        feather > 0
+        ? 1-clamp((dist-R*(1-feather))/Math.max(1,R*feather),0,1)
+        : 1;
 
-      const Y =
-        clamp(
-          sy+y,
-          0,
-          H-1
-        );
+      const amount = q*edge;
+      const i = (y*rw+x)*4;
 
-      const i =
-        (Y*W+X)*4;
+      const refX = clamp(sx-dx,x0,x1)-x0;
+      const refY = clamp(sy-dy,y0,y1)-y0;
+      const j = (refY*rw+refX)*4;
 
-      const refX =
-        clamp(
-          sx-x,
-          0,
-          W-1
-        );
+      if(S.retouch.mode === 'burn'){
 
-      const refY =
-        clamp(
-          sy-y,
-          0,
-          H-1
-        );
-
-      const j =
-        (refY*W+refX)*4;
-
-      const q =
-        S.retouch.opacity/100;
-
-      if(
-        S.retouch.mode ===
-        'burn'
-      ){
-
-        d[i] *=
-          1-q*.45;
-
-        d[i+1] *=
-          1-q*.45;
-
-        d[i+2] *=
-          1-q*.45;
+        const k = amount*.45;
+        d[i] *= 1-k;
+        d[i+1] *= 1-k;
+        d[i+2] *= 1-k;
 
       }
+      else if(S.retouch.mode === 'dodge'){
 
-      else if(
-        S.retouch.mode ===
-        'dodge'
-      ){
-
-        d[i] =
-          clamp(
-            d[i]+
-            (
-              255-d[i]
-            ) *
-            q*.45,
-            0,
-            255
-          );
-
-        d[i+1] =
-          clamp(
-            d[i+1]+
-            (
-              255-d[i+1]
-            ) *
-            q*.45,
-            0,
-            255
-          );
-
-        d[i+2] =
-          clamp(
-            d[i+2]+
-            (
-              255-d[i+2]
-            ) *
-            q*.45,
-            0,
-            255
-          );
+        const k = amount*.45;
+        d[i] = clamp(d[i]+(255-d[i])*k,0,255);
+        d[i+1] = clamp(d[i+1]+(255-d[i+1])*k,0,255);
+        d[i+2] = clamp(d[i+2]+(255-d[i+2])*k,0,255);
 
       }
-
       else{
 
-        d[i] =
-          d[i]*(1-q)+
-          d[j]*q;
-
-        d[i+1] =
-          d[i+1]*(1-q)+
-          d[j+1]*q;
-
-        d[i+2] =
-          d[i+2]*(1-q)+
-          d[j+2]*q;
+        d[i] = d[i]*(1-amount)+d[j]*amount;
+        d[i+1] = d[i+1]*(1-amount)+d[j+1]*amount;
+        d[i+2] = d[i+2]*(1-amount)+d[j+2]*amount;
 
       }
 
@@ -5652,12 +5605,7 @@ function retouchAt(e){
 
   }
 
-  ctx.putImageData(
-    id,
-    0,
-    0
-  );
-
+  ctx.putImageData(id,x0,y0);
   drawOverlay();
 
 }
@@ -5814,16 +5762,16 @@ function exportImage(){
       'Open a photo first'
     );
 
-  const max =
-    S.export.maxEdge;
+  const max = S.export.maxEdge;
+  const source = getSourceRect();
 
   const scale =
     Math.min(
       1,
       max /
       Math.max(
-        img.naturalWidth,
-        img.naturalHeight
+        source.w,
+        source.h
       )
     );
 
@@ -5836,7 +5784,7 @@ function exportImage(){
     Math.max(
       1,
       Math.round(
-        img.naturalWidth*scale
+        source.w*scale
       )
     );
 
@@ -5844,7 +5792,7 @@ function exportImage(){
     Math.max(
       1,
       Math.round(
-        img.naturalHeight*scale
+        source.h*scale
       )
     );
 
@@ -5885,6 +5833,10 @@ function exportImage(){
 
   ox.drawImage(
     img,
+    source.x,
+    source.y,
+    source.w,
+    source.h,
     -out.width/2,
     -out.height/2,
     out.width,
@@ -6166,7 +6118,7 @@ window.addEventListener(
     if(!img)
       return;
 
-    fitToScreen();
+    fitToScreen(true);
     render(false);
 
   }
@@ -6235,11 +6187,20 @@ tabs.forEach(
     t.onclick =
       () => {
 
+        const previous = active;
+
         active =
           t.dataset.tool;
 
+        textSessionFresh = active === 'text';
+        if(active === 'text') textHistoryPushed = false;
+
         renderPanel();
-        render();
+
+        if(active === 'crop' || previous === 'crop')
+          renderOverlayOnly();
+
+        updateUI();
 
       };
 
