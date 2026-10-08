@@ -1,4 +1,3 @@
-Performance-optimized JavaScript file. HTML/CSS were not modified.
 (() => {
 'use strict';
 
@@ -55,12 +54,6 @@ let workCtx = null;
 let canvasImageW = 0;
 let canvasImageH = 0;
 let canvasMode = '';
-// Reuse the already-resampled source for repeated live previews.
-// The original image object is never modified or downscaled.
-let sourcePreviewCanvas = null;
-let sourcePreviewCtx = null;
-let sourcePreviewKey = '';
-let sourcePreviewImage = null;
 let renderFrame = 0;
 let histogramFrame = 0;
 let histogramQueued = false;
@@ -1634,7 +1627,9 @@ function bindPanel(){
               );
 
           }
+
           scheduleRender(true);
+          syncPanelValues();
 
         }
       );
@@ -1756,7 +1751,7 @@ function bindPanel(){
         loadLayer();
 
         renderPanel();
-        renderOverlayOnly();
+        render();
 
       };
 
@@ -2345,7 +2340,6 @@ function resetAll(){
   };
 
   committedCrop = {x:0,y:0,w:1,h:1};
-  invalidateSourcePreview();
   textSessionFresh = true;
   textHistoryPushed = false;
   renderStateKey = '';
@@ -2822,28 +2816,18 @@ function resizeCanvas(interactive = false){
     workCanvas.height = H;
   }
 
-  if(!workCtx){
+  workCtx =
+    workCanvas.getContext('2d',{willReadFrequently:true});
 
-    workCtx =
-      workCanvas.getContext(
-        '2d',
-        {willReadFrequently:true}
-      );
-
-    workCtx.imageSmoothingEnabled = true;
-    workCtx.imageSmoothingQuality = 'high';
-
-  }
+  workCtx.imageSmoothingEnabled = true;
+  workCtx.imageSmoothingQuality = 'high';
 
 }
 
 function scheduleRender(interactive = true){
 
-  // If a frame is already queued, keep the first interactive mode for the
-  // current live-edit frame. Pointer/slider events are therefore coalesced
-  // into one render instead of repeatedly cancelling/recreating work.
   if(renderFrame)
-    return;
+    cancelAnimationFrame(renderFrame);
 
   renderFrame =
     requestAnimationFrame(() => {
@@ -2875,84 +2859,7 @@ function scheduleHistogram(){
 
 }
 
-function invalidateSourcePreview(){
-
-  sourcePreviewKey = '';
-  sourcePreviewImage = null;
-
-}
-
-function getSourcePreview(W,H){
-
-  const source = getSourceRect();
-
-  const key =
-    [
-      W,
-      H,
-      source.x,
-      source.y,
-      source.w,
-      source.h
-    ].join('|');
-
-  if(
-    sourcePreviewCanvas &&
-    sourcePreviewImage === img &&
-    sourcePreviewKey === key
-  ){
-    return sourcePreviewCanvas;
-  }
-
-  sourcePreviewCanvas =
-    sourcePreviewCanvas ||
-    document.createElement('canvas');
-
-  if(
-    sourcePreviewCanvas.width !== W ||
-    sourcePreviewCanvas.height !== H
-  ){
-
-    sourcePreviewCanvas.width = W;
-    sourcePreviewCanvas.height = H;
-
-  }
-
-  sourcePreviewCtx =
-    sourcePreviewCtx ||
-    sourcePreviewCanvas.getContext('2d',{
-      willReadFrequently:false
-    });
-
-  sourcePreviewCtx.clearRect(0,0,W,H);
-
-  sourcePreviewCtx.drawImage(
-    img,
-    source.x,
-    source.y,
-    source.w,
-    source.h,
-    0,
-    0,
-    W,
-    H
-  );
-
-  sourcePreviewImage = img;
-  sourcePreviewKey = key;
-
-  return sourcePreviewCanvas;
-
-}
-
 function render(interactive = false){
-
-  if(renderFrame){
-
-    cancelAnimationFrame(renderFrame);
-    renderFrame = 0;
-
-  }
 
   if(!img) return;
 
@@ -2991,8 +2898,7 @@ function render(interactive = false){
 
   workCtx.clearRect(0,0,W,H);
 
-  const sourcePreview =
-    getSourcePreview(W,H);
+  const source = getSourceRect();
 
   workCtx.save();
 
@@ -3020,7 +2926,11 @@ function render(interactive = false){
   );
 
   workCtx.drawImage(
-    sourcePreview,
+    img,
+    source.x,
+    source.y,
+    source.w,
+    source.h,
     -W/2,
     -H/2,
     W,
@@ -3040,7 +2950,7 @@ function render(interactive = false){
   drawCropGuide();
   updateTransform();
 
-  if(active === 'light' && !interactive)
+  if(active === 'light')
     scheduleHistogram();
 
 }
@@ -3057,400 +2967,756 @@ function renderOverlayOnly(){
 
 function processPixels(d,W,H){
 
-  const a=d.data;
-  const L=S.light;
-  const C=S.color;
-  const E=S.effects;
-  const D=S.detail;
-  const M=S.mask;
-  const B=S.blur;
+  const a = d.data;
 
-  const exp=Math.pow(2,L.exposure/100);
-  const contrast=259*(L.contrast+255)/(255*(259-L.contrast));
-  const sat=1+C.saturation/100;
-  const vib=C.vibrance/100;
-  const warm=C.temp/100;
-  const tint=C.tint/100*5;
+  const L = S.light;
+  const C = S.color;
+  const E = S.effects;
+  const D = S.detail;
+  const M = S.mask;
+  const B = S.blur;
 
-  const hslGroups=[];
-  const groupDefs=[
-    ['red',0],['orange',30],['yellow',60],['green',120],
-    ['aqua',180],['blue',220],['purple',275],['magenta',325]
-  ];
+  const exp =
+    Math.pow(
+      2,
+      L.exposure / 100
+    );
 
-  for(let gi=0;gi<groupDefs.length;gi++){
+  const contrast =
+    (
+      259 *
+      (L.contrast + 255)
+    ) /
+    (
+      255 *
+      (259 - L.contrast)
+    );
 
-    const name=groupDefs[gi][0];
-    const gh=C[name+'H'];
-    const gs=C[name+'S'];
-    const gl=C[name+'L'];
+  const sat =
+    1 +
+    C.saturation / 100;
 
-    if(gh||gs||gl){
+  const vib =
+    C.vibrance/100;
 
-      hslGroups.push({
-        center:groupDefs[gi][1],
-        h:gh,
-        s:gs/100,
-        l:gl/100
-      });
+  const warm =
+    C.temp/100;
 
-    }
+  const tint =
+    C.tint/100*5;
 
-  }
+  const hslMixActive =
+    !!(
+      C.redH || C.redS || C.redL ||
+      C.orangeH || C.orangeS || C.orangeL ||
+      C.yellowH || C.yellowS || C.yellowL ||
+      C.greenH || C.greenS || C.greenL ||
+      C.aquaH || C.aquaS || C.aquaL ||
+      C.blueH || C.blueS || C.blueL ||
+      C.purpleH || C.purpleS || C.purpleL ||
+      C.magentaH || C.magentaS || C.magentaL
+    );
 
-  const hslActive=hslGroups.length>0;
-  const globalHueActive=!!C.hue;
-
-  const gradeCache={
+  const gradeCache = {
     sh:hexRgb(C.gradeShadow),
     mi:hexRgb(C.gradeMid),
     hi:hexRgb(C.gradeHigh)
   };
 
-  const gradeBlend=C.gradeBlend/100*.35;
-  const gradeBalance=C.gradeBalance/100;
+  for(
+    let i=0;
+    i<a.length;
+    i+=4
+  ){
 
-  const maskActive=M.mode!=='off';
-  const vignette=E.vignette/100;
-  const vignetteActive=vignette!==0;
-  const needsXY=maskActive||vignetteActive;
+    let r =
+      a[i] * exp;
 
-  const glow=E.glow/100;
-  const clarity=E.clarity/100;
-  const texture=E.texture/100;
-  const dehaze=E.dehaze/100;
-  const fade=E.fade/100;
-  const sepia=E.sepia/100;
+    let g =
+      a[i+1] * exp;
 
-  const maskExposure=M.exposure/100;
-  const maskContrast=M.contrast/100;
-  const maskSaturation=M.saturation/100;
+    let b =
+      a[i+2] * exp;
 
-  const rgbTmp=[0,0,0];
-  const hslTmp=[0,0,0];
-  const gradeTmp=[0,0,0];
+    let lum =
+      .2126*r +
+      .7152*g +
+      .0722*b;
 
-  for(let i=0,px=0;i<a.length;i+=4,px++){
+    const sh =
+      Math.max(
+        0,
+        (128-lum)/128
+      ) *
+      (L.shadows/100);
 
-    let r=a[i]*exp;
-    let g=a[i+1]*exp;
-    let b=a[i+2]*exp;
+    const hi =
+      Math.max(
+        0,
+        (lum-128)/127
+      ) *
+      (L.highlights/100);
 
-    const lum=.2126*r+.7152*g+.0722*b;
+    r += sh*55 - hi*55;
+    g += sh*55 - hi*55;
+    b += sh*55 - hi*55;
 
-    const sh=Math.max(0,(128-lum)/128)*(L.shadows/100);
-    const hi=Math.max(0,(lum-128)/127)*(L.highlights/100);
-    const tone=sh*55-hi*55;
+    r =
+      (r-128)*contrast+128;
 
-    r+=tone;
-    g+=tone;
-    b+=tone;
+    g =
+      (g-128)*contrast+128;
 
-    r=(r-128)*contrast+128;
-    g=(g-128)*contrast+128;
-    b=(b-128)*contrast+128;
+    b =
+      (b-128)*contrast+128;
 
-    const avg=(r+g+b)/3;
+    const avg =
+      (r+g+b)/3;
 
-    r=avg+(r-avg)*sat;
-    g=avg+(g-avg)*sat;
-    b=avg+(b-avg)*sat;
+    r =
+      avg +
+      (r-avg)*sat;
 
-    if(hslActive){
+    g =
+      avg +
+      (g-avg)*sat;
 
-      applyHslMix(r,g,b,C,hslGroups,hslTmp);
+    b =
+      avg +
+      (b-avg)*sat;
 
-      r=hslTmp[0];
-      g=hslTmp[1];
-      b=hslTmp[2];
+    if(hslMixActive){
 
-    }
-
-    const mx=r>g?(r>b?r:b):(g>b?g:b);
-    const mn=r<g?(r<b?r:b):(g<b?g:b);
-    const vs=(mx-mn)/255;
-
-    r+=(r-avg)*vib*(1-vs);
-    g+=(g-avg)*vib*(1-vs);
-    b+=(b-avg)*vib*(1-vs);
-
-    r+=warm*18;
-    b-=warm*18;
-    g+=tint;
-
-    if(globalHueActive){
-
-      rotateRGBFast(r,g,b,C.hue,rgbTmp);
-
-      r=rgbTmp[0];
-      g=rgbTmp[1];
-      b=rgbTmp[2];
+      [
+        r,
+        g,
+        b
+      ] =
+        applyHslMix(
+          r,
+          g,
+          b,
+          C
+        );
 
     }
 
-    if(needsXY){
+    const mx =
+      Math.max(r,g,b);
 
-      const x=(px%W)/W;
-      const y=Math.floor(px/W)/H;
-      let m=1;
+    const mn =
+      Math.min(r,g,b);
 
-      if(M.mode==='radial'){
+    const vs =
+      (mx-mn)/255;
 
-        const dx=x-M.x;
-        const dy=y-M.y;
-        const dist=Math.sqrt(dx*dx+dy*dy);
+    r +=
+      (r-avg) *
+      vib *
+      (1-vs);
 
-        m=1-smoothstep(
+    g +=
+      (g-avg) *
+      vib *
+      (1-vs);
+
+    b +=
+      (b-avg) *
+      vib *
+      (1-vs);
+
+    r += warm*18;
+    b -= warm*18;
+
+    g += tint;
+
+    if(C.hue){
+
+      [
+        r,
+        g,
+        b
+      ] =
+        rotateRGB(
+          r,
+          g,
+          b,
+          C.hue
+        );
+
+    }
+
+    const x =
+      (i/4 % W)/W;
+
+    const y =
+      Math.floor(i/4/W)/H;
+
+    let m = 1;
+
+    if(M.mode === 'radial'){
+
+      const dx =
+        x-M.x;
+
+      const dy =
+        y-M.y;
+
+      const dist =
+        Math.sqrt(
+          dx*dx+
+          dy*dy
+        );
+
+      m =
+        1 -
+        smoothstep(
           M.size,
-          M.size*(1-M.feather),
+          M.size *
+          (1-M.feather),
           dist
         );
 
-      }
-      else if(M.mode==='linear'){
+    }
 
-        m=1-smoothstep(
+    else if(M.mode === 'linear'){
+
+      m =
+        1 -
+        smoothstep(
           .1,
           .9,
-          Math.abs((x-.5)*.9+(y-.5)*.9)
-        );
-
-      }
-
-      if(maskActive&&m>0){
-
-        r+=maskExposure*50*m;
-        g+=maskExposure*50*m;
-        b+=maskExposure*50*m;
-
-        const mc=1+(maskContrast/100)*m;
-
-        r=(r-128)*mc+128;
-        g=(g-128)*mc+128;
-        b=(b-128)*mc+128;
-
-        const ms=1+maskSaturation*m;
-
-        r=128+(r-128)*ms;
-        g=128+(g-128)*ms;
-        b=128+(b-128)*ms;
-
-      }
-
-      if(vignetteActive){
-
-        const dx=(x-.5)*1.4;
-        const dy=(y-.5)*1.4;
-        const shape=1+E.roundness/100*.65;
-
-        const edge=Math.min(
-          1,
-          Math.sqrt(
-            Math.abs(dx*dx*shape)+
-            Math.abs(dy*dy/shape)
+          Math.abs(
+            (x-.5)*.9 +
+            (y-.5)*.9
           )
         );
 
-        const start=E.midpoint/100*.65;
-        const soft=Math.max(.08,E.feather/100*.55);
+    }
 
-        const vv=clamp((edge-start)/soft,0,1);
-        const v=1-vignette*vv*vv;
+    if(
+      m > 0 &&
+      M.mode !== 'off'
+    ){
 
-        r*=v;
-        g*=v;
-        b*=v;
+      const ml =
+        M.exposure/100;
 
-      }
+      r += ml*50*m;
+      g += ml*50*m;
+      b += ml*50*m;
+
+      const ma =
+        M.contrast/100;
+
+      r =
+        (r-128) *
+        (1+ma*m) +
+        128;
+
+      g =
+        (g-128) *
+        (1+ma*m) +
+        128;
+
+      b =
+        (b-128) *
+        (1+ma*m) +
+        128;
+
+      const ms =
+        1 +
+        M.saturation/100*m;
+
+      r =
+        128 +
+        (r-128)*ms;
+
+      g =
+        128 +
+        (g-128)*ms;
+
+      b =
+        128 +
+        (b-128)*ms;
 
     }
 
-    if(glow>0){
+    const vign =
+      E.vignette/100;
 
-      const br=Math.max(1,Math.round(1+glow*4));
+    if(vign !== 0){
 
-      r+=(255-r)*glow*.08*br;
-      g+=(255-g)*glow*.08*br;
-      b+=(255-b)*glow*.08*br;
+      const dx =
+        (x-.5)*1.4;
+
+      const dy =
+        (y-.5)*1.4;
+
+      const shape =
+        1 +
+        E.roundness/100*.65;
+
+      const edge =
+        Math.min(
+          1,
+          Math.sqrt(
+            Math.abs(
+              dx*dx*shape
+            ) +
+            Math.abs(
+              dy*dy/shape
+            )
+          )
+        );
+
+      const start =
+        E.midpoint/100*.65;
+
+      const soft =
+        Math.max(
+          .08,
+          E.feather/100*.55
+        );
+
+      const vv =
+        clamp(
+          (edge-start)/soft,
+          0,
+          1
+        );
+
+      const v =
+        1 -
+        vign *
+        vv *
+        vv;
+
+      r *= v;
+      g *= v;
+      b *= v;
 
     }
+
+    if(E.glow > 0){
+
+      const glow =
+        E.glow/100;
+
+      const br =
+        Math.max(
+          1,
+          Math.round(
+            1+glow*4
+          )
+        );
+
+      r +=
+        (255-r) *
+        glow *
+        .08 *
+        br;
+
+      g +=
+        (255-g) *
+        glow *
+        .08 *
+        br;
+
+      b +=
+        (255-b) *
+        glow *
+        .08 *
+        br;
+
+    }
+
+    const clarity =
+      E.clarity/100;
 
     if(clarity){
 
-      const mid=(r+g+b)/3;
+      const mid =
+        (r+g+b)/3;
 
-      r+=(r-mid)*clarity*.28;
-      g+=(g-mid)*clarity*.28;
-      b+=(b-mid)*clarity*.28;
+      r +=
+        (r-mid) *
+        clarity *
+        .28;
+
+      g +=
+        (g-mid) *
+        clarity *
+        .28;
+
+      b +=
+        (b-mid) *
+        clarity *
+        .28;
 
     }
+
+    const texture =
+      E.texture/100;
 
     if(texture){
 
-      r+=(r-128)*texture*.12;
-      g+=(g-128)*texture*.12;
-      b+=(b-128)*texture*.12;
+      r +=
+        (r-128) *
+        texture *
+        .12;
+
+      g +=
+        (g-128) *
+        texture *
+        .12;
+
+      b +=
+        (b-128) *
+        texture *
+        .12;
 
     }
+
+    const dehaze =
+      E.dehaze/100;
 
     if(dehaze){
 
-      const dh=1+dehaze*.22;
+      r =
+        (r-128) *
+        (1+dehaze*.22) +
+        128;
 
-      r=(r-128)*dh+128;
-      g=(g-128)*dh+128;
-      b=(b-128)*dh+128;
+      g =
+        (g-128) *
+        (1+dehaze*.22) +
+        128;
 
-    }
-
-    r=r*(1-fade)+fade*24;
-    g=g*(1-fade)+fade*27;
-    b=b*(1-fade)+fade*31;
-
-    applyGradeFast(
-      r,g,b,
-      gradeCache,
-      gradeBlend,
-      gradeBalance,
-      gradeTmp
-    );
-
-    r=gradeTmp[0];
-    g=gradeTmp[1];
-    b=gradeTmp[2];
-
-    if(sepia){
-
-      const nr=r*.393+g*.769+b*.189;
-      const ng=r*.349+g*.686+b*.168;
-      const nb=r*.272+g*.534+b*.131;
-
-      r=r*(1-sepia)+nr*sepia;
-      g=g*(1-sepia)+ng*sepia;
-      b=b*(1-sepia)+nb*sepia;
+      b =
+        (b-128) *
+        (1+dehaze*.22) +
+        128;
 
     }
 
-    a[i]=clamp(r,0,255);
-    a[i+1]=clamp(g,0,255);
-    a[i+2]=clamp(b,0,255);
+    const fade =
+      E.fade/100;
+
+    r =
+      r*(1-fade)+
+      fade*24;
+
+    g =
+      g*(1-fade)+
+      fade*27;
+
+    b =
+      b*(1-fade)+
+      fade*31;
+
+    [
+      r,
+      g,
+      b
+    ] =
+      applyGrade(
+        r,
+        g,
+        b,
+        C,
+        gradeCache
+      );
+
+    if(E.sepia){
+
+      const q =
+        E.sepia/100;
+
+      const nr =
+        r*.393 +
+        g*.769 +
+        b*.189;
+
+      const ng =
+        r*.349 +
+        g*.686 +
+        b*.168;
+
+      const nb =
+        r*.272 +
+        g*.534 +
+        b*.131;
+
+      r =
+        r*(1-q)+
+        nr*q;
+
+      g =
+        g*(1-q)+
+        ng*q;
+
+      b =
+        b*(1-q)+
+        nb*q;
+
+    }
+
+    a[i] =
+      clamp(r,0,255);
+
+    a[i+1] =
+      clamp(g,0,255);
+
+    a[i+2] =
+      clamp(b,0,255);
 
   }
 
   if(S.retouch.ops.length)
-    applyRetouchOps(d,W,H,S.retouch.ops);
+    applyRetouchOps(
+      d,
+      W,
+      H,
+      S.retouch.ops
+    );
 
   if(
-    D.sharp>0 ||
-    D.noise>0 ||
-    D.colorNoise>0
-  )
-    applyDetail(d,W,H);
+    D.sharp > 0 ||
+    D.noise > 0 ||
+    D.colorNoise > 0
+  ){
 
-  if(E.grain>0)
-    addGrain(d,E.grain,E.grainSize,E.roughness);
-
-  if(B.amount>0)
-    applyBlurLocal(d,W,H);
-
-}
-
-function applyHslMix(r,g,b,C,groups,out){
-
-  rgbToHsl(r,g,b,out);
-
-  let h=out[0];
-  let s=out[1];
-  let l=out[2];
-
-  for(let i=0;i<groups.length;i++){
-
-    const g=groups[i];
-
-    const d=Math.abs(((h-g.center+180)%360)-180);
-    const w=d>=35 ? 0 : 1-d/35;
-
-    if(w<=0)
-      continue;
-
-    h=(h+g.h*w+360)%360;
-    s=clamp(s+g.s*w,0,1);
-    l=clamp(l+g.l*w,0,1);
+    applyDetail(
+      d,
+      W,
+      H
+    );
 
   }
 
-  hslToRgb(h,s,l,out);
+  if(E.grain > 0){
+
+    addGrain(
+      d,
+      E.grain,
+      E.grainSize,
+      E.roughness
+    );
+
+  }
+
+  if(B.amount > 0){
+
+    applyBlurLocal(
+      d,
+      W,
+      H
+    );
+
+  }
 
 }
 
-function rgbToHsl(r,g,b,out){
+function applyHslMix(r,g,b,C){
+
+  let [h,s,l] =
+    rgbToHsl(
+      r,
+      g,
+      b
+    );
+
+  const groups = [
+
+    ['red',0],
+    ['orange',30],
+    ['yellow',60],
+    ['green',120],
+    ['aqua',180],
+    ['blue',220],
+    ['purple',275],
+    ['magenta',325]
+
+  ];
+
+  for(
+    const [name,center]
+    of groups
+  ){
+
+    const d =
+      Math.abs(
+        (
+          (h-center+180)%360
+        )-180
+      );
+
+    const w =
+      clamp(
+        1-d/35,
+        0,
+        1
+      );
+
+    if(w <= 0)
+      continue;
+
+    h =
+      (
+        h +
+        C[name+'H'] *
+        w +
+        360
+      ) % 360;
+
+    s =
+      clamp(
+        s +
+        C[name+'S']/100*w,
+        0,
+        1
+      );
+
+    l =
+      clamp(
+        l +
+        C[name+'L']/100*w,
+        0,
+        1
+      );
+
+  }
+
+  return hslToRgb(
+    h,
+    s,
+    l
+  );
+
+}
+
+function rgbToHsl(r,g,b){
 
   r/=255;
   g/=255;
   b/=255;
 
-  const mx=r>g?(r>b?r:b):(g>b?g:b);
-  const mn=r<g?(r<b?r:b):(g<b?g:b);
-  const d=mx-mn;
-  const l=(mx+mn)/2;
+  const mx =
+    Math.max(r,g,b);
 
-  if(!d){
+  const mn =
+    Math.min(r,g,b);
 
-    out[0]=0;
-    out[1]=0;
-    out[2]=l;
-    return;
+  const d =
+    mx-mn;
+
+  let h = 0;
+
+  const l =
+    (mx+mn)/2;
+
+  if(d){
+
+    const s =
+      d /
+      (
+        1 -
+        Math.abs(
+          2*l-1
+        )
+      );
+
+    if(mx === r)
+      h =
+        60 *
+        (
+          ((g-b)/d)%6
+        );
+
+    else if(mx === g)
+      h =
+        60 *
+        (
+          (b-r)/d+2
+        );
+
+    else
+      h =
+        60 *
+        (
+          (r-g)/d+4
+        );
+
+    if(h < 0)
+      h += 360;
+
+    return [
+      h,
+      s,
+      l
+    ];
 
   }
 
-  let h;
-
-  if(mx===r)
-    h=60*((g-b)/d%6);
-  else if(mx===g)
-    h=60*((b-r)/d+2);
-  else
-    h=60*((r-g)/d+4);
-
-  if(h<0)
-    h+=360;
-
-  out[0]=h;
-  out[1]=d/(1-Math.abs(2*l-1));
-  out[2]=l;
+  return [
+    0,
+    0,
+    l
+  ];
 
 }
 
-function hslToRgb(h,s,l,out){
+function hslToRgb(h,s,l){
 
-  const c=(1-Math.abs(2*l-1))*s;
-  const x=c*(1-Math.abs(h/60%2-1));
-  const m=l-c/2;
+  const c =
+    (
+      1 -
+      Math.abs(
+        2*l-1
+      )
+    ) *
+    s;
 
-  let r=0,g=0,b=0;
+  const x =
+    c *
+    (
+      1 -
+      Math.abs(
+        (h/60)%2-1
+      )
+    );
 
-  if(h<60){
-    r=c; g=x;
-  }
-  else if(h<120){
-    r=x; g=c;
-  }
-  else if(h<180){
-    g=c; b=x;
-  }
-  else if(h<240){
-    g=x; b=c;
-  }
-  else if(h<300){
-    r=x; b=c;
-  }
-  else{
-    r=c; b=x;
-  }
+  const m =
+    l-c/2;
 
-  out[0]=(r+m)*255;
-  out[1]=(g+m)*255;
-  out[2]=(b+m)*255;
+  let r=0;
+  let g=0;
+  let b=0;
+
+  if(h < 60)
+    [r,g,b]=[c,x,0];
+
+  else if(h < 120)
+    [r,g,b]=[x,c,0];
+
+  else if(h < 180)
+    [r,g,b]=[0,c,x];
+
+  else if(h < 240)
+    [r,g,b]=[0,x,c];
+
+  else if(h < 300)
+    [r,g,b]=[x,0,c];
+
+  else
+    [r,g,b]=[c,0,x];
+
+  return [
+    (r+m)*255,
+    (g+m)*255,
+    (b+m)*255
+  ];
 
 }
 
@@ -3470,143 +3736,184 @@ function hexRgb(hex){
 
 }
 
-function applyGradeFast(r,g,b,gradeCache,blend,bal,out){
-
-  const sh=gradeCache.sh;
-  const mi=gradeCache.mi;
-  const hi=gradeCache.hi;
-
-  const lum=(r*.2126+g*.7152+b*.0722)/255;
-
-  let w=lum<.5 ? 1-lum*2 : 0;
-  let q=lum>.5 ? (lum-.5)*2 : 0;
-
-  const m=1-Math.abs(lum-.5)*2;
-
-  if(bal>0)
-    w*=1-bal;
-  else
-    q*=1+bal;
-
-  out[0]=r+(sh[0]-r)*w*blend+(mi[0]-r)*m*blend*.65+(hi[0]-r)*q*blend;
-  out[1]=g+(sh[1]-g)*w*blend+(mi[1]-g)*m*blend*.65+(hi[1]-g)*q*blend;
-  out[2]=b+(sh[2]-b)*w*blend+(mi[2]-b)*m*blend*.65+(hi[2]-b)*q*blend;
-
-}
-
-function rotateRGBFast(r,g,b,h,out){
-
-  if(!h){
-    out[0]=r; out[1]=g; out[2]=b;
-    return;
-  }
-
-  const mx=r>g?(r>b?r:b):(g>b?g:b);
-  const mn=r<g?(r<b?r:b):(g<b?g:b);
-  const d=mx-mn;
-
-  if(d<1){
-    out[0]=r; out[1]=g; out[2]=b;
-    return;
-  }
-
-  let H;
-
-  if(mx===r)
-    H=60*((g-b)/d%6);
-  else if(mx===g)
-    H=60*((b-r)/d+2);
-  else
-    H=60*((r-g)/d+4);
-
-  if(H<0)
-    H+=360;
-
-  H=(H+h+360)%360;
-
-  const s=d/mx;
-  const v=mx/255;
-
-  hsvRgbFast(H,s,v,out);
-
-  out[0]*=255;
-  out[1]*=255;
-  out[2]*=255;
-
-}
-
-function hsvRgbFast(h,s,v,out){
-
-  const c=v*s;
-  const x=c*(1-Math.abs(h/60%2-1));
-  const m=v-c;
-
-  let r=0,g=0,b=0;
-
-  if(h<60){
-    r=c; g=x;
-  }
-  else if(h<120){
-    r=x; g=c;
-  }
-  else if(h<180){
-    g=c; b=x;
-  }
-  else if(h<240){
-    g=x; b=c;
-  }
-  else if(h<300){
-    r=x; b=c;
-  }
-  else{
-    r=c; b=x;
-  }
-
-  out[0]=r+m;
-  out[1]=g+m;
-  out[2]=b+m;
-
-}
-
-// Compatibility wrappers keep the existing helper API intact.
-// The render hot path uses the allocation-free *Fast helpers above.
 function applyGrade(r,g,b,C,gradeCache){
 
-  const out=[0,0,0];
+  const sh =
+    gradeCache?.sh ||
+    hexRgb(
+      C.gradeShadow
+    );
 
-  applyGradeFast(
-    r,g,b,
-    gradeCache,
-    C.gradeBlend/100*.35,
-    C.gradeBalance/100,
-    out
-  );
+  const mi =
+    gradeCache?.mi ||
+    hexRgb(
+      C.gradeMid
+    );
 
-  return out;
+  const hi =
+    gradeCache?.hi ||
+    hexRgb(
+      C.gradeHigh
+    );
+
+  const lum =
+    (
+      r*.2126+
+      g*.7152+
+      b*.0722
+    )/255;
+
+  let w =
+    lum < .5
+    ? 1-lum*2
+    : 0;
+
+  let q =
+    lum > .5
+    ? (lum-.5)*2
+    : 0;
+
+  let m =
+    1 -
+    Math.abs(
+      lum-.5
+    )*2;
+
+  const bal =
+    C.gradeBalance/100;
+
+  if(bal > 0)
+    w *= 1-bal;
+  else
+    q *= 1+bal;
+
+  const blend =
+    C.gradeBlend/100*.35;
+
+  return [
+
+    r +
+    (sh[0]-r)*w*blend +
+    (mi[0]-r)*m*blend*.65 +
+    (hi[0]-r)*q*blend,
+
+    g +
+    (sh[1]-g)*w*blend +
+    (mi[1]-g)*m*blend*.65 +
+    (hi[1]-g)*q*blend,
+
+    b +
+    (sh[2]-b)*w*blend +
+    (mi[2]-b)*m*blend*.65 +
+    (hi[2]-b)*q*blend
+
+  ];
 
 }
 
 function rotateRGB(r,g,b,h){
 
-  const out=[0,0,0];
+  if(!h)
+    return [r,g,b];
 
-  rotateRGBFast(
-    r,g,b,h,out
+  const mx =
+    Math.max(r,g,b);
+
+  const mn =
+    Math.min(r,g,b);
+
+  const d =
+    mx-mn;
+
+  if(d < 1)
+    return [r,g,b];
+
+  let H =
+    mx === r
+    ?
+    60 *
+    (
+      (g-b)/d%6
+    )
+    :
+    mx === g
+    ?
+    60 *
+    (
+      (b-r)/d+2
+    )
+    :
+    60 *
+    (
+      (r-g)/d+4
+    );
+
+  if(H < 0)
+    H += 360;
+
+  H =
+    (H+h+360)%360;
+
+  const s =
+    d/mx;
+
+  const v =
+    mx/255;
+
+  return hsvRgb(
+    H,
+    s,
+    v
+  ).map(
+    x => x*255
   );
-
-  return out;
 
 }
 
 function hsvRgb(h,s,v){
 
-  const out=[0,0,0];
+  const c =
+    v*s;
 
-  hsvRgbFast(
-    h,s,v,out
-  );
+  const x =
+    c *
+    (
+      1 -
+      Math.abs(
+        h/60%2-1
+      )
+    );
 
-  return out;
+  const m =
+    v-c;
+
+  let r=0;
+  let g=0;
+  let b=0;
+
+  if(h < 60)
+    [r,g,b]=[c,x,0];
+
+  else if(h < 120)
+    [r,g,b]=[x,c,0];
+
+  else if(h < 180)
+    [r,g,b]=[0,c,x];
+
+  else if(h < 240)
+    [r,g,b]=[0,x,c];
+
+  else if(h < 300)
+    [r,g,b]=[x,0,c];
+
+  else
+    [r,g,b]=[c,0,x];
+
+  return [
+    r+m,
+    g+m,
+    b+m
+  ];
 
 }
 
@@ -4562,7 +4869,6 @@ function applyCrop(){
   }
 
   committedCrop = next;
-  invalidateSourcePreview();
 
   crop = {
     x:0,
