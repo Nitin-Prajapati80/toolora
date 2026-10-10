@@ -1,56 +1,102 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Toolora</title>
-
-    css/photo-editor.css
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101318">
+  <meta name="description" content="Edit photos privately in your browser with Toolora Photo Editor.">
+  <title>Toolora Photo Editor</title>
+  <link rel="stylesheet" href="css/photo-editor.css">
 </head>
 <body>
+<div class="app" id="app">
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Toolora Photo Editor home" onclick="return false">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span class="brand-copy"><strong>Toolora</strong><small>PHOTO EDITOR</small></span>
+    </a>
 
-<header class="topbar">
-    <h1>Toolora</h1>
+    <div class="top-actions" aria-label="Editor actions">
+      <button class="toolbar-btn open-action" id="openBtn" type="button" title="Open image" aria-label="Open image"><span aria-hidden="true">＋</span><b>Open</b></button>
+      <span class="toolbar-divider" aria-hidden="true"></span>
+      <button class="icon-btn" id="undoBtn" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>↶</button>
+      <button class="icon-btn" id="redoBtn" type="button" title="Redo (Ctrl+Y)" aria-label="Redo" disabled>↷</button>
+      <button class="icon-btn compare-btn" id="beforeBtn" type="button" title="Hold to view original" aria-label="Hold to view original">◉</button>
+      <button class="icon-btn fullscreen-btn" id="fullscreenBtn" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen">⛶</button>
+      <button class="toolbar-btn export-action" id="exportTopBtn" type="button" title="Export edited image"><span aria-hidden="true">⇩</span><b>Export</b></button>
+    </div>
+    <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/*" hidden>
+  </header>
 
-    <input type="file" id="upload" accept="image/*">
+  <main class="workspace">
+    <section class="viewer-shell" aria-label="Image workspace">
+      <div class="viewer-head">
+        <div class="file-meta">
+          <strong id="fileName">No image open</strong>
+          <span id="fileInfo">Open an image to start editing</span>
+        </div>
+        <div class="viewer-actions" aria-label="Zoom controls">
+          <button id="zoomOut" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+          <span id="zoomLabel" aria-live="polite">Fit</span>
+          <button id="zoomIn" type="button" title="Zoom in" aria-label="Zoom in">＋</button>
+          <button id="fitBtn" type="button" title="Fit image to workspace">Fit</button>
+          <button id="oneBtn" type="button" title="View at 100 percent">100%</button>
+        </div>
+      </div>
 
-    <button id="undo">Undo</button>
-    <button id="redo">Redo</button>
-    <button id="compare">Before/After</button>
-    <button id="download">Export</button>
-</header>
+      <div class="stage" id="stage" aria-label="Photo canvas">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-art" aria-hidden="true"><span>＋</span><i>▧</i></div>
+          <p class="empty-kicker">YOUR CREATIVE WORKSPACE</p>
+          <h1>Bring your photo to life.</h1>
+          <p class="empty-description">Make precise edits with tools that stay right here in your browser.</p>
+          <button class="primary" id="openEmpty" type="button"><span aria-hidden="true">＋</span> Open image</button>
+          <small>JPG, PNG and WebP · Drag and drop supported</small>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="photoCanvas" aria-label="Edited image preview"></canvas>
+          <canvas id="overlayCanvas" aria-label="Editing overlays"></canvas>
+        </div>
+        <div class="stage-toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
 
-<main class="layout">
-
-    <aside class="left">
-
-        <label>
-            Brightness
-            <input id="brightness" type="range" min="-100" max="100" value="0">
-        </label>
-
-        <label>
-            Contrast
-            <input id="contrast" type="range" min="-100" max="100" value="0">
-        </label>
-
-        <label>
-            Saturation
-            <input id="saturation" type="range" min="-100" max="100" value="0">
-        </label>
-
-        <button id="drawTool">Draw</button>
-        <button id="textTool">Text</button>
-
-    </aside>
-
-    <section class="workspace">
-        <canvas id="canvas"></canvas>
+      <div class="viewer-foot">
+        <span id="editCount">0 edits</span>
+        <span class="privacy-note"><span class="privacy-dot" aria-hidden="true"></span> Processing on this device</span>
+        <span id="statusText" role="status">Ready</span>
+      </div>
     </section>
 
-</main>
+    <section class="controls-shell" aria-label="Editing controls">
+      <div class="control-header">
+        <div class="control-heading">
+          <span class="eyebrow" id="toolEyebrow">ADJUST</span>
+          <h2 id="toolTitle">Light</h2>
+          <p id="toolDesc">Tune the overall brightness and contrast.</p>
+        </div>
+        <button class="text-btn" id="resetTool" type="button" title="Reset current tool settings">Reset</button>
+      </div>
+      <div class="control-body" id="controlBody" tabindex="0" aria-label="Selected tool settings"></div>
+    </section>
+  </main>
 
-js/photo-editor.jsscript>
-
+  <nav class="tool-tabs" id="toolTabs" aria-label="Editing tools">
+    <button class="tool-tab active" type="button" data-tool="light" aria-label="Light"><span aria-hidden="true">☼</span><small>Light</small></button>
+    <button class="tool-tab" type="button" data-tool="color" aria-label="Color"><span aria-hidden="true">◐</span><small>Color</small></button>
+    <button class="tool-tab" type="button" data-tool="effects" aria-label="Effects"><span aria-hidden="true">✦</span><small>Effects</small></button>
+    <button class="tool-tab" type="button" data-tool="detail" aria-label="Detail"><span aria-hidden="true">◌</span><small>Detail</small></button>
+    <button class="tool-tab" type="button" data-tool="crop" aria-label="Crop"><span aria-hidden="true">⌗</span><small>Crop</small></button>
+    <button class="tool-tab" type="button" data-tool="retouch" aria-label="Heal and retouch"><span aria-hidden="true">✚</span><small>Heal</small></button>
+    <button class="tool-tab" type="button" data-tool="mask" aria-label="Mask"><span aria-hidden="true">◉</span><small>Mask</small></button>
+    <button class="tool-tab" type="button" data-tool="text" aria-label="Text"><span aria-hidden="true">T</span><small>Text</small></button>
+    <button class="tool-tab" type="button" data-tool="draw" aria-label="Draw"><span aria-hidden="true">✎</span><small>Draw</small></button>
+    <button class="tool-tab" type="button" data-tool="blur" aria-label="Blur"><span aria-hidden="true">◍</span><small>Blur</small></button>
+    <button class="tool-tab" type="button" data-tool="presets" aria-label="Presets"><span aria-hidden="true">◆</span><small>Presets</small></button>
+    <button class="tool-tab" type="button" data-tool="layers" aria-label="Layers"><span aria-hidden="true">▤</span><small>Layers</small></button>
+    <button class="tool-tab" type="button" data-tool="export" aria-label="Export settings"><span aria-hidden="true">⇩</span><small>Export</small></button>
+  </nav>
+  <div class="drop-overlay" id="dropOverlay" role="status">Drop image to open</div>
+</div>
+<script src="js/photo-editor.js" defer></script>
 </body>
 </html>
