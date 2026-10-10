@@ -68,8 +68,8 @@ let blurResultCtx = null;
 // interactive canvas and a larger idle canvas on every pointer release forces
 // repeated allocations and image processing, which causes visible slider lag.
 // Export renders independently at the selected output size.
-const PREVIEW_MAX_EDGE = 800;
-const INTERACTIVE_MAX_EDGE = 800;
+const PREVIEW_MAX_EDGE = 640;
+const INTERACTIVE_MAX_EDGE = 640;
 const MAX_ZOOM = 5;
 
 // Static color centers are shared by all pixels and render passes.
@@ -154,7 +154,7 @@ const S = {
     gradeHigh:'#fff0d0',
 
     gradeBalance:0,
-    gradeBlend:50
+    gradeBlend:0
   },
 
   effects:{
@@ -199,6 +199,7 @@ const S = {
 
   mask:{
     mode:'off',
+    invert:false,
 
     x:.5,
     y:.5,
@@ -238,7 +239,12 @@ const S = {
     stroke:'#000000',
     strokeWidth:0,
     opacity:100,
-    rotation:0
+    rotation:0,
+    backgroundEnabled:false,
+    background:'#111827',
+    shadowEnabled:false,
+    shadowColor:'#000000',
+    shadowBlur:12
   },
 
   draw:{
@@ -965,8 +971,11 @@ function renderPanel(){
       field('Clarity','mask.clarity',-100,100,1,S.mask.clarity) +
 
       `
+      <div class="section">
+        <label class="check"><input id="maskInvert" type="checkbox" ${S.mask.invert?'checked':''}> Invert mask</label>
+      </div>
       <div class="hint">
-        Drag the mask center directly on the photo.
+        Drag the mask center on the photo. The ring shows the active area.
       </div>
       `;
 
@@ -999,12 +1008,12 @@ function renderPanel(){
 
           <select class="select" id="textFont">
 
-            <option>Inter</option>
-            <option>Arial</option>
-            <option>Georgia</option>
-            <option>Verdana</option>
-            <option>Trebuchet MS</option>
-            <option>Courier New</option>
+            <option ${S.text.font==='Inter'?'selected':''}>Inter</option>
+            <option ${S.text.font==='Arial'?'selected':''}>Arial</option>
+            <option ${S.text.font==='Georgia'?'selected':''}>Georgia</option>
+            <option ${S.text.font==='Verdana'?'selected':''}>Verdana</option>
+            <option ${S.text.font==='Trebuchet MS'?'selected':''}>Trebuchet MS</option>
+            <option ${S.text.font==='Courier New'?'selected':''}>Courier New</option>
 
           </select>
 
@@ -1017,9 +1026,9 @@ function renderPanel(){
           </div>
 
           <select class="select" id="textAlign">
-            <option>left</option>
-            <option>center</option>
-            <option>right</option>
+            <option ${S.text.align==='left'?'selected':''}>left</option>
+            <option ${S.text.align==='center'?'selected':''}>center</option>
+            <option ${S.text.align==='right'?'selected':''}>right</option>
           </select>
 
         </div>
@@ -1055,6 +1064,8 @@ function renderPanel(){
         S.text.strokeWidth,
         'px'
       )}
+
+      ${field('Rotation','text.rotation',-180,180,1,S.text.rotation,'°')}
 
       <div class="two">
 
@@ -1106,6 +1117,19 @@ function renderPanel(){
 
         </div>
 
+      </div>
+
+      <div class="section">
+        <div class="section-title">Text background and shadow</div>
+        <div class="two">
+          <label class="check"><input id="textBackgroundEnabled" type="checkbox" ${S.text.backgroundEnabled?'checked':''}> Background</label>
+          <input class="color" id="textBackground" type="color" value="${S.text.background}" aria-label="Text background color">
+        </div>
+        <div class="two" style="margin-top:10px">
+          <label class="check"><input id="textShadowEnabled" type="checkbox" ${S.text.shadowEnabled?'checked':''}> Shadow</label>
+          <input class="color" id="textShadowColor" type="color" value="${S.text.shadowColor}" aria-label="Text shadow color">
+        </div>
+        ${field('Shadow blur','text.shadowBlur',0,40,1,S.text.shadowBlur,'px')}
       </div>
 
       <div class="btn-row">
@@ -1631,7 +1655,7 @@ function bindPanel(){
                 key.includes('Balance')
                 ? '%'
                 :
-                key === 'crop.angle'
+                (key === 'crop.angle' || key === 'text.rotation')
                 ? '°'
                 :
                 key === 'transform.scale'
@@ -1642,7 +1666,14 @@ function bindPanel(){
 
           }
 
-          scheduleRender(true);
+          if(parts[0] === 'text'){
+            if(selectedLayer >= 0 && layers[selectedLayer]?.type === 'text'){
+              layers[selectedLayer].settings = deepClone(S.text);
+            }
+            renderOverlayOnly();
+          } else {
+            scheduleRender(true);
+          }
 
         }
       );
@@ -1801,6 +1832,11 @@ function bindPanel(){
     'textItalic',
     'textColor',
     'textStroke',
+    'textBackgroundEnabled',
+    'textBackground',
+    'textShadowEnabled',
+    'textShadowColor',
+    'maskInvert',
     'drawColor',
     'exportFormat',
     'exportQuality'
@@ -1887,6 +1923,12 @@ function syncSpecial(e){
 
   if(e.id === 'textStroke')
     S.text.stroke = e.value;
+
+  if(e.id === 'textBackgroundEnabled') S.text.backgroundEnabled = e.checked;
+  if(e.id === 'textBackground') S.text.background = e.value;
+  if(e.id === 'textShadowEnabled') S.text.shadowEnabled = e.checked;
+  if(e.id === 'textShadowColor') S.text.shadowColor = e.value;
+  if(e.id === 'maskInvert') { S.mask.invert = e.checked; scheduleRender(true); return; }
 
   if(e.id === 'drawColor')
     S.draw.color = e.value;
@@ -2269,7 +2311,7 @@ function resetAll(){
     gradeHigh:'#fff0d0',
 
     gradeBalance:0,
-    gradeBlend:50
+    gradeBlend:0
   };
 
   S.effects = {
@@ -3004,6 +3046,13 @@ function processPixels(d,W,H){
   const M = S.mask;
   const B = S.blur;
 
+  const anyNonZero = obj => Object.values(obj).some(v => typeof v === 'number' && v !== 0);
+  const activeColor = Object.values(C).some(v => typeof v === 'number' && v !== 0);
+  const activeEffects = ['texture','clarity','dehaze','vignette','grain','fade','glow','sepia'].some(k => Number(E[k]) !== 0);
+  const activeDetail = Number(D.sharp) !== 0 || Number(D.noise) !== 0 || Number(D.colorNoise) !== 0;
+  const activeMask = M.mode !== 'off' && ['exposure','contrast','highlights','shadows','saturation','temp','tint','texture','clarity'].some(k => Number(M[k]) !== 0);
+  if(!anyNonZero(L) && !activeColor && !activeEffects && !activeDetail && !activeMask && !(B.amount > 0) && !S.retouch.ops.length) return;
+
   const exp =
     Math.pow(
       2,
@@ -3205,31 +3254,19 @@ function processPixels(d,W,H){
           dy*dy
         );
 
-      m =
-        1 -
-        smoothstep(
-          M.size,
-          M.size *
-          (1-M.feather),
-          dist
-        );
+      const inner = M.size * (1 - M.feather);
+      m = 1 - smoothstep(inner, Math.max(inner + 0.001, M.size), dist);
 
     }
 
     else if(M.mode === 'linear'){
 
-      m =
-        1 -
-        smoothstep(
-          .1,
-          .9,
-          Math.abs(
-            (x-.5)*.9 +
-            (y-.5)*.9
-          )
-        );
+      const lineDistance = Math.abs((x-M.x)*0.9 + (y-M.y)*0.9);
+      m = 1 - smoothstep(0.02, Math.max(0.03, M.size), lineDistance);
 
     }
+
+    if(M.invert && M.mode !== 'off') m = 1 - m;
 
     if(
       m > 0 &&
@@ -3452,18 +3489,9 @@ function processPixels(d,W,H){
       b*(1-fade)+
       fade*31;
 
-    [
-      r,
-      g,
-      b
-    ] =
-      applyGrade(
-        r,
-        g,
-        b,
-        C,
-        gradeCache
-      );
+    if(C.gradeBlend > 0){
+      [r,g,b] = applyGrade(r,g,b,C,gradeCache);
+    }
 
     if(E.sepia){
 
@@ -4139,7 +4167,7 @@ function applyBlurLocal(d, W, H){
   blurSourceCtx.putImageData(source, 0, 0);
   blurResultCtx.clearRect(0, 0, W, H);
 
-  const radius = Math.max(0.6, amount / 8);
+  const radius = Math.max(0.8, amount / 2);
   let blurred = null;
   try {
     blurResultCtx.save();
@@ -4195,14 +4223,7 @@ function applyRetouchOps(
     const op of ops
   ){
 
-    const rad =
-      Math.max(
-        2,
-        Math.round(
-          op.size/2/100*
-          Math.min(W,H)
-        )
-      );
+    const rad = Math.max(2, Math.round((Number(op.size) || 12) / 2));
 
     const q =
       clamp(
@@ -4325,20 +4346,22 @@ function applyRetouchOps(
 
           }
 
+          else if(op.mode === 'blur' || op.mode === 'smooth' || op.mode === 'heal'){
+            const jL = (Y*W + clamp(X-1,0,W-1))*4;
+            const jR = (Y*W + clamp(X+1,0,W-1))*4;
+            const jU = (clamp(Y-1,0,H-1)*W + X)*4;
+            const jD = (clamp(Y+1,0,H-1)*W + X)*4;
+            const strength = op.mode === 'blur' ? Math.min(.9,k*1.8) : op.mode === 'smooth' ? Math.min(.75,k*1.25) : Math.min(.65,k*.9);
+            for(let ch=0;ch<3;ch++){
+              const avg = (src[jL+ch]+src[jR+ch]+src[jU+ch]+src[jD+ch])/4;
+              d.data[i+ch] = src[i+ch]*(1-strength)+avg*strength;
+            }
+          }
           else{
-
-            d.data[i] =
-              src[i]*(1-k)+
-              src[j]*k;
-
-            d.data[i+1] =
-              src[i+1]*(1-k)+
-              src[j+1]*k;
-
-            d.data[i+2] =
-              src[i+2]*(1-k)+
-              src[j+2]*k;
-
+            // Clone copies nearby mirrored pixels; it stays local to the brush.
+            d.data[i] = src[i]*(1-k)+src[j]*k;
+            d.data[i+1] = src[i+1]*(1-k)+src[j+1]*k;
+            d.data[i+2] = src[i+2]*(1-k)+src[j+2]*k;
           }
 
         }
@@ -4374,68 +4397,92 @@ function drawOverlay(){
 
   if(S.guides.grid)
     drawGrid();
+  if(active === 'mask' && S.mask.mode !== 'off') drawMaskGuide();
+  if(active === 'blur' && S.blur.mode !== 'full') drawBlurGuide();
 
 }
 
-function drawText(l){
-
-  const t =
-    l.settings ||
-    S.text;
-
+function drawMaskGuide(){
+  const x = S.mask.x * overlay.width;
+  const y = S.mask.y * overlay.height;
   octx.save();
-
-  octx.translate(
-    l.x*overlay.width,
-    l.y*overlay.height
-  );
-
-  octx.rotate(
-    (t.rotation||0) *
-    Math.PI/180
-  );
-
-  octx.globalAlpha =
-    (t.opacity||100)/100;
-
-  octx.font =
-    `${t.italic?'italic ':''}` +
-    `${t.bold?'700 ':''}` +
-    `${t.size}px ${t.font}`;
-
-  octx.textAlign =
-    t.align;
-
-  octx.textBaseline =
-    'middle';
-
-  if(t.strokeWidth){
-
-    octx.lineWidth =
-      t.strokeWidth;
-
-    octx.strokeStyle =
-      t.stroke;
-
-    octx.strokeText(
-      l.name,
-      0,
-      0
-    );
-
+  octx.strokeStyle = 'rgba(124,156,255,.95)';
+  octx.fillStyle = 'rgba(124,156,255,.10)';
+  octx.lineWidth = Math.max(1, overlay.width / 600);
+  if(S.mask.mode === 'radial'){
+    const rx = Math.max(8, S.mask.size * overlay.width);
+    const ry = Math.max(8, S.mask.size * overlay.height);
+    octx.beginPath(); octx.ellipse(x,y,rx,ry,0,0,Math.PI*2); octx.fill(); octx.stroke();
+    octx.setLineDash([5,5]);
+    octx.beginPath(); octx.ellipse(x,y,rx*(1-S.mask.feather),ry*(1-S.mask.feather),0,0,Math.PI*2); octx.stroke();
+  } else {
+    octx.setLineDash([6,5]);
+    octx.beginPath(); octx.moveTo(0,y); octx.lineTo(overlay.width,y); octx.stroke();
   }
-
-  octx.fillStyle =
-    t.color;
-
-  octx.fillText(
-    l.name,
-    0,
-    0
-  );
-
+  octx.setLineDash([]);
+  octx.beginPath(); octx.arc(x,y,4,0,Math.PI*2); octx.fillStyle='#7c9cff'; octx.fill();
   octx.restore();
+}
 
+function drawBlurGuide(){
+  const x = S.blur.focusX / 100 * overlay.width;
+  const y = S.blur.focusY / 100 * overlay.height;
+  octx.save();
+  octx.strokeStyle = 'rgba(124,156,255,.95)';
+  octx.fillStyle = 'rgba(124,156,255,.08)';
+  octx.lineWidth = Math.max(1, overlay.width / 600);
+  if(S.blur.mode === 'radial'){
+    const rx = Math.max(8, S.blur.size / 100 * overlay.width);
+    const ry = Math.max(8, S.blur.size / 100 * overlay.height);
+    octx.beginPath(); octx.ellipse(x,y,rx,ry,0,0,Math.PI*2); octx.fill(); octx.stroke();
+  } else {
+    octx.setLineDash([6,5]); octx.beginPath(); octx.moveTo(x,0); octx.lineTo(x,overlay.height); octx.stroke();
+  }
+  octx.beginPath(); octx.arc(x,y,4,0,Math.PI*2); octx.fillStyle='#7c9cff'; octx.fill();
+  octx.restore();
+}
+
+function drawText(l){
+  const t = l.settings || S.text;
+  const lines = String(l.name ?? '').split(/\r?\n/);
+  octx.save();
+  octx.translate(l.x * overlay.width, l.y * overlay.height);
+  octx.rotate((Number(t.rotation) || 0) * Math.PI / 180);
+  octx.globalAlpha = clamp((Number(t.opacity ?? 100) || 0) / 100, 0, 1);
+  const size = Math.max(8, Number(t.size) || 48);
+  const lineHeight = size * 1.2;
+  octx.font = `${t.italic ? 'italic ' : ''}${t.bold ? '700 ' : '400 '}${size}px ${t.font || 'Inter'}`;
+  octx.textAlign = t.align || 'center';
+  octx.textBaseline = 'middle';
+  const widths = lines.map(line => octx.measureText(line || ' ').width);
+  const maxWidth = Math.max(1, ...widths);
+  const totalHeight = Math.max(lineHeight, lines.length * lineHeight);
+  if(t.backgroundEnabled){
+    const padX = Math.max(8, size * .22), padY = Math.max(5, size * .12);
+    let left = t.align === 'left' ? 0 : t.align === 'right' ? -maxWidth : -maxWidth/2;
+    octx.fillStyle = t.background || '#111827';
+    octx.beginPath();
+    octx.roundRect(left-padX, -totalHeight/2-padY, maxWidth+padX*2, totalHeight+padY*2, Math.max(4,size*.12));
+    octx.fill();
+  }
+  if(t.shadowEnabled){
+    octx.shadowColor = t.shadowColor || '#000000';
+    octx.shadowBlur = clamp(Number(t.shadowBlur) || 0, 0, 40);
+    octx.shadowOffsetX = 1;
+    octx.shadowOffsetY = 2;
+  }
+  const top = -(lines.length - 1) * lineHeight / 2;
+  for(let i=0;i<lines.length;i++){
+    const y = top + i*lineHeight;
+    if(t.strokeWidth){
+      octx.lineWidth = Number(t.strokeWidth) || 0;
+      octx.strokeStyle = t.stroke || '#000000';
+      octx.strokeText(lines[i], 0, y);
+    }
+    octx.fillStyle = t.color || '#ffffff';
+    octx.fillText(lines[i], 0, y);
+  }
+  octx.restore();
 }
 
 function drawStroke(l){
@@ -4943,37 +4990,21 @@ function handlePointerDown(e){
   }
 
   if(active === 'mask'){
-
-    const p =
-      pointerPos(e);
-
-    S.mask.x =
-      p.x;
-
-    S.mask.y =
-      p.y;
-
+    const p = pointerPos(e);
+    S.mask.x = p.x;
+    S.mask.y = p.y;
+    drawing = {type:'maskMove'};
     scheduleRender(true);
-
     return;
-
   }
 
   if(active === 'blur'){
-
-    const p =
-      pointerPos(e);
-
-    S.blur.focusX =
-      p.x*100;
-
-    S.blur.focusY =
-      p.y*100;
-
+    const p = pointerPos(e);
+    S.blur.focusX = p.x*100;
+    S.blur.focusY = p.y*100;
+    drawing = {type:'blurMove'};
     scheduleRender(true);
-
     return;
-
   }
 
   if(active === 'crop'){
@@ -5149,15 +5180,28 @@ function handlePointerMove(e){
     drawing?.type ===
     'retouch'
   ){
-
-    drawing.points.push(
-      pointerPos(e)
-    );
-
+    const p = pointerPos(e);
+    const last = drawing.points[drawing.points.length - 1];
+    const minGap = Math.max(2, S.retouch.size * 0.22) / Math.max(canvas.width, canvas.height);
+    if(!last || Math.hypot(p.x-last.x, p.y-last.y) >= minGap) drawing.points.push(p);
     retouchAt(e);
-
     return;
+  }
 
+  if(drawing?.type === 'maskMove'){
+    const p = pointerPos(e);
+    S.mask.x = p.x;
+    S.mask.y = p.y;
+    scheduleRender(true);
+    return;
+  }
+
+  if(drawing?.type === 'blurMove'){
+    const p = pointerPos(e);
+    S.blur.focusX = p.x*100;
+    S.blur.focusY = p.y*100;
+    scheduleRender(true);
+    return;
   }
 
   if(
@@ -5315,9 +5359,12 @@ function handlePointerUp(e){
     drawing?.type ===
     'draw'
   ){
-
     drawing = null;
-
+  }
+  else if(drawing?.type === 'maskMove' || drawing?.type === 'blurMove'){
+    drawing = null;
+    pushHistory();
+    renderPanel();
   }
 
   if(
@@ -5822,69 +5869,41 @@ function exportImage(){
 
 }
 
-function drawExportText(
-  x,
-  l,
-  W,
-  H
-){
-
-  const t =
-    l.settings;
-
+function drawExportText(x, l, W, H){
+  const t = l.settings || S.text;
+  const scale = W / Math.max(1, overlay.width);
+  const lines = String(l.name ?? '').split(/\r?\n/);
+  const size = Math.max(8, (Number(t.size) || 48) * scale);
+  const lineHeight = size * 1.2;
   x.save();
-
-  x.translate(
-    l.x*W,
-    l.y*H
-  );
-
-  x.rotate(
-    (t.rotation||0) *
-    Math.PI/180
-  );
-
-  x.globalAlpha =
-    t.opacity/100;
-
-  x.font =
-    `${t.italic?'italic ':''}` +
-    `${t.bold?'700 ':''}` +
-    `${t.size}px ${t.font}`;
-
-  x.textAlign =
-    t.align;
-
-  x.textBaseline =
-    'middle';
-
-  if(t.strokeWidth){
-
-    x.lineWidth =
-      t.strokeWidth;
-
-    x.strokeStyle =
-      t.stroke;
-
-    x.strokeText(
-      l.name,
-      0,
-      0
-    );
-
+  x.translate(l.x * W, l.y * H);
+  x.rotate((Number(t.rotation) || 0) * Math.PI / 180);
+  x.globalAlpha = clamp((Number(t.opacity ?? 100) || 0) / 100, 0, 1);
+  x.font = `${t.italic ? 'italic ' : ''}${t.bold ? '700 ' : '400 '}${size}px ${t.font || 'Inter'}`;
+  x.textAlign = t.align || 'center';
+  x.textBaseline = 'middle';
+  const widths = lines.map(line => x.measureText(line || ' ').width);
+  const maxWidth = Math.max(1, ...widths);
+  const totalHeight = Math.max(lineHeight, lines.length * lineHeight);
+  if(t.backgroundEnabled){
+    const padX = Math.max(8, size*.22), padY = Math.max(5, size*.12);
+    const left = t.align === 'left' ? 0 : t.align === 'right' ? -maxWidth : -maxWidth/2;
+    x.fillStyle = t.background || '#111827';
+    x.beginPath(); x.roundRect(left-padX,-totalHeight/2-padY,maxWidth+padX*2,totalHeight+padY*2,Math.max(4,size*.12)); x.fill();
   }
-
-  x.fillStyle =
-    t.color;
-
-  x.fillText(
-    l.name,
-    0,
-    0
-  );
-
+  if(t.shadowEnabled){
+    x.shadowColor = t.shadowColor || '#000000';
+    x.shadowBlur = clamp(Number(t.shadowBlur)||0,0,40) * scale;
+    x.shadowOffsetX = scale;
+    x.shadowOffsetY = 2*scale;
+  }
+  const top = -(lines.length-1)*lineHeight/2;
+  for(let i=0;i<lines.length;i++){
+    const y = top+i*lineHeight;
+    if(t.strokeWidth){ x.lineWidth = (Number(t.strokeWidth)||0)*scale; x.strokeStyle=t.stroke||'#000000'; x.strokeText(lines[i],0,y); }
+    x.fillStyle=t.color||'#ffffff'; x.fillText(lines[i],0,y);
+  }
   x.restore();
-
 }
 
 function drawExportStroke(
