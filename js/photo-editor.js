@@ -69,7 +69,7 @@ let blurResultCtx = null;
 // repeated allocations and image processing, which causes visible slider lag.
 // Export renders independently at the selected output size.
 const PREVIEW_MAX_EDGE = 800;
-const INTERACTIVE_MAX_EDGE = 520;
+const INTERACTIVE_MAX_EDGE = 420;
 const MAX_ZOOM = 5;
 
 // Static color centers are shared by all pixels and render passes.
