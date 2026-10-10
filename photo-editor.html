@@ -1,169 +1,56 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#0b0d10">
-<title>Toolora Photo Editor</title>
-<link rel="stylesheet" href="css/photo-editor.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Toolora</title>
+
+    css/photo-editor.css
 </head>
 <body>
-<div class="app" id="app">
 
 <header class="topbar">
-  <div class="brand">
-    <span class="brand-mark">T</span>
-    <span>Toolora</span>
-  </div>
+    <h1>Toolora</h1>
 
-  <div class="top-actions">
-    <button class="icon-btn" id="openBtn" title="Open photo">↥</button>
-    <button class="icon-btn" id="undoBtn" title="Undo">↶</button>
-    <button class="icon-btn" id="redoBtn" title="Redo">↷</button>
-    <button class="icon-btn" id="beforeBtn" title="Hold to view original">◉</button>
-    <button class="icon-btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
-  </div>
+    <input type="file" id="upload" accept="image/*">
 
-  <input id="fileInput" type="file" accept="image/*" hidden>
+    <button id="undo">Undo</button>
+    <button id="redo">Redo</button>
+    <button id="compare">Before/After</button>
+    <button id="download">Export</button>
 </header>
 
-<main class="workspace">
+<main class="layout">
 
-  <section class="viewer-shell">
+    <aside class="left">
 
-    <div class="viewer-head">
-      <div class="file-meta">
-        <strong id="fileName">No photo</strong>
-        <span id="fileInfo">Open an image to begin</span>
-      </div>
+        <label>
+            Brightness
+            <input id="brightness" type="range" min="-100" max="100" value="0">
+        </label>
 
-      <div class="viewer-actions">
-        <button id="zoomOut">−</button>
-        <span id="zoomLabel">Fit</span>
-        <button id="zoomIn">+</button>
-        <button id="fitBtn">Fit</button>
-        <button id="oneBtn">100%</button>
-      </div>
-    </div>
+        <label>
+            Contrast
+            <input id="contrast" type="range" min="-100" max="100" value="0">
+        </label>
 
-    <div class="stage" id="stage">
+        <label>
+            Saturation
+            <input id="saturation" type="range" min="-100" max="100" value="0">
+        </label>
 
-      <div class="empty-state" id="emptyState">
-        <div class="empty-icon">＋</div>
-        <h1>Open a photo</h1>
-        <p>Professional editing, directly in your browser.</p>
-        <button class="primary" id="openEmpty">Open Photo</button>
-        <small>Drag and drop an image here</small>
-      </div>
+        <button id="drawTool">Draw</button>
+        <button id="textTool">Text</button>
 
-      <div class="canvas-wrap" id="canvasWrap">
-        <canvas id="photoCanvas"></canvas>
-        <canvas id="overlayCanvas"></canvas>
-      </div>
+    </aside>
 
-      <div class="stage-toast" id="toast"></div>
-    </div>
-
-    <div class="viewer-foot">
-      <span id="editCount">0 edits</span>
-      <span id="statusText">Ready</span>
-    </div>
-
-  </section>
-
-  <section class="controls-shell">
-
-    <div class="control-header">
-      <div>
-        <span class="eyebrow" id="toolEyebrow">Adjust</span>
-        <h2 id="toolTitle">Light</h2>
-        <p id="toolDesc">Tune the overall brightness and contrast.</p>
-      </div>
-
-      <button class="text-btn" id="resetTool">Reset</button>
-    </div>
-
-    <div class="control-body" id="controlBody"></div>
-
-  </section>
+    <section class="workspace">
+        <canvas id="canvas"></canvas>
+    </section>
 
 </main>
 
-<nav class="tool-tabs" id="toolTabs">
+js/photo-editor.jsscript>
 
-  <button class="tool-tab active" data-tool="light">
-    <span>☼</span>
-    <small>Light</small>
-  </button>
-
-  <button class="tool-tab" data-tool="color">
-    <span>◐</span>
-    <small>Color</small>
-  </button>
-
-  <button class="tool-tab" data-tool="effects">
-    <span>✦</span>
-    <small>Effects</small>
-  </button>
-
-  <button class="tool-tab" data-tool="detail">
-    <span>◌</span>
-    <small>Detail</small>
-  </button>
-
-  <button class="tool-tab" data-tool="crop">
-    <span>⌗</span>
-    <small>Crop</small>
-  </button>
-
-  <button class="tool-tab" data-tool="retouch">
-    <span>✚</span>
-    <small>Heal</small>
-  </button>
-
-  <button class="tool-tab" data-tool="mask">
-    <span>◉</span>
-    <small>Mask</small>
-  </button>
-
-  <button class="tool-tab" data-tool="text">
-    <span>T</span>
-    <small>Text</small>
-  </button>
-
-  <button class="tool-tab" data-tool="draw">
-    <span>✎</span>
-    <small>Draw</small>
-  </button>
-
-  <button class="tool-tab" data-tool="blur">
-    <span>◍</span>
-    <small>Blur</small>
-  </button>
-
-  <button class="tool-tab" data-tool="presets">
-    <span>◆</span>
-    <small>Presets</small>
-  </button>
-
-  <button class="tool-tab" data-tool="layers">
-    <span>▤</span>
-    <small>Layers</small>
-  </button>
-
-  <button class="tool-tab" data-tool="export">
-    <span>⇩</span>
-    <small>Export</small>
-  </button>
-
-</nav>
-
-<div class="drop-overlay" id="dropOverlay">
-  Drop image to open
-</div>
-
-</div>
-
-<script src="js/photo-editor.js"></script>
 </body>
 </html>
