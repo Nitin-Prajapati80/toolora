@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,6 +24,13 @@
         .tool-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+
+        #communityProfile input[type="text"],
+        #communityProfile input[type="email"],
+        #communityProfile input[type="tel"] {
+            width: 100%;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -76,6 +84,156 @@
         </section>
 
 
+        <!-- Optional Community Profile -->
+        <section id="communityProfile"
+                 class="max-w-3xl mx-auto px-5 pt-10"
+                 aria-labelledby="communityProfileTitle">
+
+            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6 md:p-8">
+
+                <p class="text-blue-700 text-sm font-semibold mb-2">
+                    OPTIONAL • YOUR CHOICE
+                </p>
+
+                <h2 id="communityProfileTitle"
+                    class="text-2xl md:text-3xl font-bold mb-3">
+                    Help Us Get to Know Our Community
+                </h2>
+
+                <p class="text-gray-700 leading-relaxed mb-3">
+                    If you would like to tell us a little about yourself
+                    and where you are visiting from, you can share your
+                    details below. This is completely optional, and you
+                    can use Toolora without filling in this form.
+                </p>
+
+                <p class="text-gray-600 text-sm leading-relaxed mb-6">
+                    We will use the information you choose to share to
+                    understand our audience and improve Toolora. We do
+                    not intend to sell your personal information.
+                    Please do not share sensitive information or your
+                    full home address.
+                </p>
+
+                <form id="communityProfileForm"
+                      class="grid md:grid-cols-2 gap-4">
+
+                    <div>
+                        <label for="communityName"
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Name (Optional)
+                        </label>
+
+                        <input id="communityName"
+                               name="name"
+                               type="text"
+                               maxlength="80"
+                               autocomplete="name"
+                               placeholder="Your name"
+                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="communityEmail"
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address (Optional)
+                        </label>
+
+                        <input id="communityEmail"
+                               name="email"
+                               type="email"
+                               maxlength="120"
+                               autocomplete="email"
+                               placeholder="you@example.com"
+                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="communityCountry"
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Country (Optional)
+                        </label>
+
+                        <input id="communityCountry"
+                               name="country"
+                               type="text"
+                               maxlength="80"
+                               autocomplete="country-name"
+                               placeholder="Your country"
+                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="communityCity"
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            City (Optional)
+                        </label>
+
+                        <input id="communityCity"
+                               name="city"
+                               type="text"
+                               maxlength="80"
+                               autocomplete="address-level2"
+                               placeholder="Your city"
+                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="communityMobile"
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Mobile Number (Optional)
+                        </label>
+
+                        <input id="communityMobile"
+                               name="mobile"
+                               type="tel"
+                               maxlength="25"
+                               autocomplete="tel"
+                               placeholder="Your mobile number"
+                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="md:col-span-2 flex items-start gap-3">
+                        <input id="communityConsent"
+                               name="consent"
+                               type="checkbox"
+                               required
+                               class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+
+                        <label for="communityConsent"
+                               class="text-sm text-gray-600">
+                            I agree that Toolora may use the information
+                            I voluntarily submit to understand its audience
+                            and improve the website. I understand that I
+                            can use Toolora without submitting this form.
+                        </label>
+                    </div>
+
+                    <div class="md:col-span-2 flex flex-wrap items-center gap-3">
+
+                        <button type="submit"
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition">
+                            Share My Details
+                        </button>
+
+                        <button type="button"
+                                id="communitySkip"
+                                class="border border-gray-300 hover:bg-white text-gray-700 font-semibold px-6 py-3 rounded-xl transition">
+                            Maybe Later
+                        </button>
+
+                        <p id="communityStatus"
+                           class="w-full text-sm text-gray-600"
+                           role="status"
+                           aria-live="polite"></p>
+
+                    </div>
+
+                </form>
+            </div>
+        </section>
+
+
         <!-- Tools -->
         <section class="max-w-6xl mx-auto px-5 py-16">
 
@@ -93,7 +251,6 @@
 
 
             <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-
 
                 <!-- Resume Maker -->
                 <div class="tool-card bg-white rounded-2xl border p-8">
@@ -216,9 +373,8 @@
                         </h3>
 
                         <p class="text-gray-600 text-sm">
-                            We will build the tools to perform
-                            as much processing as possible in
-                            your browser.
+                            We aim to perform as much processing
+                            as possible directly in your browser.
                         </p>
                     </div>
 
@@ -244,10 +400,24 @@
                 Professional online tools made simple.
             </p>
 
-            <nav class="flex flex-wrap justify-center gap-x-5 gap-y-3 text-xs md:text-sm mt-5" aria-label="Legal and help links">
-                <a href="terms-and-conditions.html" class="hover:text-white underline-offset-4 hover:underline">Terms &amp; Conditions</a>
-                <a href="privacy-policy.html" class="hover:text-white underline-offset-4 hover:underline">Privacy Policy</a>
-                <a href="how-to-use.html" class="hover:text-white underline-offset-4 hover:underline">How to Use Toolora</a>
+            <nav class="flex flex-wrap justify-center gap-x-5 gap-y-3 text-xs md:text-sm mt-5"
+                 aria-label="Legal and help links">
+
+                <a href="terms-and-conditions.html"
+                   class="hover:text-white underline-offset-4 hover:underline">
+                    Terms &amp; Conditions
+                </a>
+
+                <a href="privacy-policy.html"
+                   class="hover:text-white underline-offset-4 hover:underline">
+                    Privacy Policy
+                </a>
+
+                <a href="how-to-use.html"
+                   class="hover:text-white underline-offset-4 hover:underline">
+                    How to Use Toolora
+                </a>
+
             </nav>
 
             <p class="text-xs mt-4">
@@ -257,6 +427,86 @@
         </div>
 
     </footer>
+
+
+    <!-- Community Form Script -->
+    <script>
+        /*
+         * IMPORTANT:
+         * The form is not connected to a database yet.
+         * Leave this empty until Google Apps Script is configured.
+         */
+        const TOOLORA_FORM_ENDPOINT = "";
+
+        const communityForm =
+            document.getElementById("communityProfileForm");
+
+        const communityStatus =
+            document.getElementById("communityStatus");
+
+        const communitySkip =
+            document.getElementById("communitySkip");
+
+        // Allow visitors to skip the optional form.
+        communitySkip.addEventListener("click", function () {
+            communityForm.reset();
+
+            communityStatus.textContent =
+                "No problem! You can continue using Toolora without sharing your details.";
+        });
+
+        // Handle form submission.
+        communityForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            if (!communityForm.reportValidity()) {
+                return;
+            }
+
+            if (!TOOLORA_FORM_ENDPOINT) {
+                communityStatus.textContent =
+                    "The form is not connected yet. No information has been sent.";
+
+                return;
+            }
+
+            const submitButton =
+                communityForm.querySelector('button[type="submit"]');
+
+            submitButton.disabled = true;
+            submitButton.textContent = "Submitting...";
+
+            const payload = Object.fromEntries(
+                new FormData(communityForm).entries()
+            );
+
+            payload.consent =
+                document.getElementById("communityConsent").checked;
+
+            try {
+                await fetch(TOOLORA_FORM_ENDPOINT, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {
+                        "Content-Type": "text/plain;charset=utf-8"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                communityStatus.textContent =
+                    "Thank you for sharing! Your request has been sent. Please note that the browser cannot verify whether it was saved.";
+
+                communityForm.reset();
+
+            } catch (error) {
+                communityStatus.textContent =
+                    "We could not send your details. Please try again later.";
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = "Share My Details";
+            }
+        });
+    </script>
 
 </body>
 </html>
