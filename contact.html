@@ -8,7 +8,7 @@
 <p id="cNotice" class="text-sm text-amber-700" role="status">Configure a support email before publishing to enable email preparation.</p>
 <button class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 py-3 font-semibold" type="submit">Prepare Email</button></form>
 <script>
-const TOOLORA_SUPPORT_EMAIL = ""; // Add an email address you control before publishing.
+const TOOLORA_SUPPORT_EMAIL = "knitin68576@gmail.com"; // Add an email address you control before publishing.
 document.getElementById("contactForm").addEventListener("submit", function(e) {
  e.preventDefault(); if (!e.currentTarget.reportValidity()) return;
  if (!TOOLORA_SUPPORT_EMAIL) { document.getElementById("cNotice").textContent = "No support email is configured. Add your email address in this page's JavaScript."; document.getElementById("cNotice").className = "text-sm text-red-700"; return; }
