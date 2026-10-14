@@ -26,11 +26,31 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.12);
         }
 
-        #communityProfile input[type="text"],
-        #communityProfile input[type="email"],
-        #communityProfile input[type="tel"] {
+        #communityModal[hidden] {
+            display: none !important;
+        }
+
+        #communityModal {
+            overflow-y: auto;
+        }
+
+        .community-input {
             width: 100%;
             box-sizing: border-box;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background: white;
+            padding: 12px 14px;
+            outline: none;
+        }
+
+        .community-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+
+        body.modal-open {
+            overflow: hidden;
         }
     </style>
 </head>
@@ -49,6 +69,7 @@
             <nav class="flex items-center gap-3 md:gap-6 text-xs md:text-sm font-medium">
                 <a href="about.html" class="hover:text-blue-600 whitespace-nowrap">About Us</a>
                 <a href="contact.html" class="hover:text-blue-600 whitespace-nowrap">Contact Us</a>
+
                 <span class="hidden md:flex items-center gap-6">
                     <a href="index.html" class="hover:text-blue-600">Home</a>
                     <a href="resume.html" class="hover:text-blue-600">Resume Maker</a>
@@ -84,154 +105,226 @@
         </section>
 
 
-        <!-- Optional Community Profile -->
-        <section id="communityProfile"
-                 class="max-w-3xl mx-auto px-5 pt-10"
-                 aria-labelledby="communityProfileTitle">
+        <!-- Compact Community Banner -->
+        <section class="max-w-3xl mx-auto px-5 pt-8">
 
-            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6 md:p-8">
+            <button type="button"
+                    id="openCommunityModal"
+                    aria-haspopup="dialog"
+                    aria-controls="communityModal"
+                    class="w-full flex items-center gap-3 text-left bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition">
 
-                <p class="text-blue-700 text-sm font-semibold mb-2">
-                    OPTIONAL • YOUR CHOICE
-                </p>
+                <span class="flex-shrink-0 w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center text-xl">
+                    👋
+                </span>
 
-                <h2 id="communityProfileTitle"
-                    class="text-2xl md:text-3xl font-bold mb-3">
-                    Help Us Get to Know Our Community
-                </h2>
+                <span class="flex-1 min-w-0">
+                    <span class="block font-semibold text-gray-900">
+                        Help Us Get to Know You
+                    </span>
 
-                <p class="text-gray-700 leading-relaxed mb-3">
-                    If you would like to tell us a little about yourself
-                    and where you are visiting from, you can share your
-                    details below. This is completely optional, and you
-                    can use Toolora without filling in this form.
-                </p>
+                    <span class="block text-sm text-gray-600 mt-1">
+                        Share a little about yourself. Completely optional.
+                    </span>
+                </span>
 
-                <p class="text-gray-600 text-sm leading-relaxed mb-6">
-                    We will use the information you choose to share to
-                    understand our audience and improve Toolora. We do
-                    not intend to sell your personal information.
-                    Please do not share sensitive information or your
-                    full home address.
-                </p>
+                <span class="text-gray-400 text-xl flex-shrink-0"
+                      aria-hidden="true">
+                    →
+                </span>
 
-                <form id="communityProfileForm"
-                      class="grid md:grid-cols-2 gap-4">
+            </button>
 
-                    <div>
-                        <label for="communityName"
-                               class="block text-sm font-medium text-gray-700 mb-1">
-                            Name (Optional)
-                        </label>
+        </section>
 
-                        <input id="communityName"
-                               name="name"
-                               type="text"
-                               maxlength="80"
-                               autocomplete="name"
-                               placeholder="Your name"
-                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
 
-                    <div>
-                        <label for="communityEmail"
-                               class="block text-sm font-medium text-gray-700 mb-1">
-                            Email Address (Optional)
-                        </label>
+        <!-- Community Profile Popup -->
+        <div id="communityModal"
+             hidden
+             class="fixed inset-0 z-[100] bg-black/60 p-3 sm:p-5"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="communityModalTitle"
+             aria-describedby="communityModalDescription">
 
-                        <input id="communityEmail"
-                               name="email"
-                               type="email"
-                               maxlength="120"
-                               autocomplete="email"
-                               placeholder="you@example.com"
-                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
+            <div class="min-h-full flex items-center justify-center">
 
-                    <div>
-                        <label for="communityCountry"
-                               class="block text-sm font-medium text-gray-700 mb-1">
-                            Country (Optional)
-                        </label>
+                <div id="communityModalPanel"
+                     class="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl my-auto">
 
-                        <input id="communityCountry"
-                               name="country"
-                               type="text"
-                               maxlength="80"
-                               autocomplete="country-name"
-                               placeholder="Your country"
-                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
+                    <!-- Popup Header -->
+                    <div class="flex items-start justify-between gap-4 p-5 sm:p-6 border-b">
 
-                    <div>
-                        <label for="communityCity"
-                               class="block text-sm font-medium text-gray-700 mb-1">
-                            City (Optional)
-                        </label>
+                        <div>
+                            <p class="text-xs font-semibold tracking-wide text-blue-600 mb-2">
+                                OPTIONAL • YOUR CHOICE
+                            </p>
 
-                        <input id="communityCity"
-                               name="city"
-                               type="text"
-                               maxlength="80"
-                               autocomplete="address-level2"
-                               placeholder="Your city"
-                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
+                            <h2 id="communityModalTitle"
+                                class="text-2xl font-bold text-gray-900">
+                                About You
+                            </h2>
 
-                    <div class="md:col-span-2">
-                        <label for="communityMobile"
-                               class="block text-sm font-medium text-gray-700 mb-1">
-                            Mobile Number (Optional)
-                        </label>
-
-                        <input id="communityMobile"
-                               name="mobile"
-                               type="tel"
-                               maxlength="25"
-                               autocomplete="tel"
-                               placeholder="Your mobile number"
-                               class="rounded-xl border border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-
-                    <div class="md:col-span-2 flex items-start gap-3">
-                        <input id="communityConsent"
-                               name="consent"
-                               type="checkbox"
-                               required
-                               class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-
-                        <label for="communityConsent"
-                               class="text-sm text-gray-600">
-                            I agree that Toolora may use the information
-                            I voluntarily submit to understand its audience
-                            and improve the website. I understand that I
-                            can use Toolora without submitting this form.
-                        </label>
-                    </div>
-
-                    <div class="md:col-span-2 flex flex-wrap items-center gap-3">
-
-                        <button type="submit"
-                                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition">
-                            Share My Details
-                        </button>
+                            <p id="communityModalDescription"
+                               class="text-sm text-gray-600 mt-2 leading-relaxed">
+                                If you would like to tell us a little about yourself
+                                and where you are visiting from, you can share your
+                                details here. You can use Toolora without filling
+                                in this form.
+                            </p>
+                        </div>
 
                         <button type="button"
-                                id="communitySkip"
-                                class="border border-gray-300 hover:bg-white text-gray-700 font-semibold px-6 py-3 rounded-xl transition">
-                            Maybe Later
+                                id="closeCommunityModal"
+                                aria-label="Close form"
+                                class="flex-shrink-0 w-9 h-9 rounded-full hover:bg-gray-100 text-gray-500 text-2xl flex items-center justify-center">
+                            ×
                         </button>
 
+                    </div>
+
+
+                    <!-- Form -->
+                    <form id="communityProfileForm"
+                          class="p-5 sm:p-6 space-y-4">
+
+                        <div>
+                            <label for="communityName"
+                                   class="block text-sm font-medium text-gray-700 mb-1">
+                                Name (Optional)
+                            </label>
+
+                            <input id="communityName"
+                                   name="name"
+                                   type="text"
+                                   maxlength="80"
+                                   autocomplete="name"
+                                   placeholder="Your name"
+                                   class="community-input">
+                        </div>
+
+
+                        <div>
+                            <label for="communityEmail"
+                                   class="block text-sm font-medium text-gray-700 mb-1">
+                                Email Address (Optional)
+                            </label>
+
+                            <input id="communityEmail"
+                                   name="email"
+                                   type="email"
+                                   maxlength="120"
+                                   autocomplete="email"
+                                   placeholder="you@example.com"
+                                   class="community-input">
+                        </div>
+
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                            <div>
+                                <label for="communityCountry"
+                                       class="block text-sm font-medium text-gray-700 mb-1">
+                                    Country (Optional)
+                                </label>
+
+                                <input id="communityCountry"
+                                       name="country"
+                                       type="text"
+                                       maxlength="80"
+                                       autocomplete="country-name"
+                                       placeholder="Your country"
+                                       class="community-input">
+                            </div>
+
+                            <div>
+                                <label for="communityCity"
+                                       class="block text-sm font-medium text-gray-700 mb-1">
+                                    City (Optional)
+                                </label>
+
+                                <input id="communityCity"
+                                       name="city"
+                                       type="text"
+                                       maxlength="80"
+                                       autocomplete="address-level2"
+                                       placeholder="Your city"
+                                       class="community-input">
+                            </div>
+
+                        </div>
+
+
+                        <div>
+                            <label for="communityMobile"
+                                   class="block text-sm font-medium text-gray-700 mb-1">
+                                Mobile Number (Optional)
+                            </label>
+
+                            <input id="communityMobile"
+                                   name="mobile"
+                                   type="tel"
+                                   maxlength="25"
+                                   autocomplete="tel"
+                                   placeholder="Your mobile number"
+                                   class="community-input">
+                        </div>
+
+
+                        <div class="flex items-start gap-3 pt-1">
+
+                            <input id="communityConsent"
+                                   name="consent"
+                                   type="checkbox"
+                                   required
+                                   class="mt-1 h-4 w-4 flex-shrink-0">
+
+                            <label for="communityConsent"
+                                   class="text-xs text-gray-600 leading-relaxed">
+                                I agree that Toolora may use the information
+                                I voluntarily submit to understand its audience
+                                and improve the website. I understand that I
+                                can use Toolora without submitting this form.
+                            </label>
+
+                        </div>
+
+
+                        <p class="text-xs text-gray-500 leading-relaxed">
+                            Please do not share passwords, financial details,
+                            sensitive personal information, or your full home address.
+                        </p>
+
+
+                        <div class="space-y-3 pt-1">
+
+                            <button type="submit"
+                                    id="communitySubmitButton"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition">
+                                Share My Details
+                            </button>
+
+                            <button type="button"
+                                    id="communitySkip"
+                                    class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-xl transition">
+                                Maybe Later
+                            </button>
+
+                        </div>
+
+
                         <p id="communityStatus"
-                           class="w-full text-sm text-gray-600"
+                           class="text-sm text-gray-600"
                            role="status"
                            aria-live="polite"></p>
 
-                    </div>
+                    </form>
 
-                </form>
+                </div>
+
             </div>
-        </section>
+
+        </div>
 
 
         <!-- Tools -->
@@ -251,6 +344,7 @@
 
 
             <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+
 
                 <!-- Resume Maker -->
                 <div class="tool-card bg-white rounded-2xl border p-8">
@@ -429,61 +523,94 @@
     </footer>
 
 
-    <!-- Community Form Script -->
+    <!-- Community Popup Behaviour -->
     <script>
         /*
-         * IMPORTANT:
-         * The form is not connected to a database yet.
-         * Leave this empty until Google Apps Script is configured.
+         * Google Sheets connection is not configured yet.
+         * Keep this empty until the endpoint has been created and tested.
          */
         const TOOLORA_FORM_ENDPOINT = "";
 
-        const communityForm =
-            document.getElementById("communityProfileForm");
+        const modal = document.getElementById("communityModal");
+        const modalPanel = document.getElementById("communityModalPanel");
+        const openButton = document.getElementById("openCommunityModal");
+        const closeButton = document.getElementById("closeCommunityModal");
+        const skipButton = document.getElementById("communitySkip");
+        const form = document.getElementById("communityProfileForm");
+        const statusMessage = document.getElementById("communityStatus");
+        const submitButton = document.getElementById("communitySubmitButton");
 
-        const communityStatus =
-            document.getElementById("communityStatus");
+        let previousFocusedElement = null;
 
-        const communitySkip =
-            document.getElementById("communitySkip");
+        function openCommunityModal() {
+            previousFocusedElement = document.activeElement;
 
-        // Allow visitors to skip the optional form.
-        communitySkip.addEventListener("click", function () {
-            communityForm.reset();
+            modal.hidden = false;
+            document.body.classList.add("modal-open");
+            statusMessage.textContent = "";
 
-            communityStatus.textContent =
-                "No problem! You can continue using Toolora without sharing your details.";
+            closeButton.focus();
+        }
+
+        function closeCommunityModal() {
+            modal.hidden = true;
+            document.body.classList.remove("modal-open");
+
+            if (previousFocusedElement) {
+                previousFocusedElement.focus();
+            }
+        }
+
+        openButton.addEventListener("click", openCommunityModal);
+        closeButton.addEventListener("click", closeCommunityModal);
+        skipButton.addEventListener("click", closeCommunityModal);
+
+        // Close when the user clicks the dark area outside the popup.
+        modal.addEventListener("click", function (event) {
+            if (event.target === modal) {
+                closeCommunityModal();
+            }
         });
 
-        // Handle form submission.
-        communityForm.addEventListener("submit", async function (event) {
+        // Close the popup with Escape.
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !modal.hidden) {
+                closeCommunityModal();
+            }
+        });
+
+        form.addEventListener("submit", async function (event) {
             event.preventDefault();
 
-            if (!communityForm.reportValidity()) {
+            if (!form.reportValidity()) {
                 return;
             }
 
             if (!TOOLORA_FORM_ENDPOINT) {
-                communityStatus.textContent =
+                statusMessage.textContent =
                     "The form is not connected yet. No information has been sent.";
 
                 return;
             }
 
-            const submitButton =
-                communityForm.querySelector('button[type="submit"]');
-
             submitButton.disabled = true;
             submitButton.textContent = "Submitting...";
 
             const payload = Object.fromEntries(
-                new FormData(communityForm).entries()
+                new FormData(form).entries()
             );
 
             payload.consent =
                 document.getElementById("communityConsent").checked;
 
+            payload.submittedAt = new Date().toISOString();
+
             try {
+                /*
+                 * This request must be tested with the actual Apps Script
+                 * deployment. no-cors does not confirm whether the server
+                 * successfully saved the submission.
+                 */
                 await fetch(TOOLORA_FORM_ENDPOINT, {
                     method: "POST",
                     mode: "no-cors",
@@ -493,14 +620,15 @@
                     body: JSON.stringify(payload)
                 });
 
-                communityStatus.textContent =
-                    "Thank you for sharing! Your request has been sent. Please note that the browser cannot verify whether it was saved.";
+                statusMessage.textContent =
+                    "Your submission request has been sent. The browser cannot confirm whether it was saved.";
 
-                communityForm.reset();
+                form.reset();
 
             } catch (error) {
-                communityStatus.textContent =
+                statusMessage.textContent =
                     "We could not send your details. Please try again later.";
+
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = "Share My Details";
